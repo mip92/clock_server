@@ -53,7 +53,7 @@ class UserController {
             const isEmailUniq = await User.findOne({where: {email: newEmail}})
             if (isEmailUniq) return next(ApiError.BadRequest("User with this email is already be exist"))
             await user.update({email: newEmail, name: newName})
-            const newUser = {id, email:newEmail, name:newName}
+            const newUser = {id, email: newEmail, name: newName}
             res.status(200).json(newUser)
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))

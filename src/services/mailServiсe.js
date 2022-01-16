@@ -14,6 +14,7 @@ class MailService {
     }
 
     async sendMail(to, masterName, date, clockSize) {
+        console.log(to, masterName, date, clockSize)
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,

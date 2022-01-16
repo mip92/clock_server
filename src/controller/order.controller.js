@@ -3,14 +3,19 @@ const {Order, Master, User, City, MasterCity, MasterBusyDate} = require('../mode
 const masterController = require('../controller/master.controller')
 let mail = require("../services/mailServiсe");
 let oneOrder = require('../services/Order')
-const {where} = require("sequelize");
+const {where, DataTypes} = require("sequelize");
 
 class OrderController {
     async createOrder(req, res, next) {
         try {
-
             const {cityId, clockSize, dateTime, email, masterId, name} = req.body
-            const user = await User.findOne({where: {email: email}})
+            const user = await User.create({
+                email,
+                role: "USER",
+                name
+            })
+            /*const user = await User.findOne({where: {email}})
+            console.log(user)*/
             const master = await Master.findOne({where: {id: masterId}})
             let masterBusyDate = await masterController.timeReservation(masterId, dateTime, next)
             for (let i = 1; i < clockSize; i++) {
@@ -18,16 +23,18 @@ class OrderController {
                 await masterController.timeReservation(masterId, newDateTime, next)
             }
             const order = await Order.create({
-                email: user.email,
+                email: email,
                 userId: user.id,
                 clockSize,
                 masterBusyDateId: masterBusyDate.id,
                 cityId
             })
-            await mail.sendMail(user.email, master.name, masterBusyDate.dateTime, clockSize)
+            console.log(email, master.name, masterBusyDate.dateTime, clockSize)
+            await mail.sendMail(email, master.name, masterBusyDate.dateTime, clockSize)
             res.status(201).json(order)
         } catch (e) {
-            next(ApiError.Internal(e.parent.detail))
+            console.log(e)
+            next(ApiError.Internal(e))
         }
     }
 
