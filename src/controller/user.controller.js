@@ -10,11 +10,9 @@ class UserController {
             if (isUserCreated) return res.status(201).json(isUserCreated)
             else {
                 const newUser = await User.create({name, email});
-                console.log(newUser)
                 return res.status(201).json(newUser)
             }
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -28,7 +26,6 @@ class UserController {
             if (!users) return next(ApiError.BadRequest("Users not found"))
             res.status(200).json(users)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -44,7 +41,6 @@ class UserController {
             if (!user) return next(ApiError.BadRequest("User not found"))
             res.status(200).json(user)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -60,7 +56,6 @@ class UserController {
             const newUser = {id, email:newEmail, name:newName}
             res.status(200).json(newUser)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -68,14 +63,13 @@ class UserController {
     async deleteUser(req, res, next) {
         try {
             const {userId} = req.params
-            console.log(req.params)
             if (!userId) next(ApiError.BadRequest("id is not defined"))
             const candidate = await User.findOne({where: {id: userId}})
             if (!candidate) next(ApiError.BadRequest(`user with id:${userId} is not defined`))
             await User.destroy({where: {id: userId}})
             res.status(200).json({message: `user with id:${userId} was deleted`, user: candidate})
         } catch (e) {
-            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
         }
     }
 }

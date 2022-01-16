@@ -15,7 +15,7 @@ validationCreateOrderBodyRules = [
 ];
 
 router.post('/', validationCreateOrderBodyRules, checkRules, orderController.createOrder);
-router.get('/'/*,checkRole("ADMIN")*/, orderController.getAllOrders);
+router.get('/', checkRole("ADMIN"), orderController.getAllOrders);
 router.get('/:orderId', checkRole("ADMIN"), orderController.getOneOrder);
 router.delete('/:orderId', checkRole("ADMIN"), orderController.deleteOrder);
 

@@ -27,7 +27,6 @@ class OrderController {
             await mail.sendMail(user.email, master.name, masterBusyDate.dateTime, clockSize)
             res.status(201).json(order)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(e.parent.detail))
         }
     }
@@ -44,7 +43,6 @@ class OrderController {
             newMaster.dataValues.cities = [city]
             return res.status(201).json(newMaster)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -66,7 +64,6 @@ class OrderController {
                 const dateTime = await MasterBusyDate.findOne({where: {id: orders.rows[i].dataValues.masterBusyDateId}})
                 const master = await Master.findOne({where: {id: orders.rows[i].master_busyDate.dataValues.masterId}})
                 const city = await City.findOne({where:{id:orders.rows[i].dataValues.cityId}})
-                console.log(city)
                 const ord = new oneOrder(dateTime.dateTime,
                     orders.rows[i].dataValues,
                     user.dataValues,
@@ -76,7 +73,6 @@ class OrderController {
             }
             res.status(200).json({ rows:result,  count:orders.count})
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -95,7 +91,6 @@ class OrderController {
             const result = new oneOrder(order, user, master)
             res.status(200).json({result})
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -107,10 +102,9 @@ class OrderController {
             const candidate = await Order.findOne({where: {id: orderId}})
             if (!candidate) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
             await Order.destroy({where: {id: masterId}})
-
             res.status(200).json({message: `order with id:${orderId} was deleted`, order: candidate})
         } catch (e) {
-            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
         }
     }
 

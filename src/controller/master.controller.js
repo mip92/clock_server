@@ -19,7 +19,6 @@ class MasterController {
             newMaster.dataValues.cities = [city]
             return res.status(201).json(newMaster)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -47,7 +46,6 @@ class MasterController {
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -63,7 +61,6 @@ class MasterController {
             if (!master) return next(ApiError.BadRequest("Master not found"))
             res.status(200).json(master)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -79,7 +76,6 @@ class MasterController {
             master.dataValues.cities = [newCity]
             res.status(200).json(master.dataValues)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -92,10 +88,9 @@ class MasterController {
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
             await MasterBusyDate.destroy({where: {masterId}})
             await Master.destroy({where: {id: masterId}})
-
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
         } catch (e) {
-            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
         }
     }
 
@@ -118,7 +113,6 @@ class MasterController {
     async getFreeMasters(req, res, next) {
         try {
             const {cityId, dateTime, clockSize} = req.body
-            console.log(+new Date(dateTime) - +Date.now())
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("the date may be later than the date now"))
 
             if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("max clockSize is 3"))
@@ -148,7 +142,7 @@ class MasterController {
             }
             res.status(200).json(freeMasters)
         } catch (e) {
-            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
         }
     }
 }

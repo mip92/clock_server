@@ -3,7 +3,7 @@ const router = new Router();
 const userController = require('../controller/user.controller')
 const checkRole = require('../middlwares/checkRoleMiddleware')
 const checkRules = require('../middlwares/checkRulesMiddleware')
-let {body} = require('express-validator');
+const {body} = require('express-validator');
 
 validationCreateUserBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
@@ -16,8 +16,8 @@ validationUpdateUserBodyRules = [
 ];
 
 router.post('/', validationCreateUserBodyRules, checkRules, userController.createUser);
-router.get('/', userController.getAllUsers);
-router.get('/:userId', userController.getOneUser);
+router.get('/',checkRole("ADMIN"), userController.getAllUsers);
+router.get('/:userId',checkRole("ADMIN"), userController.getOneUser);
 router.put('/',checkRole("ADMIN"), userController.updateUser);
 router.delete('/:userId',checkRole("ADMIN"),  userController.deleteUser);
 

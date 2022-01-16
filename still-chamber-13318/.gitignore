@@ -1,8 +1,0 @@
-.idea
-/coverage
-/build
-/node_modules
-/.env
-/.env.development
-/.env.production
-

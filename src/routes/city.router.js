@@ -9,7 +9,7 @@ validationCreateCityBodyRules = [
     body('city', "city name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
 ];
 validationUpdateCityBodyRules = [
-    body('city_name', "city name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
+    body('cityName', "city name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
 ];
 
 router.post('/', checkRole("ADMIN"), validationCreateCityBodyRules, checkRules, cityController.createCity);

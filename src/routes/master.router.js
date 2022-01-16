@@ -24,7 +24,7 @@ validationUpdateMasterBodyRules = [
 router.post('/', checkRole("ADMIN"), validationCreateMasterBodyRules, checkRules, masterController.createMaster);
 router.get('/', masterController.getAllMasters);
 router.get('/:masterId', masterController.getOneMaster);
-router.put('/', validationCreateMasterBodyRules, checkRules, masterController.updateMaster);
+router.put('/', checkRole("ADMIN"), validationCreateMasterBodyRules, checkRules, masterController.updateMaster);
 router.delete('/:masterId', checkRole("ADMIN"), masterController.deleteMaster);
 /*router.post('/timeReservation'/!*,checkRole("ADMIN")*!/,masterController.timeReservation);*/
 router.post('/getFreeMasters', validationGetFreeMastersBodyRules, checkRules, masterController.getFreeMasters);

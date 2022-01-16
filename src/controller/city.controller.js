@@ -5,12 +5,11 @@ class CityController {
     async createCity(req, res, next) {
         try {
             const {city} = req.body
-            const isCityUniq = await City.findOne({where: {city_name: city}})
+            const isCityUniq = await City.findOne({where: {cityName: city}})
             if (isCityUniq) next(ApiError.BadRequest("the city with that name already exists"))
-            const newCity = await City.create({city_name: city})
+            const newCity = await City.create({cityName: city})
             res.status(201).json(newCity)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -31,7 +30,6 @@ class CityController {
             if (!cities) return next(ApiError.BadRequest("Сities not found"))
             res.status(200).json(cities)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -42,7 +40,6 @@ class CityController {
             const city = await City.findOne({where: {id: cityId}})
             res.status(200).json(city)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -50,12 +47,11 @@ class CityController {
     async updateCity(req, res, next) {
         try {
             const {cityId} = req.params
-            const {city_name} = req.body
+            const {cityName} = req.body
             const city = await City.findOne({where: {id: cityId}})
-            await city.update({"city_name": city_name})
+            await city.update({"cityName": cityName})
             res.status(200).json(city)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -69,7 +65,6 @@ class CityController {
             await City.destroy({where: {id: cityId}})
             res.status(200).json({message: `city with id:${cityId} was deleted`, city: candidate})
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }

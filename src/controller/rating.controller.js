@@ -9,7 +9,6 @@ class RatingController {
             const newRating = await Rating.create({ orderId, masterId, rating});
             return res.status(201).json(newRating)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -31,7 +30,6 @@ class RatingController {
             if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
             res.status(200).json(ratings)
         }catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -46,7 +44,6 @@ class RatingController {
             if (!rating) return next(ApiError.BadRequest("Rating not found"))
             res.status(200).json(rating)
         } catch (e) {
-            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }

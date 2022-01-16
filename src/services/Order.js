@@ -10,7 +10,7 @@ class OneOrder{
         this.masterEmail=master.email;
         this.masterName=master.name;
         this.cityId=city.id;
-        this.cityName=city.city_name
+        this.cityName=city.cityName
     }
 }
 module.exports = OneOrder;

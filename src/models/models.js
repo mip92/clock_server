@@ -30,7 +30,7 @@ const Master = sequelize.define('master', {
 })
 const City = sequelize.define('city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    city_name: {type: DataTypes.STRING, unique: true, allowNull: false},
+    cityName: {type: DataTypes.STRING, unique: true, allowNull: false},
 })
 
 
