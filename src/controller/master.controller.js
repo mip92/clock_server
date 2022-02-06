@@ -9,16 +9,21 @@ const dateToString = (date) => {
 class MasterController {
     async createMaster(req, res, next) {
         try {
-            const {name, email, city_id} = req.body
+            const {name, email, cities_id} = req.body
+            const citiesId = cities_id.split(',');
             const isEmailUniq = await Master.findOne({where: {email}})
             if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
-            const city = await City.findOne({where: {id: city_id}})
-            if (!city) return next(ApiError.BadRequest("city with this id is not found"))
             const newMaster = await Master.create({name, email});
-            await MasterCity.create({masterId: newMaster.id, cityId: city_id})
-            newMaster.dataValues.cities = [city]
-            return res.status(201).json(newMaster)
+            for (let i = 0; i < citiesId.length; i++) {
+                const city = await City.findOne({where: {id: Number(citiesId[i])}})
+                if (!city) return next(ApiError.BadRequest(`city with this ${citiesId[i]} is not found`))
+                await MasterCity.create({masterId: newMaster.id, cityId: citiesId[i]})
+            }
+            const master = await Master.findOne({where: {email}, include:[{model: City}]})
+            console.log(master)
+            return res.status(201).json(master)
         } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -29,11 +34,18 @@ class MasterController {
             if (limit > 50) limit = 50
             if (!offset) offset = 0
             let masters
-            if (!city_id) masters = await Master.findAndCountAll({
-                include: {model: City, required: true},
-                limit,
-                offset
-            })
+            if (!city_id) {
+                const m = await Master.findAll({
+                    include: {model: City, required: false},
+                    limit,
+                    offset
+                })
+                const c = await Master.count({
+                    limit,
+                    offset
+                })
+                masters = {count:c, rows:m}
+            }
             if (city_id) masters = await Master.findAndCountAll({
                 include: [{
                     where: {id: city_id},
@@ -67,15 +79,18 @@ class MasterController {
 
     async updateMaster(req, res, next) {
         try {
-            const {id, name, email, city_id} = req.body
-            const master = await Master.findOne({where: {id}})
-            const cityMaster = await MasterCity.findOne({where: {masterId: id}})
-            await cityMaster.update({cityId: city_id})
-            const newCity = await City.findOne({where: {id: city_id}})
+            const {id, name, email, cities_id} = req.body
+            const citiesId = cities_id.split(',');
+            await MasterCity.destroy({where: {masterId: id}})
+            for (let i = 0; i < citiesId.length; i++) {
+                await MasterCity.create({masterId:id, cityId:Number(citiesId[i])})
+            }
+            const master = await Master.findOne({where: {id}, include:[{model: City}]})
             await master.update({name, email})
-            master.dataValues.cities = [newCity]
+            console.log(master)
             res.status(200).json(master.dataValues)
         } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }

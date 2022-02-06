@@ -28,7 +28,7 @@ class AdminController {
         }
         let comparePassword = bcrypt.compareSync(password, admin.password)
         if (!comparePassword) {
-            return next(ApiError.BadRequest('User is not found or password is wrong!!!!!!'))
+            return next(ApiError.BadRequest('User is not found or password is wrong'))
         }
         const token = generateJwt(admin.id, admin.email, admin.role)
         return res.status(200).json({token})

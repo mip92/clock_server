@@ -13,6 +13,7 @@ const User = sequelize.define('user', {
 const Order = sequelize.define('order', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     clockSize: {type: DataTypes.INTEGER, allowNull: false},
+    originalCityName: {type: DataTypes.STRING, allowNull: false},
     userId:{
         type: DataTypes.INTEGER,
         references:{

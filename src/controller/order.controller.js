@@ -17,6 +17,7 @@ class OrderController {
             /*const user = await User.findOne({where: {email}})
             console.log(user)*/
             const master = await Master.findOne({where: {id: masterId}})
+            const city = await City.findOne({where: {id: cityId}})
             let masterBusyDate = await masterController.timeReservation(masterId, dateTime, next)
             for (let i = 1; i < clockSize; i++) {
                 const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * i))
@@ -27,9 +28,9 @@ class OrderController {
                 userId: user.id,
                 clockSize,
                 masterBusyDateId: masterBusyDate.id,
-                cityId
+                cityId,
+                originalCityName:city.cityName
             })
-            console.log(email, master.name, masterBusyDate.dateTime, clockSize)
             await mail.sendMail(email, master.name, masterBusyDate.dateTime, clockSize)
             res.status(201).json(order)
         } catch (e) {
@@ -64,6 +65,10 @@ class OrderController {
                 offset,
                 include: {all: true},
             })
+            const c = await Order.count({
+                limit,
+                offset,
+            })
             if (!orders) return next(ApiError.BadRequest("Orders not found"))
             let result = []
             for (let i = 0; i < orders.rows.length; i++) {
@@ -78,7 +83,7 @@ class OrderController {
                     city.dataValues)
                 result.push(ord)
             }
-            res.status(200).json({ rows:result,  count:orders.count})
+            res.status(200).json({ rows:result,  count:c})
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))
         }

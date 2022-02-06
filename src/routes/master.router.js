@@ -8,12 +8,13 @@ let {body} = require('express-validator');
 validationCreateMasterBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
     body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
-    body('city_id', 'city_id is required').not().isEmpty().escape()
+    body('cities_id', 'city_id is required').not().isEmpty().escape()
 ];
 validationGetFreeMastersBodyRules = [
     body('cityId', 'city_id is required').not().isEmpty().escape(),
     body('dateTime', 'dateTime is required').not().isEmpty(),
     body('clockSize', 'clockSize is required').not().isEmpty(),
+    body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
 ];
 validationUpdateMasterBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
