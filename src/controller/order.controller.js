@@ -14,14 +14,12 @@ class OrderController {
                 role: "USER",
                 name
             })
-            /*const user = await User.findOne({where: {email}})
-            console.log(user)*/
             const master = await Master.findOne({where: {id: masterId}})
             const city = await City.findOne({where: {id: cityId}})
-            let masterBusyDate = await masterController.timeReservation(masterId, dateTime, next)
+            let masterBusyDate = await masterController.timeReservation(masterId, dateTime,cityId, next)
             for (let i = 1; i < clockSize; i++) {
                 const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * i))
-                await masterController.timeReservation(masterId, newDateTime, next)
+                await masterController.timeReservation(masterId, newDateTime.toISOString(), cityId, next)
             }
             const order = await Order.create({
                 email: email,
@@ -75,12 +73,14 @@ class OrderController {
                 const user = await User.findOne({where: {id: orders.rows[i].dataValues.userId}})
                 const dateTime = await MasterBusyDate.findOne({where: {id: orders.rows[i].dataValues.masterBusyDateId}})
                 const master = await Master.findOne({where: {id: orders.rows[i].master_busyDate.dataValues.masterId}})
+                const originalCity = orders.rows[i].originalCityName
                 const city = await City.findOne({where:{id:orders.rows[i].dataValues.cityId}})
                 const ord = new oneOrder(dateTime.dateTime,
                     orders.rows[i].dataValues,
                     user.dataValues,
                     master.dataValues,
-                    city.dataValues)
+                    originalCity,
+                    city)
                 result.push(ord)
             }
             res.status(200).json({ rows:result,  count:c})

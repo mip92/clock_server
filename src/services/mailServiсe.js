@@ -5,7 +5,7 @@ class MailService {
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT,
-            secure: true,
+            secure: false,
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASSWORD
@@ -15,6 +15,11 @@ class MailService {
 
     async sendMail(to, masterName, date, clockSize) {
         console.log(to, masterName, date, clockSize)
+        const dateTime = new Date(date)
+        const year = dateTime.getFullYear()
+        const month=dateTime.getMonth()+1
+        const day=dateTime.getDate()
+        const hours =dateTime.getHours()
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
@@ -24,7 +29,7 @@ class MailService {
                 `
             <div>
                 <h1>Заказ оформлен</h1>
-                <div>Мастер ${masterName} прибудет к Вам ${date}:00 для ремонта часов, примерное время ремонта составляет ${clockSize} часа</div>
+                <div>Мастер ${masterName} прибудет к Вам ${day}.${month}.${year} в ${hours}:00 для ремонта часов, примерное время ремонта составляет ${clockSize} часа</div>
             </div>
             `
         })

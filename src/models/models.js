@@ -51,6 +51,13 @@ const MasterBusyDate = sequelize.define('master_busyDate', {
         }
     },
     dateTime: {type: DataTypes.STRING},
+/*    cityId:{
+        type: DataTypes.INTEGER,
+        references:{
+            model: City,
+            key:'id',
+        }
+    },*/
 })
 
 const MasterCity = sequelize.define('master_city', {

@@ -1,10 +1,11 @@
 const {Master, MasterCity, City, MasterBusyDate} = require('../models/models')
 const ApiError = require('../exeptions/api-error')
+const {where} = require("sequelize");
 
-const dateToString = (date) => {
+/*const dateToString = (date) => {
     const validDate = new Date(date)
     return `${validDate.getFullYear()}:${validDate.getMonth() + 1}:${validDate.getDate()}:${validDate.getHours()}`
-}
+}*/
 
 class MasterController {
     async createMaster(req, res, next) {
@@ -19,7 +20,7 @@ class MasterController {
                 if (!city) return next(ApiError.BadRequest(`city with this ${citiesId[i]} is not found`))
                 await MasterCity.create({masterId: newMaster.id, cityId: citiesId[i]})
             }
-            const master = await Master.findOne({where: {email}, include:[{model: City}]})
+            const master = await Master.findOne({where: {email}, include: [{model: City}]})
             console.log(master)
             return res.status(201).json(master)
         } catch (e) {
@@ -44,7 +45,7 @@ class MasterController {
                     limit,
                     offset
                 })
-                masters = {count:c, rows:m}
+                masters = {count: c, rows: m}
             }
             if (city_id) masters = await Master.findAndCountAll({
                 include: [{
@@ -83,9 +84,9 @@ class MasterController {
             const citiesId = cities_id.split(',');
             await MasterCity.destroy({where: {masterId: id}})
             for (let i = 0; i < citiesId.length; i++) {
-                await MasterCity.create({masterId:id, cityId:Number(citiesId[i])})
+                await MasterCity.create({masterId: id, cityId: Number(citiesId[i])})
             }
-            const master = await Master.findOne({where: {id}, include:[{model: City}]})
+            const master = await Master.findOne({where: {id}, include: [{model: City}]})
             await master.update({name, email})
             console.log(master)
             res.status(200).json(master.dataValues)
@@ -109,27 +110,58 @@ class MasterController {
         }
     }
 
-    async timeReservation(masterId, dateTime, next) {
+    async timeReservation(masterId, dateTime, cityId, next) {
         try {
             if (!masterId || !dateTime) next(ApiError.BadRequest("id is not defined"))
-            let masterDateTime = await MasterBusyDate.findOne({where: {masterId, dateTime: dateToString(dateTime)}})
+            let masterDateTime = await MasterBusyDate.findOne({where: {masterId, dateTime}})
             if (masterDateTime) next(ApiError.BadRequest("this master is already working at this time"))
-            masterDateTime = await MasterBusyDate.create({masterId, dateTime: dateToString(dateTime)})
-            /*res.status(200).json({
-                message: `master with id: ${masterId} was reserved at this time: ${dateTime}`,
-                masterDateTime
-            })*/
+            masterDateTime = await MasterBusyDate.create({masterId,dateTime: String(dateTime)})
             return masterDateTime
         } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
 
+    /*    async getFreeMasters(req, res, next) {
+            try {
+                const {cityId, dateTime, clockSize} = req.body
+                if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("the date may be later than the date now"))
+                console.log(dateTime)
+                if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("max clockSize is 3"))
+                let masters = await Master.findAll({
+                    include: [{
+                        where: {id: Number(cityId)},
+                        model: City,
+                        required: true
+                    }],
+                })
+                if (masters.length === 0) return next(ApiError.BadRequest("masters is not found"))
+
+                let freeMasters = masters
+                let time = dateTime
+                for (let cs = 0; cs < clockSize; cs++) {
+                    time = dateToString(new Date(new Date(dateTime).getTime() + 3600000 * cs))
+                    if ((new Date(dateTime)).getHours() + cs > 20) return next(ApiError.BadRequest("masters is not found"))
+                    for (let m = 0; m < masters.length; m++) {
+                        let theRightTime = await MasterBusyDate.findOne({
+                            where: {
+                                masterId: masters[m].id,
+                                dateTime: time
+                            }
+                        })
+                        if (theRightTime) freeMasters = freeMasters.filter(master => master.id !== theRightTime.masterId)
+                    }
+                }
+                res.status(200).json(freeMasters)
+            } catch (e) {
+                next(ApiError.BadRequest(e.parent.detail))
+            }
+        }*/
     async getFreeMasters(req, res, next) {
         try {
             const {cityId, dateTime, clockSize} = req.body
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("the date may be later than the date now"))
-
             if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("max clockSize is 3"))
             let masters = await Master.findAll({
                 include: [{
@@ -139,22 +171,22 @@ class MasterController {
                 }],
             })
             if (masters.length === 0) return next(ApiError.BadRequest("masters is not found"))
-
-            let freeMasters = masters
-            let time = dateTime
-            for (let cs = 0; cs < clockSize; cs++) {
-                time = dateToString(new Date(new Date(dateTime).getTime() + 3600000 * cs))
-                if ((new Date(dateTime)).getHours() + cs > 20) return next(ApiError.BadRequest("masters is not found"))
-                for (let m = 0; m < masters.length; m++) {
-                    let theRightTime = await MasterBusyDate.findOne({
-                        where: {
-                            masterId: masters[m].id,
-                            dateTime: time
-                        }
-                    })
-                    if (theRightTime) freeMasters = freeMasters.filter(master => master.id !== theRightTime.masterId)
+            const freeMasters=[]
+            for (let i = 0; i <masters.length ; i++) {
+                let isThisMasterBusy = false
+                for (let cs = 0; cs < clockSize; cs++) {
+                    const time = new Date(dateTime)
+                    time.setHours(time.getHours()+cs)
+                    let busy= await MasterBusyDate.findOne({where:{
+                            masterId:masters[i].id,
+                            dateTime: String(time.toISOString())
+                        }})
+                    console.log(busy)
+                    if (busy) isThisMasterBusy = true
                 }
+                if (!isThisMasterBusy) freeMasters.push(masters[i])
             }
+            if (freeMasters.length === 0) return next(ApiError.BadRequest("masters is not found"))
             res.status(200).json(freeMasters)
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))
