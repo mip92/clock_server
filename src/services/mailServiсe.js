@@ -5,7 +5,7 @@ class MailService {
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT,
-            secure: false,
+            secure: process.env.NODE_ENV=='production' ? true: false,
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASSWORD
@@ -15,6 +15,7 @@ class MailService {
 
     async sendMail(to, masterName, date, clockSize) {
         console.log(to, masterName, date, clockSize)
+        console.log(process.env.NODE_ENV)
         const dateTime = new Date(date)
         const year = dateTime.getFullYear()
         const month=dateTime.getMonth()+1
