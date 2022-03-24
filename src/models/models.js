@@ -5,7 +5,7 @@ const {DataTypes} = require('sequelize')
 
 const User = sequelize.define('user', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    email: {type: DataTypes.STRING, unique: true,},
+    email: {type: DataTypes.STRING, unique: true},
     role: {type: DataTypes.STRING, defaultValue: "USER"},
     name:{type: DataTypes.STRING, allowNull: false},
 })
@@ -14,13 +14,13 @@ const Order = sequelize.define('order', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     clockSize: {type: DataTypes.INTEGER, allowNull: false},
     originalCityName: {type: DataTypes.STRING, allowNull: false},
-    userId:{
+    /*userId:{
         type: DataTypes.INTEGER,
         references:{
             model: User,
             key:'id'
         }
-    },
+    },*/
 })
 
 const Master = sequelize.define('master', {
@@ -102,6 +102,8 @@ Order.belongsTo(Rating);*/
 Master.belongsToMany(City, {through: MasterCity})
 City.belongsToMany(Master, {through: MasterCity})
 
+User.hasMany(Order);
+Order.belongsTo(User);
 
 MasterBusyDate.hasMany(Order);
 Order.belongsTo(MasterBusyDate);

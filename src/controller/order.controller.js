@@ -9,14 +9,17 @@ class OrderController {
     async createOrder(req, res, next) {
         try {
             const {cityId, clockSize, dateTime, email, masterId, name} = req.body
-            const user = await User.create({
-                email,
-                role: "USER",
-                name
-            })
+            let user = await User.findOne({where: {email}})
+            if (!user) {
+                user = await User.create({
+                    email,
+                    role: "USER",
+                    name
+                })
+            }
             const master = await Master.findOne({where: {id: masterId}})
             const city = await City.findOne({where: {id: cityId}})
-            let masterBusyDate = await masterController.timeReservation(masterId, dateTime,cityId, next)
+            let masterBusyDate = await masterController.timeReservation(masterId, dateTime, cityId, next)
             for (let i = 1; i < clockSize; i++) {
                 const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * i))
                 await masterController.timeReservation(masterId, newDateTime.toISOString(), cityId, next)
@@ -27,7 +30,7 @@ class OrderController {
                 clockSize,
                 masterBusyDateId: masterBusyDate.id,
                 cityId,
-                originalCityName:city.cityName
+                originalCityName: city.cityName
             })
             await mail.sendMail(email, master.name, masterBusyDate.dateTime, clockSize)
             res.status(201).json(order)
@@ -74,7 +77,7 @@ class OrderController {
                 const dateTime = await MasterBusyDate.findOne({where: {id: orders.rows[i].dataValues.masterBusyDateId}})
                 const master = await Master.findOne({where: {id: orders.rows[i].master_busyDate.dataValues.masterId}})
                 const originalCity = orders.rows[i].originalCityName
-                const city = await City.findOne({where:{id:orders.rows[i].dataValues.cityId}})
+                const city = await City.findOne({where: {id: orders.rows[i].dataValues.cityId}})
                 const ord = new oneOrder(dateTime.dateTime,
                     orders.rows[i].dataValues,
                     user.dataValues,
@@ -83,7 +86,7 @@ class OrderController {
                     city)
                 result.push(ord)
             }
-            res.status(200).json({ rows:result,  count:c})
+            res.status(200).json({rows: result, count: c})
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))
         }
