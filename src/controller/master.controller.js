@@ -1,6 +1,9 @@
 const {Master, MasterCity, City, MasterBusyDate} = require('../models/models')
 const ApiError = require('../exeptions/api-error')
 const {where} = require("sequelize");
+const uuid = require('uuid')
+const bcrypt = require('bcrypt')
+let mail = require("../services/mailServiсe");
 
 /*const dateToString = (date) => {
     const validDate = new Date(date)
@@ -14,14 +17,28 @@ class MasterController {
             const citiesId = cities_id.split(',');
             const isEmailUniq = await Master.findOne({where: {email}})
             if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
-            const newMaster = await Master.create({name, email});
+            const password = uuid.v4();
+            const hashPassword = await bcrypt.hash(password.slice(0, 6), 5)
+            const newMaster = await Master.create({
+                name,
+                email,
+                password: hashPassword,
+                role: "MASTER",
+                isActivated: false,
+                isApproved: true
+            });
+            const activationLink = uuid.v4();
+            await mail.sendActivationMail(email,
+                `${process.env.API_URL}/api/auth/activate/${activationLink}`,
+                newMaster.role,
+                password.slice(0, 6)
+            )
             for (let i = 0; i < citiesId.length; i++) {
                 const city = await City.findOne({where: {id: Number(citiesId[i])}})
                 if (!city) return next(ApiError.BadRequest(`city with this ${citiesId[i]} is not found`))
                 await MasterCity.create({masterId: newMaster.id, cityId: citiesId[i]})
             }
             const master = await Master.findOne({where: {email}, include: [{model: City}]})
-            console.log(master)
             return res.status(201).json(master)
         } catch (e) {
             console.log(e)
@@ -37,6 +54,7 @@ class MasterController {
             let masters
             if (!city_id) {
                 const m = await Master.findAll({
+                    where:{isActivated:true}, //отображать мастеров которые подтвердили свою почту
                     include: {model: City, required: false},
                     limit,
                     offset
@@ -49,7 +67,10 @@ class MasterController {
             }
             if (city_id) masters = await Master.findAndCountAll({
                 include: [{
-                    where: {id: city_id},
+                    where: {id: city_id,
+                        isActivated:true,//отображать мастеров которые подтвердили свою почту
+                        isApproved: true //отображать мастеров которых подтвердил администратор
+                    },
                     model: City,
                     required: true
                 }],
@@ -109,6 +130,19 @@ class MasterController {
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
+    async approveMaster(req, res, next) {
+        try {
+            const {masterId} = req.params
+            if (!masterId) next(ApiError.BadRequest("id is not defined"))
+            const master = await Master.findOne({where: {id: masterId}})
+            if (!master) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
+            const approve = master.isApproved
+            await master.update({isApproved: !approve})
+            res.status(200).json({message: `master with id:${masterId} changed status approve`, master})
+        } catch (e) {
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+    }
 
     async timeReservation(masterId, dateTime, cityId, next) {
         try {
@@ -164,6 +198,10 @@ class MasterController {
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("the date may be later than the date now"))
             if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("max clockSize is 3"))
             let masters = await Master.findAll({
+                where:{
+                    isActivated:true,//отображать мастеров которые подтвердили свою почту
+                    isApproved: true,//отображать мастеров которых подтвердил админ
+                },
                 include: [{
                     where: {id: Number(cityId)},
                     model: City,

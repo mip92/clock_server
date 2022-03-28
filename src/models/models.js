@@ -8,6 +8,9 @@ const User = sequelize.define('user', {
     email: {type: DataTypes.STRING, unique: true},
     role: {type: DataTypes.STRING, defaultValue: "USER"},
     name:{type: DataTypes.STRING, allowNull: false},
+    password:{type:DataTypes.STRING, unique: false, allowNull: true},
+    activationLink:{type: DataTypes.STRING, allowNull: false},
+    isActivated:{type: DataTypes.BOOLEAN, defaultValue: false}
 })
 
 const Order = sequelize.define('order', {
@@ -28,6 +31,11 @@ const Master = sequelize.define('master', {
     name: {type: DataTypes.STRING, allowNull: false},
     email: {type: DataTypes.STRING, unique: true, allowNull: false},
     rating: {type: DataTypes.INTEGER, allowNull: false, defaultValue: 5},
+    role: {type: DataTypes.STRING, defaultValue: "MASTER"},
+    password:{type:DataTypes.STRING, unique: false, allowNull: false},
+    activationLink:{type: DataTypes.STRING, allowNull: true},
+    isActivated:{type: DataTypes.BOOLEAN, defaultValue: false},
+    isApproved:{type: DataTypes.BOOLEAN, defaultValue: false},
 })
 const City = sequelize.define('city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
