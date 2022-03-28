@@ -138,6 +138,7 @@ class MasterController {
             if (!master) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
             const approve = master.isApproved
             await master.update({isApproved: !approve})
+            await mail.sendApproveMail(master.email, Boolean(master.isApproved))
             res.status(200).json({message: `master with id:${masterId} changed status approve`, master})
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))

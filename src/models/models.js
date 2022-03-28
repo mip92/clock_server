@@ -26,6 +26,7 @@ const Order = sequelize.define('order', {
     },*/
 })
 
+
 const Master = sequelize.define('master', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     name: {type: DataTypes.STRING, allowNull: false},
@@ -37,6 +38,7 @@ const Master = sequelize.define('master', {
     isActivated:{type: DataTypes.BOOLEAN, defaultValue: false},
     isApproved:{type: DataTypes.BOOLEAN, defaultValue: false},
 })
+
 const City = sequelize.define('city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     cityName: {type: DataTypes.STRING, unique: true, allowNull: false},
@@ -112,6 +114,7 @@ City.belongsToMany(Master, {through: MasterCity})
 
 User.hasMany(Order);
 Order.belongsTo(User);
+
 
 MasterBusyDate.hasMany(Order);
 Order.belongsTo(MasterBusyDate);
