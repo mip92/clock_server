@@ -4,10 +4,10 @@ const {City, User} = require('../models/models')
 class CityController {
     async createCity(req, res, next) {
         try {
-            const {city} = req.body
+            const {city, price} = req.body
             const isCityUniq = await City.findOne({where: {cityName: city}})
             if (isCityUniq) next(ApiError.BadRequest("the city with that name already exists"))
-            const newCity = await City.create({cityName: city})
+            const newCity = await City.create({cityName: city, price})
             res.status(201).json(newCity)
         } catch (e) {
             next(ApiError.Internal(`server error`))
@@ -47,9 +47,9 @@ class CityController {
     async updateCity(req, res, next) {
         try {
             const {cityId} = req.params
-            const {cityName} = req.body
+            const {cityName, price} = req.body
             const city = await City.findOne({where: {id: cityId}})
-            await city.update({"cityName": cityName})
+            await city.update({"cityName": cityName, price})
             res.status(200).json(city)
         } catch (e) {
             next(ApiError.Internal(`server error`))

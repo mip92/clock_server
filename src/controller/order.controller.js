@@ -3,7 +3,7 @@ const {Order, Master, User, City, MasterCity, MasterBusyDate} = require('../mode
 const masterController = require('../controller/master.controller')
 let mail = require("../services/mailServiсe");
 let oneOrder = require('../services/Order')
-const {where, DataTypes} = require("sequelize");
+const Status = require('../services/status.service')
 
 class OrderController {
     async createOrder(req, res, next) {
@@ -27,7 +27,8 @@ class OrderController {
                 clockSize,
                 masterBusyDateId: masterBusyDate.id,
                 cityId,
-                originalCityName:city.cityName
+                originalCityName:city.cityName,
+                statusId:2
             })
             await mail.sendMail(email, master.name, masterBusyDate.dateTime, clockSize)
             res.status(201).json(order)
@@ -55,7 +56,7 @@ class OrderController {
 
     async getAllOrders(req, res, next) {
         try {
-            let {limit, offset} = req.query
+            let {limit, offset, masterId, userId} = req.query
             if (limit > 50) limit = 50
             if (!offset) offset = 0
             const orders = await Order.findAndCountAll({
@@ -81,7 +82,10 @@ class OrderController {
                     master.dataValues,
                     originalCity,
                     city)
-                result.push(ord)
+                if (masterId && userId && userId === user.dataValues.id && masterId === master.dataValues.id) result.push(ord)
+                else if (masterId && !userId && masterId === master.dataValues.id) result.push(ord)
+                else if (userId && !masterId && userId === user.dataValues.id) result.push(ord)
+                else if (!masterId && !userId) result.push(ord)
             }
             res.status(200).json({ rows:result,  count:c})
         } catch (e) {
@@ -115,6 +119,19 @@ class OrderController {
             if (!candidate) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
             await Order.destroy({where: {id: masterId}})
             res.status(200).json({message: `order with id:${orderId} was deleted`, order: candidate})
+        } catch (e) {
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+    }
+    async changeOrderStatus(req, res, next) {
+        try {
+            const {orderId, statusId} = req.params
+            const order = await Order.findOne({where: {id: orderId}})
+            if (!order) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
+            const status = await Status.getStatusById(statusId)
+            if (!status) next(ApiError.BadRequest(`status with id:${statusId} is not defined`))
+            const updatedOrder = await order.update({statusId})
+            res.status(200).json({message: `status by order with id:${orderId} was updated to value ${status.name}`, order: updatedOrder})
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))
         }

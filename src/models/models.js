@@ -10,6 +10,11 @@ const User = sequelize.define('user', {
     name:{type: DataTypes.STRING, allowNull: false},
 })
 
+const Status = sequelize.define('status', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    name: {type: DataTypes.STRING, unique: true, allowNull: false},
+})
+
 const Order = sequelize.define('order', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     clockSize: {type: DataTypes.INTEGER, allowNull: false},
@@ -21,6 +26,14 @@ const Order = sequelize.define('order', {
             key:'id'
         }
     },
+    statusId:{
+        type: DataTypes.INTEGER,
+        references:{
+            model: Status,
+            key:'id'
+        },
+        defaultValue: 1
+    },
 })
 
 const Master = sequelize.define('master', {
@@ -29,11 +42,12 @@ const Master = sequelize.define('master', {
     email: {type: DataTypes.STRING, unique: true, allowNull: false},
     rating: {type: DataTypes.INTEGER, allowNull: false, defaultValue: 5},
 })
+
 const City = sequelize.define('city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     cityName: {type: DataTypes.STRING, unique: true, allowNull: false},
+    price:{type: DataTypes.INTEGER, allowNull: false},
 })
-
 
 const Admin= sequelize.define('admin', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
@@ -41,6 +55,7 @@ const Admin= sequelize.define('admin', {
     password: {type: DataTypes.STRING, allowNull: false},
     role: {type: DataTypes.STRING, allowNull: false, defaultValue: 'ADMIN'},
 })
+
 const MasterBusyDate = sequelize.define('master_busyDate', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     masterId:{
@@ -109,6 +124,9 @@ Order.belongsTo(MasterBusyDate);
 City.hasMany(Order);
 Order.belongsTo(City)
 
+Status.hasMany(Order);
+Order.belongsTo(Status)
+
 Master.hasMany(Rating)
 Rating.belongsTo(Master)
 
@@ -120,5 +138,6 @@ module.exports = {
     Admin,
     Order,
     MasterBusyDate,
-    User
+    User,
+    Status
 }

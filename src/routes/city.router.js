@@ -7,9 +7,11 @@ const checkRules = require("../middlwares/checkRulesMiddleware");
 
 validationCreateCityBodyRules = [
     body('city', "city name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
+    body('price',"price per hour must be a number").not().isEmpty().isInt()
 ];
 validationUpdateCityBodyRules = [
     body('cityName', "city name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
+    body('price',"price per hour must be a number").not().isEmpty().isInt()
 ];
 
 router.post('/', checkRole("ADMIN"), validationCreateCityBodyRules, checkRules, cityController.createCity);
