@@ -1,6 +1,9 @@
-const {User, Master, City, MasterCity, MasterBusyDate} = require('../models/models')
+const {User} = require('../models/models')
 const ApiError = require('../exeptions/api-error')
-
+const tokenService = require('../services/tokenServiсe')
+const uuid = require('uuid')
+const bcrypt = require('bcrypt')
+const mail = require("../services/mailServiсe");
 
 class UserController {
     async createUser(req, res, next) {
@@ -69,6 +72,32 @@ class UserController {
             await User.destroy({where: {id: userId}})
             res.status(200).json({message: `user with id:${userId} was deleted`, user: candidate})
         } catch (e) {
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+    }
+    async registration(req, res, next) {
+        try {
+            const {email, name, firstPassword} = req.body
+            let user = await User.findOne({where: {email}})
+            if (user) return next(ApiError.BadRequest('User with this email is already registered'))
+            if (!user) {
+                const hashPassword = await bcrypt.hash(firstPassword, 5)
+                const activationLink = uuid.v4();
+                const user = await User.create({
+                    password: hashPassword,
+                    email,
+                    role: "USER",
+                    name,
+                    activationLink
+                })
+                await mail.sendActivationMail(email,
+                    `${process.env.API_URL}/api/auth/activate/${activationLink}`,
+                    user.role)
+                const token = tokenService.generateJwt(user.id, user.email, user.role)
+                return res.status(201).json({token})
+            }
+        } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
