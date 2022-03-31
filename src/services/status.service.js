@@ -5,7 +5,12 @@ const {Status} = require('../models/models')
 class StatusService{
     async createStatuses() {
         try {
-            const namesStatuses = ['canceled', 'confirmed', 'completed']
+            const namesStatuses = ['approval','canceled', 'confirmed', 'completed', 'not completed']
+            //['админ рассматривает заказ',
+            // 'админ или мастер или пользователь отменяет заказ',
+            // 'мастер принимант заказ'
+            // 'мастер и пользователь омечает, что выполнил заказ',
+            // 'мастер или пользователь отмечает что заказ не выполнен']
             for (let i = 0; i < namesStatuses.length; i++) {
                 await Status.create({name: namesStatuses[i]})
             }
