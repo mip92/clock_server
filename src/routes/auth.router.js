@@ -12,5 +12,6 @@ validationRegistrationBodyRules = [
 ];
 
 router.post('/registration', validationRegistrationBodyRules, checkRules, authController.registration)
+router.get('/activate/:link', authController.activate);
 
 module.exports = router
