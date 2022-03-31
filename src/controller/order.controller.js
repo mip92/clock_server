@@ -1,9 +1,11 @@
 const ApiError = require('../exeptions/api-error')
 const {Order, Master, User, City, MasterCity, MasterBusyDate} = require('../models/models')
 const masterController = require('../controller/master.controller')
-let mail = require("../services/mailServiсe");
-let oneOrder = require('../services/Order')
+
 const Status = require('../services/status.service')
+const mail = require("../services/mailServiсe");
+const oneOrder = require('../services/Order')
+
 
 class OrderController {
     async createOrder(req, res, next) {
@@ -19,7 +21,7 @@ class OrderController {
             }
             const master = await Master.findOne({where: {id: masterId}})
             const city = await City.findOne({where: {id: cityId}})
-            let masterBusyDate = await masterController.timeReservation(masterId, dateTime, cityId, next)
+            const masterBusyDate = await masterController.timeReservation(masterId, dateTime, cityId, next)
             for (let i = 1; i < clockSize; i++) {
                 const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * i))
                 await masterController.timeReservation(masterId, newDateTime.toISOString(), cityId, next)
@@ -61,7 +63,8 @@ class OrderController {
     async getAllOrders(req, res, next) {
         try {
             let {limit, offset, masterId, userId} = req.query
-            if (limit > 50) limit = 50
+            console.log(11)
+            /*if (limit > 50) limit = 50
             if (!offset) offset = 0
             const orders = await Order.findAndCountAll({
                 limit,
@@ -73,7 +76,7 @@ class OrderController {
                 offset,
             })
             if (!orders) return next(ApiError.BadRequest("Orders not found"))
-            let result = []
+            let result = []//let
             for (let i = 0; i < orders.rows.length; i++) {
                 const user = await User.findOne({where: {id: orders.rows[i].dataValues.userId}})
                 const dateTime = await MasterBusyDate.findOne({where: {id: orders.rows[i].dataValues.masterBusyDateId}})
@@ -91,8 +94,9 @@ class OrderController {
                 else if (userId && !masterId && userId === user.dataValues.id) result.push(ord)
                 else if (!masterId && !userId) result.push(ord)
             }
-            res.status(200).json({rows: result, count: c})
+            res.status(200).json({rows: result, count: c})*/
         } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }

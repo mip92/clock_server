@@ -1,7 +1,15 @@
 const ApiError = require('../exeptions/api-error')
-const {City, User} = require('../models/models')
+const {City} = require('../models/models')
 
 class CityController {
+
+    static findOneCity(cityId){
+        return new Promise(function (resolve, reject) {
+            resolve(City.findOne({where: {id: cityId}}))
+            reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
+        })
+    }
+
     async createCity(req, res, next) {
         try {
             const {city, price} = req.body
@@ -19,7 +27,7 @@ class CityController {
             let {limit, offset} = req.query
             if (limit > 50) limit = 50
             if (!offset) offset = 0
-            let cities = await City.findAndCountAll({
+            const cities = await City.findAndCountAll({
                     limit,
                     offset,
                     order: [
