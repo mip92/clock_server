@@ -37,6 +37,7 @@ const Order = sequelize.define('order', {
     }
 })
 
+
 const Master = sequelize.define('master', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     name: {type: DataTypes.STRING, allowNull: false},

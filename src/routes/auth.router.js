@@ -4,6 +4,7 @@ const authController = require('../controller/auth.controller')
 const {body} = require("express-validator");
 const checkRules = require("../middlwares/checkRulesMiddleware");
 
+
 validationLoginBodyRules = [
     body('password', "password must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
     body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),

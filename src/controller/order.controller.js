@@ -1,7 +1,6 @@
 const ApiError = require('../exeptions/api-error')
 const {Order, Master, User, City, MasterCity, MasterBusyDate} = require('../models/models')
 const masterController = require('../controller/master.controller')
-
 const Status = require('../services/status.service')
 const mail = require("../services/mailServiсe");
 const oneOrder = require('../services/Order')
@@ -94,6 +93,7 @@ class OrderController {
                 else if (!masterId && !userId) result.push(ord)
             }
             res.status(200).json({rows: result, count: c})
+
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))

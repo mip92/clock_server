@@ -42,7 +42,6 @@ class AuthController {
             console.log(e)
         }
     }
-
     async registration(req, res, next) {
         try {
             const {firstPassword, secondPassword, isRulesChecked, isMaster} = req.body

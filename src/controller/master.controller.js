@@ -158,7 +158,6 @@ class MasterController {
             const isApprove = master.isApproved
             await master.update({isApproved: !isApprove})
             await mail.sendApproveMail(master.email, master.isApproved)
-
             res.status(200).json({message: `master with id:${masterId} changed status approve`, master})
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))
@@ -299,43 +298,6 @@ class MasterController {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
-        /*try {
-            const result = await sequelize.transaction(async (t) => {
-                const newMaster = await Master.create({
-                    name,
-                    email,
-                    password: hashPassword,
-                    role: "MASTER",
-                    activationLink
-                }, {transaction: t});
-                await mail.sendActivationMail(email,
-                    `${process.env.API_URL}/api/auth/activate/${activationLink}`,
-                    newMaster.role
-                )
-                const findOneCity = (cityId) => {
-                    return new Promise(async function (resolve) {
-                        resolve(City.findOne({where: {id: cityId}}))
-                        //reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
-                    })
-                }
-                Promise.all(citiesId.map(findOneCity))
-                    .then(results => {
-                            results.map(city => MasterCity.create({
-                                masterId: newMaster.id,
-                                cityId: city.id
-                            }, {transaction: t}))
-                        },
-                        //error => next(error)
-                    )
-                return newMaster
-            });
-            const master = await Master.findOne({where: {email:result.email}, include: [{model: City}]})
-            const token = tokenService.generateJwt(master.id, master.email, master.role)
-            return res.status(201).json({token})
-        }catch (e) {
-            console.log(e)
-            next(ApiError.BadRequest(e.parent.detail))
-        }*/
     }
 }
 

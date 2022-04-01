@@ -35,8 +35,8 @@ class MailService {
             `
         })
     }
+    async sendActivationMail(to, link, role, password = null) {
 
-    async sendActivationMail(to, link, role, password=null) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
@@ -47,8 +47,8 @@ class MailService {
             <div>
                 <h1>Для активации почты перейдите по ссылке</h1>
                 <a href=${link}>${link}<a/>
-                <div>${role=="MASTER" ? 'Ваша заявка будет рассмотрена администратором в течении двух рабочих дней, ждите ответа': ""}</div>
-                <div>${password ? `Это временный пароль, измените его на более надежный в личном кабинете ${password}`: ""}</div>
+                <div>${role == "MASTER" ? 'Ваша заявка будет рассмотрена администратором в течении двух рабочих дней, ждите ответа' : ""}</div>
+                <div>${password ? `Это временный пароль, измените его на более надежный в личном кабинете ${password}` : ""}</div>
             </div>
             `
         })
