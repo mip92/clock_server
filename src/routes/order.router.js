@@ -4,6 +4,7 @@ const orderController = require('../controller/order.controller')
 const {body} = require("express-validator");
 const checkRules = require('../middlwares/checkRulesMiddleware')
 const checkRole = require("../middlwares/checkRoleMiddleware");
+const checkRoles = require("../middlwares/checkRolesMiddleware");
 
 validationCreateOrderBodyRules = [
     body('cityId', 'city_id is required').not().isEmpty().escape(),
@@ -15,7 +16,7 @@ validationCreateOrderBodyRules = [
 ];
 
 router.post('/', validationCreateOrderBodyRules, checkRules, orderController.createOrder);
-router.get('/', checkRole("ADMIN"), orderController.getAllOrders);
+router.get('/', checkRoles(["ADMIN", "MASTER"]), orderController.getAllOrders);
 router.get('/:orderId', checkRole("ADMIN"), orderController.getOneOrder);
 router.delete('/:orderId', checkRole("ADMIN"), orderController.deleteOrder);
 

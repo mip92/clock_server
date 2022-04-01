@@ -9,6 +9,6 @@ validationLoginBodyRules = [
     body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
 ];
 
-router.post('/login', validationLoginBodyRules, checkRules, adminController.login)
+//router.post('/login', validationLoginBodyRules, checkRules, adminController.login)
 
 module.exports = router

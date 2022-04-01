@@ -63,8 +63,7 @@ class OrderController {
     async getAllOrders(req, res, next) {
         try {
             let {limit, offset, masterId, userId} = req.query
-            console.log(11)
-            /*if (limit > 50) limit = 50
+            if (limit > 50) limit = 50
             if (!offset) offset = 0
             const orders = await Order.findAndCountAll({
                 limit,
@@ -89,12 +88,12 @@ class OrderController {
                     master.dataValues,
                     originalCity,
                     city)
-                if (masterId && userId && userId === user.dataValues.id && masterId === master.dataValues.id) result.push(ord)
-                else if (masterId && !userId && masterId === master.dataValues.id) result.push(ord)
-                else if (userId && !masterId && userId === user.dataValues.id) result.push(ord)
+                if (masterId && userId && (userId == user.dataValues.id) && (masterId == master.dataValues.id)) result.push(ord)
+                else if (masterId && !userId && (masterId == master.id)) result.push(ord)
+                else if (userId && !masterId && (userId == user.dataValues.id)) result.push(ord)
                 else if (!masterId && !userId) result.push(ord)
             }
-            res.status(200).json({rows: result, count: c})*/
+            res.status(200).json({rows: result, count: c})
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))

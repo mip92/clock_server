@@ -254,54 +254,52 @@ class MasterController {
     }
 
     async registration(req, res, next) {
-        const {email, name, citiesId, firstPassword} = req.body
-        if (citiesId.length === 0) return next(ApiError.BadRequest('Please mark your cities'))
-        const isEmailUniq = await Master.findOne({where: {email}})
-        if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
-
-        /* try {
-             const result = await sequelize.transaction(async (t) => {
-                 const hashPassword = await bcrypt.hash(firstPassword, 5)
-                 const activationLink = uuid.v4();
-                 const newMaster = await Master.create({
-                     name,
-                     email,
-                     password: hashPassword,
-                     role: "MASTER",
-                     activationLink
-                 }, { transaction: t });
-                 await mail.sendActivationMail(email,
-                     `${process.env.API_URL}/api/auth/activate/${activationLink}`,
-                     newMaster.role
-                 )
-                 const findOneCity = (cityId) => {
-                     return new Promise(function (resolve, reject) {
-                         resolve(City.findOne({where: {id: cityId}}))
-                         reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
-                     })
-                 }
-                 Promise.all(citiesId.map(findOneCity))
-                     .then(results => {
-                             results.map(city=>MasterCity.create({masterId: newMaster.id, cityId: city.id}))
-                         },
-                         error => next(error)
-                     )
-                 const master = await Master.findOne({where: {email}, include: [{model: City}]}, { transaction: t })
-
-                 const token = tokenService.generateJwt(master.id, master.email, master.role)
-                 //return token;
-                 //return res.status(201).json({token})
-             }).then(function (result) {
-                 console.log(result)
-                 // Transaction has been committed
-                 // result is whatever the result of the promise chain returned to the transaction callback
-             });
-         } catch (error) {
-             console.log(error)
-         }*/
-        const hashPassword = await bcrypt.hash(firstPassword, 5)
-        const activationLink = uuid.v4();
         try {
+            const {email, name, citiesId, firstPassword} = req.body
+            if (citiesId.length === 0) return next(ApiError.BadRequest('Please mark your cities'))
+            const isEmailUniq = await Master.findOne({where: {email}})
+            if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
+            const hashPassword = await bcrypt.hash(firstPassword, 5)
+            const activationLink = uuid.v4();
+
+            const newMaster = await Master.create({
+                name,
+                email,
+                password: hashPassword,
+                role: "MASTER",
+                activationLink
+            });
+
+            const findOneCity = (cityId) => {
+                return new Promise(async function (resolve, reject) {
+                    resolve(City.findOne({where: {id: cityId}}))
+                    reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
+                })
+            }
+            Promise.all(citiesId.map(findOneCity))
+                .then(results => {
+                        results.map(city => {
+                            const ms = MasterCity.create({
+                                masterId: newMaster.id,
+                                cityId: city.id
+                            })
+                        })
+                    },
+                    error => next(error)
+                )
+
+            await mail.sendActivationMail(email,
+                `${process.env.API_URL}/api/auth/activate/${activationLink}`,
+                newMaster.role
+            )
+            const master = await Master.findOne({where: {email: newMaster.email}, include: [{model: City}]})
+            const token = tokenService.generateJwt(master.id, master.email, master.role)
+            return res.status(201).json({token})
+        } catch (e) {
+            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+        /*try {
             const result = await sequelize.transaction(async (t) => {
                 const newMaster = await Master.create({
                     name,
@@ -315,9 +313,9 @@ class MasterController {
                     newMaster.role
                 )
                 const findOneCity = (cityId) => {
-                    return new Promise(function (resolve, reject) {
+                    return new Promise(async function (resolve) {
                         resolve(City.findOne({where: {id: cityId}}))
-                        reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
+                        //reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
                     })
                 }
                 Promise.all(citiesId.map(findOneCity))
@@ -327,17 +325,17 @@ class MasterController {
                                 cityId: city.id
                             }, {transaction: t}))
                         },
-                        error => next(error)
+                        //error => next(error)
                     )
                 return newMaster
             });
             const master = await Master.findOne({where: {email:result.email}, include: [{model: City}]})
             const token = tokenService.generateJwt(master.id, master.email, master.role)
             return res.status(201).json({token})
-        } catch (e) {
+        }catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
-        }
+        }*/
     }
 }
 

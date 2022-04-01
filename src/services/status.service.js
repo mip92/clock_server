@@ -12,7 +12,7 @@ class StatusService{
             // 'мастер и пользователь омечает, что выполнил заказ',
             // 'мастер или пользователь отмечает что заказ не выполнен']
             for (let i = 0; i < namesStatuses.length; i++) {
-                await Status.create({name: namesStatuses[i]})
+                const st =await Status.create({name: namesStatuses[i]})
             }
             const statuses = await Status.findAndCountAll()
             return statuses

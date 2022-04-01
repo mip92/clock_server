@@ -1,15 +1,13 @@
 const sequelize = require('../db')
 const {DataTypes} = require('sequelize')
 
-
-
 const User = sequelize.define('user', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     email: {type: DataTypes.STRING, unique: true},
     role: {type: DataTypes.STRING, defaultValue: "USER"},
     name:{type: DataTypes.STRING, allowNull: false},
     password:{type:DataTypes.STRING, unique: false, allowNull: true},
-    activationLink:{type: DataTypes.STRING, allowNull: false},
+    activationLink:{type: DataTypes.STRING, allowNull: true},
     isActivated:{type: DataTypes.BOOLEAN, defaultValue: false}
 })
 

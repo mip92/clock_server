@@ -53,6 +53,23 @@ class MailService {
             `
         })
     }
+
+    async sendApproveMail(to, status) {
+        await this.transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to,
+            subject: "Статус изменен",
+            text: "",
+            html:
+                `
+                    <div>
+                        <div>Ваша статус мастера был изменен на значение</div>
+                        <div>${status ? "подтвержден" : "не подтвержден"}</div>
+                    </div>
+                    
+                `
+        })
+    }
 }
 
 module.exports = new MailService()
