@@ -278,7 +278,7 @@ class MasterController {
             Promise.all(citiesId.map(findOneCity))
                 .then(results => {
                         results.map(city => {
-                            const ms = MasterCity.create({
+                            MasterCity.create({
                                 masterId: newMaster.id,
                                 cityId: city.id
                             })
