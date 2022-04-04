@@ -2,7 +2,7 @@ const Router =require('express').Router;
 const router = new Router();
 const orderController = require('../controller/order.controller')
 const {body} = require("express-validator");
-const checkRules = require('../middlwares/checkRulesMiddleware')
+const checkRules = require('../middlwares/checkRuleMiddleware')
 const checkRole = require("../middlwares/checkRoleMiddleware");
 const checkRoles = require("../middlwares/checkRolesMiddleware");
 

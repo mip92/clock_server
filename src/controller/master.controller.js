@@ -253,6 +253,72 @@ class MasterController {
     }
 
     async registration(req, res, next) {
+        const {email, name, citiesId, firstPassword} = req.body
+        if (citiesId.length === 0) return next(ApiError.BadRequestJSON({
+            value: citiesId,
+            msg: "Please mark your cities",
+            param: "citiesId",
+            location: "body"
+        }))
+        const isEmailUniq = await Master.findOne({where: {email}})
+        if (isEmailUniq) return next(ApiError.BadRequestJSON({
+            value: email,
+            msg: "Master with this email is already registered",
+            param: "email",
+            location: "body"
+        }))
+        const hashPassword = await bcrypt.hash(firstPassword, 5)
+        const activationLink = uuid.v4();
+        try {
+            let result = await sequelize.transaction(async (t) => {
+                const newMaster = await Master.create({
+                    name,
+                    email,
+                    password: hashPassword,
+                    role: "MASTER",
+                    activationLink
+                }, {transaction: t});
+                if (!newMaster) throw new Error('Error with creating master');
+                for (let i = 0; i < citiesId.length; i++) {
+                    const city = await City.findOne({where: {id: citiesId[i]}, transaction: t})
+                    if (!city) throw ApiError.BadRequest(`city with this id :${citiesId[i]} is not found`);
+                    await MasterCity.create({masterId: newMaster.id, cityId: citiesId[i]}, {transaction: t})
+                }
+
+                /*const findOneCity = (cityId) => {
+                    return new Promise(async function (resolve, reject) {
+                        const city =City.findOne({where: {id: cityId}, transaction: t})
+                        if (!city) throw new Error(`city with this id :${cityId} is not found`)
+                        resolve(city)
+                        //reject(throw new Error(`city with this id :${cityId} is not found`))
+                    })
+                }
+                Promise.all(citiesId.map(findOneCity))
+                    .then(results => {
+                            results.map(city => {
+                                MasterCity.create({
+                                    masterId: newMaster.id,
+                                    cityId: city.id
+                                }, {transaction: t})
+                            })
+                        },
+                        /!*error => throw new Error(error)*!/
+                    ).catch(e=>console.log(e))*/
+                return newMaster
+            });
+            await mail.sendActivationMail(email,
+                `${process.env.API_URL}/api/auth/activate/${activationLink}`,
+                result.role
+            )
+            const master = await Master.findOne({where: {email: result.email}, include: [{model: City}]})
+            const token = tokenService.generateJwt(master.id, master.email, master.role)
+            return res.status(201).json({token})
+        } catch (err) {
+            next(err)
+        }
+    }
+
+    /*async registration(req, res, next) {
         try {
             const {email, name, citiesId, firstPassword} = req.body
             if (citiesId.length === 0) return next(ApiError.BadRequest('Please mark your cities'))
@@ -260,6 +326,10 @@ class MasterController {
             if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
             const hashPassword = await bcrypt.hash(firstPassword, 5)
             const activationLink = uuid.v4();
+
+
+
+
 
             const newMaster = await Master.create({
                 name,
@@ -298,7 +368,7 @@ class MasterController {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
-    }
+    }*/
 }
 
 module.exports = new MasterController()

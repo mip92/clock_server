@@ -79,7 +79,12 @@ class UserController {
         try {
             const {email, name, firstPassword} = req.body
             let user = await User.findOne({where: {email}})
-            if (user) return next(ApiError.BadRequest('User with this email is already registered'))
+            if (user) return next(ApiError.BadRequestJSON({
+                value: email,
+                msg: "User with this email is already registered",
+                param: "email",
+                location: "body"
+            }))
             if (!user) {
                 const hashPassword = await bcrypt.hash(firstPassword, 5)
                 const activationLink = uuid.v4();

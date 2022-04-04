@@ -33,9 +33,19 @@ class AuthController {
             let user = await User.findOne({where: {email}})
             if (!user) user = await Master.findOne({where: {email}})
             if (!user) user = await Admin.findOne({where: {email}})
-            if (!user) return next(ApiError.BadRequest('User is not found or password is wrong'))
+            if (!user) return next(ApiError.BadRequestJSON({
+                value: email,
+                msg: "User is not found or password is wrong",
+                param: "email",
+                location: "body"
+            }))
             let comparePassword = bcrypt.compareSync(password, user.password)
-            if (!comparePassword) return next(ApiError.BadRequest('User is not found or password is wrong'))
+            if (!comparePassword) return next(ApiError.BadRequestJSON({
+                value: email,
+                msg: "User is not found or password is wrong",
+                param: "email",
+                location: "body"
+            }))
             const token = generateJwt(user.id, user.email, user.role)
             return res.status(200).json({token})
         }catch (e) {

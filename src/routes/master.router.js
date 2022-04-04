@@ -2,7 +2,7 @@ const Router = require('express').Router;
 const router = new Router();
 const masterController = require('../controller/master.controller')
 const checkRole = require('../middlwares/checkRoleMiddleware')
-const checkRules = require('../middlwares/checkRulesMiddleware')
+const checkRules = require('../middlwares/checkRuleMiddleware')
 let {body} = require('express-validator');
 
 validationCreateMasterBodyRules = [
