@@ -13,28 +13,54 @@ class MailService {
         });
     }
 
-    async sendMail(to, masterName, date, clockSize) {
-        console.log(to, masterName, date, clockSize)
-        console.log(process.env.NODE_ENV)
+    async sendMailToNewUser(to, masterName, date, clockSize, password, activationLink) {
         const dateTime = new Date(date)
         const year = dateTime.getFullYear()
         const month = dateTime.getMonth() + 1
         const day = dateTime.getDate()
         const hours = dateTime.getHours()
-        await this.transporter.sendMail({
-            from: process.env.SMTP_USER,
-            to,
-            subject: "Заказ на вызов мастера на сайте " + process.env.CLIENT_URL + " оформлен",
-            text: "",
-            html:
-                `
+        const url =`${process.env.API_URL}/api/auth/login/activate/${activationLink}`
+        await this.transporter.sendMail(
+            {
+                from: process.env.SMTP_USER,
+                to,
+                subject: "Заказ на вызов мастера на сайте " + process.env.CLIENT_URL + " оформлен",
+                text: "",
+                html:
+                    `
             <div>
                 <h1>Заказ оформлен</h1>
                 <div>Мастер ${masterName} прибудет к Вам ${day}.${month}.${year} в ${hours}:00 для ремонта часов, примерное время ремонта составляет ${clockSize} часа</div>
-            </div>
+                <div>Это временный пароль, измените его на более надежный в личном кабинете ${password}</div>
+                <div>Для активации почты перейдите по ссылке и авторизуйтесь</div>
+                <a href=${url}>Авторизация<a/>
+            <div/>
             `
-        })
+            })
     }
+
+    async sendMail(to, masterName, date, clockSize) {
+        const dateTime = new Date(date)
+        const year = dateTime.getFullYear()
+        const month = dateTime.getMonth() + 1
+        const day = dateTime.getDate()
+        const hours = dateTime.getHours()
+        await this.transporter.sendMail(
+            {
+                from: process.env.SMTP_USER,
+                to,
+                subject: "Заказ на вызов мастера на сайте " + process.env.CLIENT_URL + " оформлен",
+                text: "",
+                html:
+                    `
+            <div>
+                <h1>Заказ оформлен</h1>
+                <div>Мастер ${masterName} прибудет к Вам ${day}.${month}.${year} в ${hours}:00 для ремонта часов, примерное время ремонта составляет ${clockSize} часа</div>
+            <div/>
+            `
+            })
+    }
+
     async sendActivationMail(to, link, role, password = null) {
 
         await this.transporter.sendMail({
@@ -63,7 +89,7 @@ class MailService {
             html:
                 `
                     <div>
-                        <div>Ваша статус мастера был изменен на значение</div>
+                        <div>Ваш статус мастера был изменен на значение</div>
                         <div>${status ? "подтвержден" : "не подтвержден"}</div>
                     </div>
                     

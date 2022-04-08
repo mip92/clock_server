@@ -19,13 +19,13 @@ class AuthController {
     async login(req, res, next) {
         try {
             const admin = await Admin.findAll()
-            if (admin.length===0) {
+            if (admin.length === 0) {
                 const email = process.env.ADMIN_EMAIL
                 const password = process.env.ADMIN_PASSWORD
                 const hashPassword = await bcrypt.hash(password, 5)
                 await Admin.create({email, password: hashPassword})
                 const statuses = await statusService.getAllStatuses()
-                if (statuses.length===0) {
+                if (statuses.length === 0) {
                     await statusService.createStatuses()
                 }
             }
@@ -33,25 +33,42 @@ class AuthController {
             let user = await User.findOne({where: {email}})
             if (!user) user = await Master.findOne({where: {email}})
             if (!user) user = await Admin.findOne({where: {email}})
-            if (!user) return next(ApiError.BadRequestJSON({
+            if (!user) return next(ApiError.ExpectationFailed({
                 value: email,
                 msg: "User is not found or password is wrong",
                 param: "email",
                 location: "body"
             }))
             let comparePassword = bcrypt.compareSync(password, user.password)
-            if (!comparePassword) return next(ApiError.BadRequestJSON({
+            if (!comparePassword) return next(ApiError.ExpectationFailed({
                 value: email,
                 msg: "User is not found or password is wrong",
                 param: "email",
                 location: "body"
             }))
             const token = generateJwt(user.id, user.email, user.role)
-            return res.status(200).json({token})
-        }catch (e) {
+            return res.status(200).json({token, name:user.name})
+        } catch (e) {
             console.log(e)
         }
     }
+
+    async changeEmail(req, res, next) {
+        try {
+            const {role} = req.body
+            if (role === "USER") await userController.changeEmail(req, res, next)
+            else if (role=== "MASTER") await masterController.changeEmail(req, res, next)
+            next(ApiError.ExpectationFailed({
+                value: role,
+                msg: "Role is not found",
+                param: "role",
+                location: "body"
+            }))
+        } catch (e) {
+
+        }
+    }
+
     async registration(req, res, next) {
         try {
             const {firstPassword, secondPassword, isRulesChecked, isMaster} = req.body
@@ -77,6 +94,20 @@ class AuthController {
             if (!user) return next(ApiError.BadRequest('Incorrect activation link'))
             await user.update({isActivated: true})
             return res.redirect(process.env.CLIENT_URL);
+        } catch (e) {
+            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+    }
+    async loginActivate(req, res, next) {
+        try {
+            const activationLink = req.params.link;
+            let user = await User.findOne({where: {activationLink}})
+            if (!user) user = await Master.findOne({where: {activationLink}})
+            if (!user) return next(ApiError.BadRequest('Incorrect activation link'))
+            await user.update({isActivated: true})
+            console.log(process.env.CLIENT_URL+'/login')
+            return res.redirect(process.env.CLIENT_URL+'/login');
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))

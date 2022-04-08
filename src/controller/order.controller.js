@@ -4,6 +4,8 @@ const masterController = require('../controller/master.controller')
 const Status = require('../services/status.service')
 const mail = require("../services/mailServiсe");
 const oneOrder = require('../services/Order')
+const uuid = require('uuid')
+const bcrypt = require('bcrypt')
 
 
 class OrderController {
@@ -11,12 +13,21 @@ class OrderController {
         try {
             const {cityId, clockSize, dateTime, email, masterId, name} = req.body
             let user = await User.findOne({where: {email}})
+            let isNewUser = false
+            let password
+            let activationLink
             if (!user) {
+                password = uuid.v4();
+                const hashPassword = await bcrypt.hash(password.slice(0, 6), 5)
+                activationLink = uuid.v4();
                 user = await User.create({
+                    password: hashPassword,
                     email,
                     role: "USER",
-                    name
+                    name,
+                    activationLink
                 })
+                isNewUser = true
             }
             const master = await Master.findOne({where: {id: masterId}})
             const city = await City.findOne({where: {id: cityId}})
@@ -31,10 +42,13 @@ class OrderController {
                 clockSize,
                 masterBusyDateId: masterBusyDate.id,
                 cityId,
-                originalCityName:city.cityName,
-                statusId:1
+                originalCityName: city.cityName,
+                statusId: 1,
+                masterId,
+                dealPrice:city.price
             })
-            await mail.sendMail(email, master.name, masterBusyDate.dateTime, clockSize)
+            !isNewUser && await mail.sendMail(email, master.name, masterBusyDate.dateTime, clockSize)
+            isNewUser && await mail.sendMailToNewUser(email, master.name, masterBusyDate.dateTime, clockSize, password.slice(0, 6), activationLink)
             res.status(201).json(order)
         } catch (e) {
             console.log(e)
@@ -59,7 +73,7 @@ class OrderController {
         }
     }
 
-    async getAllOrders(req, res, next) {
+    /*async getAllOrders(req, res, next) {
         try {
             let {limit, offset, masterId, userId} = req.query
             if (limit > 50) limit = 50
@@ -89,11 +103,86 @@ class OrderController {
                     city)
                 if (masterId && userId && (userId == user.dataValues.id) && (masterId == master.dataValues.id)) result.push(ord)
                 else if (masterId && !userId && (masterId == master.id)) result.push(ord)
-                else if (userId && !masterId && (userId == user.dataValues.id)) result.push(ord)
-                else if (!masterId && !userId) result.push(ord)
+                else if (userId && !masterId && (userId == user.id)) {
+                    console.log(123)
+                    result.push(ord)
+                } else if (!masterId && !userId) result.push(ord)
             }
             res.status(200).json({rows: result, count: c})
 
+        } catch (e) {
+            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+    }*/
+    async getAllOrders(req, res, next) {
+        try {
+            let {limit, offset} = req.query
+            if (limit > 50) limit = 50
+            if (!offset) offset = 0
+            const orders = await Order.findAndCountAll({
+                limit,
+                offset,
+                include: {all: true},
+            })
+            const c = await Order.count({
+                limit,
+                offset,
+            })
+            if (!orders) return next(ApiError.BadRequest("Orders not found"))
+            let result = []//let
+            for (let i = 0; i < orders.rows.length; i++) {
+                const user = await User.findOne({where: {id: orders.rows[i].dataValues.userId}})
+                const dateTime = await MasterBusyDate.findOne({where: {id: orders.rows[i].dataValues.masterBusyDateId}})
+                const master = await Master.findOne({where: {id: orders.rows[i].master_busyDate.dataValues.masterId}})
+                const originalCity = orders.rows[i].originalCityName
+                const city = await City.findOne({where: {id: orders.rows[i].dataValues.cityId}})
+                const ord = new oneOrder(dateTime.dateTime,
+                    orders.rows[i].dataValues,
+                    user.dataValues,
+                    master.dataValues,
+                    originalCity,
+                    city)
+                result.push(ord)
+            }
+            res.status(200).json({rows: result, count: c})
+
+        } catch (e) {
+            console.log(e)
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+    }
+
+    async getMastersOrders(req, res, next) {
+        try {
+            let {limit, offset, masterId, userId} = req.query
+            if (limit > 50) limit = 50
+            if (!offset) offset = 0
+            let options
+            userId ?
+                options = {
+                    where: {userId},
+                    include: {all: true},
+                    limit,
+                    offset,
+                }
+                : options = {
+                    where: {masterId},
+                    include: {all: true},
+                    limit,
+                    offset,
+                }
+            const orders = await Order.findAndCountAll(options)
+            let result = []
+            for (let i = 0; i < orders.rows.length; i++) {
+                const dateTime = await MasterBusyDate.findOne({where: {id: orders.rows[i].masterBusyDateId}})
+                const user = await User.findOne({where: {id: orders.rows[i].userId}})
+                const master = await Master.findOne({where: {id: orders.rows[i].masterId}})
+                const city = await City.findOne({where: {id: orders.rows[i].cityId}})
+                const ord = new oneOrder(dateTime.dateTime, orders.rows[i], user, master, orders.rows[i].originalCityName, city)
+                result.push(ord)
+            }
+            res.status(200).json({rows: result, count: orders.count})
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
@@ -130,6 +219,7 @@ class OrderController {
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
+
     async changeOrderStatus(req, res, next) {
         try {
             const {orderId, statusId} = req.params
@@ -138,7 +228,10 @@ class OrderController {
             const status = await Status.getStatusById(statusId)
             if (!status) next(ApiError.BadRequest(`status with id:${statusId} is not defined`))
             const updatedOrder = await order.update({statusId})
-            res.status(200).json({message: `status by order with id:${orderId} was updated to value ${status.name}`, order: updatedOrder})
+            res.status(200).json({
+                message: `status by order with id:${orderId} was updated to value ${status.name}`,
+                order: updatedOrder
+            })
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))
         }

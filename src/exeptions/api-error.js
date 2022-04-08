@@ -10,9 +10,10 @@ module.exports = class ApiError extends Error {
     static BadRequest(message){
         return new ApiError(404, message)
     }
-    static BadRequestJSON(message){
-        return new ApiError(404, JSON.stringify(message))
+    static ExpectationFailed(message){
+        return new ApiError(417, JSON.stringify(message))
     }
+
     static Internal(message){
         return new ApiError(500, message)
     }

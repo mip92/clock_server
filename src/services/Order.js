@@ -11,6 +11,8 @@ class OneOrder{
         this.masterName=master.name;
         this.cityName=originalCity
         this.cityId=city.id;
+        this.dealPrice=order.dealPrice
+        this.statusId=order.statusId
         //this.cityName=city.cityName
     }
 }

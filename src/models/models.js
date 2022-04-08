@@ -16,10 +16,23 @@ const Status = sequelize.define('status', {
     name: {type: DataTypes.STRING, unique: true, allowNull: false},
 })
 
+const Master = sequelize.define('master', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    name: {type: DataTypes.STRING, allowNull: false},
+    email: {type: DataTypes.STRING, unique: true, allowNull: false},
+    rating: {type: DataTypes.INTEGER, allowNull: false, defaultValue: 5},
+    role: {type: DataTypes.STRING, defaultValue: "MASTER"},
+    password:{type:DataTypes.STRING, unique: false, allowNull: false},
+    activationLink:{type: DataTypes.STRING, allowNull: true},
+    isActivated:{type: DataTypes.BOOLEAN, defaultValue: false},
+    isApproved:{type: DataTypes.BOOLEAN, defaultValue: false},
+})
+
 const Order = sequelize.define('order', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     clockSize: {type: DataTypes.INTEGER, allowNull: false},
     originalCityName: {type: DataTypes.STRING, allowNull: false},
+    dealPrice: {type: DataTypes.INTEGER, allowNull: false},
     userId:{
         type: DataTypes.INTEGER,
         references:{
@@ -34,21 +47,18 @@ const Order = sequelize.define('order', {
             key:'id'
         },
         defaultValue: 1
+    },
+    masterId:{
+        type: DataTypes.INTEGER,
+        references:{
+            model: Master,
+            key:'id',
+        }
     }
 })
 
 
-const Master = sequelize.define('master', {
-    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    name: {type: DataTypes.STRING, allowNull: false},
-    email: {type: DataTypes.STRING, unique: true, allowNull: false},
-    rating: {type: DataTypes.INTEGER, allowNull: false, defaultValue: 5},
-    role: {type: DataTypes.STRING, defaultValue: "MASTER"},
-    password:{type:DataTypes.STRING, unique: false, allowNull: false},
-    activationLink:{type: DataTypes.STRING, allowNull: true},
-    isActivated:{type: DataTypes.BOOLEAN, defaultValue: false},
-    isApproved:{type: DataTypes.BOOLEAN, defaultValue: false},
-})
+
 
 const City = sequelize.define('city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},

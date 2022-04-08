@@ -21,14 +21,7 @@ class StatusService{
         }
     }
 
-    async getStatusById(id) {
-        try {
-            const status = await Status.findByPk(id)
-            return status
-        } catch (e) {
-            console.log(e)
-        }
-    }
+
 
     async getAllStatuses() {
         try {

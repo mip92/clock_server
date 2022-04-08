@@ -9,6 +9,9 @@ validationCreateUserBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
     body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail()
 ];
+validationFindUserBodyRules = [
+    body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail()
+];
 validationUpdateUserBodyRules = [
     body('id', 'id is required').not().isEmpty().escape(),
     body('newEmail', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
@@ -16,6 +19,7 @@ validationUpdateUserBodyRules = [
 ];
 
 router.post('/', validationCreateUserBodyRules, checkRules, userController.createUser);
+router.post('/findUser', validationFindUserBodyRules, checkRules, userController.findUser);
 router.get('/',checkRole("ADMIN"), userController.getAllUsers);
 router.get('/:userId',checkRole("ADMIN"), userController.getOneUser);
 router.put('/',checkRole("ADMIN"), userController.updateUser);

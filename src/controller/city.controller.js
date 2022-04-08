@@ -14,7 +14,12 @@ class CityController {
         try {
             const {city, price} = req.body
             const isCityUniq = await City.findOne({where: {cityName: city}})
-            if (isCityUniq) next(ApiError.BadRequest("the city with that name already exists"))
+            if (isCityUniq) return next(ApiError.ExpectationFailed({
+                value: city,
+                msg: `City with this name: ${city} is not found`,
+                param: "city",
+                location: "body"
+            }))
             const newCity = await City.create({cityName: city, price})
             res.status(201).json(newCity)
         } catch (e) {
@@ -57,6 +62,12 @@ class CityController {
             const {cityId} = req.params
             const {cityName, price} = req.body
             const city = await City.findOne({where: {id: cityId}})
+            if (!city) return next(ApiError.ExpectationFailed({
+                value: cityId,
+                msg: `City with this id: ${cityName} is not found`,
+                param: "cityName",
+                location: "body"
+            }))
             await city.update({"cityName": cityName, price})
             res.status(200).json(city)
         } catch (e) {

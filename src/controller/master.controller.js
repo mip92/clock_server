@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken')
 const sequelize = require("../db");
 const {Master, MasterCity, City, MasterBusyDate} = require('../models/models')
 const CityController = require('../controller/city.controller')
@@ -11,6 +12,13 @@ const tokenService = require('../services/tokenServiсe')
     const validDate = new Date(date)
     return `${validDate.getFullYear()}:${validDate.getMonth() + 1}:${validDate.getDate()}:${validDate.getHours()}`
 }*/
+const generateJwt = (id, email, role) => {
+    return jwt.sign(
+        {id, email, role},
+        process.env.SECRET_KEY,
+        {expiresIn: '24h'}
+    )
+}
 
 class MasterController {
 
@@ -254,14 +262,14 @@ class MasterController {
 
     async registration(req, res, next) {
         const {email, name, citiesId, firstPassword} = req.body
-        if (citiesId.length === 0) return next(ApiError.BadRequestJSON({
+        if (citiesId.length === 0) return next(ApiError.ExpectationFailed({
             value: citiesId,
             msg: "Please mark your cities",
             param: "citiesId",
             location: "body"
         }))
         const isEmailUniq = await Master.findOne({where: {email}})
-        if (isEmailUniq) return next(ApiError.BadRequestJSON({
+        if (isEmailUniq) return next(ApiError.ExpectationFailed({
             value: email,
             msg: "Master with this email is already registered",
             param: "email",
@@ -284,26 +292,6 @@ class MasterController {
                     if (!city) throw ApiError.BadRequest(`city with this id :${citiesId[i]} is not found`);
                     await MasterCity.create({masterId: newMaster.id, cityId: citiesId[i]}, {transaction: t})
                 }
-
-                /*const findOneCity = (cityId) => {
-                    return new Promise(async function (resolve, reject) {
-                        const city =City.findOne({where: {id: cityId}, transaction: t})
-                        if (!city) throw new Error(`city with this id :${cityId} is not found`)
-                        resolve(city)
-                        //reject(throw new Error(`city with this id :${cityId} is not found`))
-                    })
-                }
-                Promise.all(citiesId.map(findOneCity))
-                    .then(results => {
-                            results.map(city => {
-                                MasterCity.create({
-                                    masterId: newMaster.id,
-                                    cityId: city.id
-                                }, {transaction: t})
-                            })
-                        },
-                        /!*error => throw new Error(error)*!/
-                    ).catch(e=>console.log(e))*/
                 return newMaster
             });
             await mail.sendActivationMail(email,
@@ -326,10 +314,6 @@ class MasterController {
             if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
             const hashPassword = await bcrypt.hash(firstPassword, 5)
             const activationLink = uuid.v4();
-
-
-
-
 
             const newMaster = await Master.create({
                 name,
@@ -369,6 +353,34 @@ class MasterController {
             next(ApiError.BadRequest(e.parent.detail))
         }
     }*/
+    async changeEmail(req, res, next) {
+        try {
+            const {password, currentEmail, newEmail} = req.body
+            const master = await Master.findOne({where: {email: currentEmail}})
+            if (!master) return next(ApiError.ExpectationFailed({
+                value: currentEmail,
+                msg: "Master is not found or password is wrong",
+                param: "currentEmail",
+                location: "body"
+            }))
+            let comparePassword = bcrypt.compareSync(password, master.password)
+            if (!comparePassword) return next(ApiError.ExpectationFailed({
+                value: currentEmail,
+                msg: "Master is not found or password is wrong",
+                param: "currentEmail",
+                location: "body"
+            }))
+            const activationLink = uuid.v4();
+            const changedMaster = await master.update({email: newEmail, isActivated: false, activationLink})
+            const token = generateJwt(changedMaster.id, changedMaster.email, changedMaster.role)
+            await mail.sendActivationMail(newEmail,
+                `${process.env.API_URL}/api/auth/activate/${activationLink}`,
+                changedMaster.role)
+            return res.status(200).json({token})
+        } catch (e) {
+            console.log(e)
+        }
+    }
 }
 
 module.exports = new MasterController()

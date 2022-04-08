@@ -3,7 +3,16 @@ const ApiError = require('../exeptions/api-error')
 const tokenService = require('../services/tokenServiсe')
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 const mail = require("../services/mailServiсe");
+
+const generateJwt = (id, email, role) => {
+    return jwt.sign(
+        {id, email, role},
+        process.env.SECRET_KEY,
+        {expiresIn: '24h'}
+    )
+}
 
 class UserController {
     async createUser(req, res, next) {
@@ -19,6 +28,18 @@ class UserController {
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
+
+    async findUser(req, res, next) {
+        try {
+            const {email} = req.body
+            const isUserCreated = await User.findOne({where: {email}})
+            if (isUserCreated) return next(ApiError.BadRequest("User with this email is already registered"))
+            else res.status(201).json(email)
+        } catch (e) {
+            next(ApiError.BadRequest(e.parent.detail))
+        }
+    }
+
 
     async getAllUsers(req, res, next) {
         try {
@@ -75,11 +96,12 @@ class UserController {
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
+
     async registration(req, res, next) {
         try {
             const {email, name, firstPassword} = req.body
-            let user = await User.findOne({where: {email}})
-            if (user) return next(ApiError.BadRequestJSON({
+            const user = await User.findOne({where: {email}})
+            if (user) return next(ApiError.ExpectationFailed({
                 value: email,
                 msg: "User with this email is already registered",
                 param: "email",
@@ -104,6 +126,35 @@ class UserController {
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
+        }
+    }
+
+    async changeEmail(req, res, next) {
+        try {
+            const {password, currentEmail, newEmail} = req.body
+            const user = await User.findOne({where: {email: currentEmail}})
+            if (!user) return next(ApiError.ExpectationFailed({
+                value: currentEmail,
+                msg: "User is not found or password is wrong",
+                param: "currentEmail",
+                location: "body"
+            }))
+            let comparePassword = bcrypt.compareSync(password, user.password)
+            if (!comparePassword) return next(ApiError.ExpectationFailed({
+                value: currentEmail,
+                msg: "User is not found or password is wrong",
+                param: "currentEmail",
+                location: "body"
+            }))
+            const activationLink = uuid.v4();
+            const changedUser = await user.update({email: newEmail, isActivated: false, activationLink})
+            const token = generateJwt(changedUser.id, changedUser.email, changedUser.role)
+            await mail.sendActivationMail(newEmail,
+                `${process.env.API_URL}/api/auth/activate/${activationLink}`,
+                changedUser.role)
+            return res.status(200).json({token})
+        } catch (e) {
+            console.log(e)
         }
     }
 }
