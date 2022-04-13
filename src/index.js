@@ -5,6 +5,8 @@ require("dotenv").config({
 const cors = require('cors')
 const errorMiddleware=require('./middlwares/error-middleware')
 const router = require('./routes')
+const fileupload = require("express-fileupload");
+
 
 const PORT = process.env.PORT || 5000
 const sequelize= require('./db')
@@ -15,7 +17,9 @@ app.use(cors({
     credentials:true,
     origin: process.env.CLIENT_URL
 }))
+app.use(fileupload())
 app.use('/api',router)
+
 app.use(errorMiddleware)
 
 const start = async () => {

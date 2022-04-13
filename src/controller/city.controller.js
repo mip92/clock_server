@@ -16,7 +16,7 @@ class CityController {
             const isCityUniq = await City.findOne({where: {cityName: city}})
             if (isCityUniq) return next(ApiError.ExpectationFailed({
                 value: city,
-                msg: `City with this name: ${city} is not found`,
+                msg: `City with this name: ${city} is not unique`,
                 param: "city",
                 location: "body"
             }))
@@ -68,7 +68,7 @@ class CityController {
                 param: "cityName",
                 location: "body"
             }))
-            await city.update({"cityName": cityName, price})
+            await city.update({cityName, price})
             res.status(200).json(city)
         } catch (e) {
             next(ApiError.Internal(`server error`))

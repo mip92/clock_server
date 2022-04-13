@@ -11,10 +11,10 @@ const User = sequelize.define('user', {
     isActivated:{type: DataTypes.BOOLEAN, defaultValue: false}
 })
 
-const Status = sequelize.define('status', {
+/*const Status = sequelize.define('status', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     name: {type: DataTypes.STRING, unique: true, allowNull: false},
-})
+})*/
 
 const Master = sequelize.define('master', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
@@ -32,7 +32,7 @@ const Order = sequelize.define('order', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     clockSize: {type: DataTypes.INTEGER, allowNull: false},
     originalCityName: {type: DataTypes.STRING, allowNull: false},
-    dealPrice: {type: DataTypes.INTEGER, allowNull: false},
+    dealPrice: {type: DataTypes.FLOAT, allowNull: false},
     userId:{
         type: DataTypes.INTEGER,
         references:{
@@ -40,30 +40,50 @@ const Order = sequelize.define('order', {
             key:'id'
         }
     },
-    statusId:{
+    status: {type: DataTypes.STRING, allowNull: false},
+/*    statusId:{
         type: DataTypes.INTEGER,
         references:{
             model: Status,
             key:'id'
         },
         defaultValue: 1
-    },
-    masterId:{
+    }*/
+    /*masterId:{
         type: DataTypes.INTEGER,
         references:{
             model: Master,
             key:'id',
         }
-    }
+    }*/
 })
 
-
-
+const Picture = sequelize.define('picture', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    name: {type: DataTypes.STRING, unique: true, allowNull: false},
+})
+const OrderPicture = sequelize.define('orderPicture', {
+    id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
+    orderId:{
+        type: DataTypes.INTEGER,
+        references:{
+            model: Order,
+            key:'id',
+        }
+    },
+    pictureId:{
+        type: DataTypes.INTEGER,
+        references:{
+            model: Picture,
+            key:'id',
+        }
+    },
+})
 
 const City = sequelize.define('city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     cityName: {type: DataTypes.STRING, unique: true, allowNull: false},
-    price:{type: DataTypes.INTEGER, allowNull: false},
+    price:{type: DataTypes.FLOAT, allowNull: false},
 })
 
 const Admin= sequelize.define('admin', {
@@ -83,13 +103,6 @@ const MasterBusyDate = sequelize.define('master_busyDate', {
         }
     },
     dateTime: {type: DataTypes.STRING},
-/*    cityId:{
-        type: DataTypes.INTEGER,
-        references:{
-            model: City,
-            key:'id',
-        }
-    },*/
 })
 
 const MasterCity = sequelize.define('master_city', {
@@ -128,6 +141,9 @@ const Rating = sequelize.define('rating', {
     }
 })
 
+const STATUSES ={Approval:"Approval", Canceled:"Canceled", Confirmed:"Confirmed", Completed:"Completed", NotCompleted:"NotCompleted"}
+const ROLE={User:"USER", Admin:"ADMIN", Master:"MASTER"}
+
 /*Rating.hasMany(Order);
 Order.belongsTo(Rating);*/
 
@@ -137,14 +153,23 @@ City.belongsToMany(Master, {through: MasterCity})
 User.hasMany(Order);
 Order.belongsTo(User);
 
+Picture.hasMany(OrderPicture);
+OrderPicture.belongsTo(Picture);
+
+Order.hasMany(Picture);
+Picture.belongsTo(Order);
+
 MasterBusyDate.hasMany(Order);
 Order.belongsTo(MasterBusyDate);
+
+Master.hasMany(Order);
+Order.belongsTo(Master);
 
 City.hasMany(Order);
 Order.belongsTo(City)
 
-Status.hasMany(Order);
-Order.belongsTo(Status)
+// Status.hasMany(Order);
+// Order.belongsTo(Status)
 
 Master.hasMany(Rating)
 Rating.belongsTo(Master)
@@ -158,5 +183,6 @@ module.exports = {
     Order,
     MasterBusyDate,
     User,
-    Status
+    STATUSES,
+    ROLE
 }

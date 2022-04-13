@@ -31,10 +31,10 @@ class UserController {
 
     async findUser(req, res, next) {
         try {
-            const {email} = req.body
+            const {email} = req.query
             const isUserCreated = await User.findOne({where: {email}})
             if (isUserCreated) return next(ApiError.BadRequest("User with this email is already registered"))
-            else res.status(201).json(email)
+            else res.status(200).json(email)
         } catch (e) {
             next(ApiError.BadRequest(e.parent.detail))
         }

@@ -1,5 +1,5 @@
 const ApiError = require('../exeptions/api-error');
-const {Master, User, City, MasterCity, Admin, Status} = require('../models/models');
+const {Master, User, Admin} = require('../models/models');
 const userController = require("../controller/user.controller");
 const masterController = require("../controller/master.controller");
 const bcrypt = require('bcrypt')
@@ -24,10 +24,6 @@ class AuthController {
                 const password = process.env.ADMIN_PASSWORD
                 const hashPassword = await bcrypt.hash(password, 5)
                 await Admin.create({email, password: hashPassword})
-                const statuses = await statusService.getAllStatuses()
-                if (statuses.length === 0) {
-                    await statusService.createStatuses()
-                }
             }
             const {email, password} = req.body
             let user = await User.findOne({where: {email}})
@@ -50,22 +46,6 @@ class AuthController {
             return res.status(200).json({token, name:user.name})
         } catch (e) {
             console.log(e)
-        }
-    }
-
-    async changeEmail(req, res, next) {
-        try {
-            const {role} = req.body
-            if (role === "USER") await userController.changeEmail(req, res, next)
-            else if (role=== "MASTER") await masterController.changeEmail(req, res, next)
-            next(ApiError.ExpectationFailed({
-                value: role,
-                msg: "Role is not found",
-                param: "role",
-                location: "body"
-            }))
-        } catch (e) {
-
         }
     }
 
@@ -106,7 +86,6 @@ class AuthController {
             if (!user) user = await Master.findOne({where: {activationLink}})
             if (!user) return next(ApiError.BadRequest('Incorrect activation link'))
             await user.update({isActivated: true})
-            console.log(process.env.CLIENT_URL+'/login')
             return res.redirect(process.env.CLIENT_URL+'/login');
         } catch (e) {
             console.log(e)

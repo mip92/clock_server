@@ -3,8 +3,9 @@ const router = new Router();
 const orderController = require('../controller/order.controller')
 const {body} = require("express-validator");
 const checkRules = require('../middlwares/checkRuleMiddleware')
-const checkRole = require("../middlwares/checkRoleMiddleware");
+
 const checkRoles = require("../middlwares/checkRolesMiddleware");
+const {ROLE}=require("../models/models")
 
 validationCreateOrderBodyRules = [
     body('cityId', 'city_id is required').not().isEmpty().escape(),
@@ -16,10 +17,8 @@ validationCreateOrderBodyRules = [
 ];
 
 router.post('/', validationCreateOrderBodyRules, checkRules, orderController.createOrder);
-router.get('/', checkRoles(["ADMIN"]), orderController.getAllOrders);
-router.get('/getMastersOrders', checkRoles(["MASTER", "USER"]), orderController.getMastersOrders);
-
-router.get('/:orderId', checkRole("ADMIN"), orderController.getOneOrder);
-router.delete('/:orderId', checkRole("ADMIN"), orderController.deleteOrder);
+router.get('/', checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), orderController.getAllOrders);
+router.get('/:orderId', checkRoles([ROLE.Admin]), orderController.getOneOrder);
+router.delete('/:orderId', checkRoles([ROLE.Admin]), orderController.deleteOrder);
 
 module.exports=router

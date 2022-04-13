@@ -1,13 +1,11 @@
 const ApiError = require('../exeptions/api-error')
-const {Status, Order} = require('../models/models')
+const {STATUSES, Order} = require('../models/models')
 
 class StatusController {
 
     async getStatuses(req, res, next) {
         try {
-            const statuses = await Status.findAndCountAll()
-            if (!statuses) return next(ApiError.BadRequest("Statuses not found"))
-            res.status(200).json(statuses)
+            res.status(200).json(STATUSES)
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }
@@ -15,28 +13,20 @@ class StatusController {
     async changeStatus(req, res, next) {
         try {
             const {orderId} = req.params
-            const {statusId} = req.body
-            const status = await Status.findOne({where: {id:statusId}})
-            if (!status) return next(ApiError.BadRequest("Status is not found"))
+            const {status} = req.body
             const order = await Order.findByPk(orderId)
             if (!order) return next(ApiError.BadRequest("Order is not found"))
-            res.status(200).json(status)
+            for (let key in STATUSES) {
+                if (STATUSES[key]==status) {
+                    const update = await order.update({status:STATUSES[key]})
+                    res.status(200).json(status)
+                }
+            }
+            return next(ApiError.BadRequest("Status not found"))
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }
     }
-    async getStatusById(req, res, next) {
-        try {
-            const {statusId} = req.params
-            console.log(statusId)
-            const status = await Status.findByPk(statusId)
-            if (!status) return next(ApiError.BadRequest("Status not found"))
-            return status
-        } catch (e) {
-            next(ApiError.Internal(`server error`))
-        }
-    }
-
 }
 
 module.exports = new StatusController()

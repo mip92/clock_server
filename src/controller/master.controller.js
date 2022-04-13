@@ -8,10 +8,7 @@ const bcrypt = require('bcrypt')
 const mail = require("../services/mailServiсe");
 const tokenService = require('../services/tokenServiсe')
 
-/*const dateToString = (date) => {
-    const validDate = new Date(date)
-    return `${validDate.getFullYear()}:${validDate.getMonth() + 1}:${validDate.getDate()}:${validDate.getHours()}`
-}*/
+
 const generateJwt = (id, email, role) => {
     return jwt.sign(
         {id, email, role},
@@ -57,11 +54,6 @@ class MasterController {
                     },
                     error => next(error)
                 )
-            /*for (let i = 0; i < citiesId.length; i++) {
-                const city = await City.findOne({where: {id: citiesId[i]}})
-                if (!city) return next(ApiError.BadRequest(`city with this ${citiesId[i]} is not found`))
-                await MasterCity.create({masterId: newMaster.id, cityId: citiesId[i]})
-            }*/
             const master = await Master.findOne({where: {email}, include: [{model: City}]})
             return res.status(201).json(master)
         } catch (e) {
@@ -94,8 +86,8 @@ class MasterController {
                 include: [{
                     where: {
                         id: city_id,
-                        isActivated: true,//display masters who have confirmed their mail
-                        isApproved: true //display the masters approved by the administrator
+                        isActivated: true,
+                        isApproved: true
                     },
                     model: City,
                     required: true
@@ -184,42 +176,6 @@ class MasterController {
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
-
-    /*    async getFreeMasters(req, res, next) {
-            try {
-                const {cityId, dateTime, clockSize} = req.body
-                if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("the date may be later than the date now"))
-                console.log(dateTime)
-                if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("max clockSize is 3"))
-                let masters = await Master.findAll({
-                    include: [{
-                        where: {id: Number(cityId)},
-                        model: City,
-                        required: true
-                    }],
-                })
-                if (masters.length === 0) return next(ApiError.BadRequest("masters is not found"))
-
-                let freeMasters = masters
-                let time = dateTime
-                for (let cs = 0; cs < clockSize; cs++) {
-                    time = dateToString(new Date(new Date(dateTime).getTime() + 3600000 * cs))
-                    if ((new Date(dateTime)).getHours() + cs > 20) return next(ApiError.BadRequest("masters is not found"))
-                    for (let m = 0; m < masters.length; m++) {
-                        let theRightTime = await MasterBusyDate.findOne({
-                            where: {
-                                masterId: masters[m].id,
-                                dateTime: time
-                            }
-                        })
-                        if (theRightTime) freeMasters = freeMasters.filter(master => master.id !== theRightTime.masterId)
-                    }
-                }
-                res.status(200).json(freeMasters)
-            } catch (e) {
-                next(ApiError.BadRequest(e.parent.detail))
-            }
-        }*/
     async getFreeMasters(req, res, next) {
         try {
             const {cityId, dateTime, clockSize} = req.body
@@ -227,8 +183,8 @@ class MasterController {
             if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("max clockSize is 3"))
             const masters = await Master.findAll({
                 where: {
-                    isActivated: true,//display masters who have confirmed their mail
-                    isApproved: true,//display the masters approved by the administrator
+                    isActivated: true,
+                    isApproved: true,
                 },
                 include: [{
                     where: {id: Number(cityId)},
@@ -306,53 +262,6 @@ class MasterController {
         }
     }
 
-    /*async registration(req, res, next) {
-        try {
-            const {email, name, citiesId, firstPassword} = req.body
-            if (citiesId.length === 0) return next(ApiError.BadRequest('Please mark your cities'))
-            const isEmailUniq = await Master.findOne({where: {email}})
-            if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
-            const hashPassword = await bcrypt.hash(firstPassword, 5)
-            const activationLink = uuid.v4();
-
-            const newMaster = await Master.create({
-                name,
-                email,
-                password: hashPassword,
-                role: "MASTER",
-                activationLink
-            });
-
-            const findOneCity = (cityId) => {
-                return new Promise(async function (resolve, reject) {
-                    resolve(City.findOne({where: {id: cityId}}))
-                    reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
-                })
-            }
-            Promise.all(citiesId.map(findOneCity))
-                .then(results => {
-                        results.map(city => {
-                            MasterCity.create({
-                                masterId: newMaster.id,
-                                cityId: city.id
-                            })
-                        })
-                    },
-                    error => next(error)
-                )
-
-            await mail.sendActivationMail(email,
-                `${process.env.API_URL}/api/auth/activate/${activationLink}`,
-                newMaster.role
-            )
-            const master = await Master.findOne({where: {email: newMaster.email}, include: [{model: City}]})
-            const token = tokenService.generateJwt(master.id, master.email, master.role)
-            return res.status(201).json({token})
-        } catch (e) {
-            console.log(e)
-            next(ApiError.BadRequest(e.parent.detail))
-        }
-    }*/
     async changeEmail(req, res, next) {
         try {
             const {password, currentEmail, newEmail} = req.body
