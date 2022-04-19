@@ -18,13 +18,23 @@ const generateJwt = (id, email, role) => {
 }
 
 class MasterController {
-
     async createMaster(req, res, next) {
         try {
-            const {name, email, cities_id} = req.body
-            const citiesId = JSON.parse(cities_id)
+            const {name, email, citiesId} = req.body
+            const citiesID = JSON.parse(citiesId)
             const isEmailUniq = await Master.findOne({where: {email}})
-            if (isEmailUniq) return next(ApiError.BadRequest("Master with this email is already registered"))
+            if (citiesID.length==0) return next(ApiError.ExpectationFailed({
+                value: citiesId,
+                msg: `CitiesId field must have at least 1 items`,
+                param: "citiesId",
+                location: "body"
+            }))
+            if (isEmailUniq) return next(ApiError.ExpectationFailed({
+                value: email,
+                msg: `Master with this email is already registered`,
+                param: "email",
+                location: "body"
+            }))
             const password = uuid.v4();
             const hashPassword = await bcrypt.hash(password.slice(0, 6), 5)
             const activationLink = uuid.v4();
@@ -42,13 +52,13 @@ class MasterController {
                 newMaster.role,
                 password.slice(0, 6)
             )
-            const findOneCity = (cityId) => {
+            const findOneCity = (citiesID) => {
                 return new Promise(function (resolve, reject) {
-                    resolve(City.findOne({where: {id: cityId}}))
-                    reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
+                    resolve(City.findOne({where: {id: citiesID}}))
+                    reject(ApiError.BadRequest(`city with this id: ${citiesID} is not found`))
                 })
             }
-            Promise.all(citiesId.map(findOneCity))
+            Promise.all(citiesID.map(findOneCity))
                 .then(results => {
                         results.map(city => MasterCity.create({masterId: newMaster.id, cityId: city.id}))
                     },
@@ -119,11 +129,25 @@ class MasterController {
 
     async updateMaster(req, res, next) {
         try {
-            const {id, name, email, cities_id} = req.body
-            const citiesId = cities_id.split(',');
+            const {id, name, email, citiesId} = req.body
+            const isEmailUniq = await Master.findOne({where: {email}})
+            if (isEmailUniq && isEmailUniq.id!==id) return next(ApiError.ExpectationFailed({
+                value: email,
+                msg: `Master with this email is already registered`,
+                param: "email",
+                location: "body"
+            }))
+
+            const citiesID = citiesId.split(',');
+            if (!citiesID) return next(ApiError.ExpectationFailed({
+                value: citiesId,
+                msg: `CitiesId field must have at least 1 items`,
+                param: "citiesId",
+                location: "body"
+            }))
             await MasterCity.destroy({where: {masterId: id}})
-            for (let i = 0; i < citiesId.length; i++) {
-                await MasterCity.create({masterId: id, cityId: Number(citiesId[i])})
+            for (let i = 0; i < citiesID.length; i++) {
+                await MasterCity.create({masterId: id, cityId: Number(citiesID[i])})
             }
             const master = await Master.findOne({where: {id}, include: [{model: City}]})
             await master.update({name, email})

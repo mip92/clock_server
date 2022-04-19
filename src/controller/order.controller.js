@@ -1,7 +1,5 @@
 const ApiError = require('../exeptions/api-error')
-const {Order, Master, User, City, MasterCity, MasterBusyDate, STATUSES} = require('../models/models')
-const masterController = require('../controller/master.controller')
-const Status = require('../services/status.service')
+const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models/models')
 const mail = require("../services/mailServiсe");
 const oneOrder = require('../services/Order')
 const uuid = require('uuid')
@@ -26,65 +24,137 @@ class OrderController {
                 })
                 const master = await Master.findOne({where: {id: masterId}})
                 const city = await City.findOne({where: {id: cityId}})
-                const masterBusyDate = await masterController.timeReservation(masterId, dateTime, cityId, next)
-
-                for (let i = 1; i < clockSize; i++) {
-                    const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * i))
-                    await masterController.timeReservation(masterId, newDateTime.toISOString(), cityId, next)
+                let arr = []
+                for (let i = 0; i < clockSize; i++) {
+                    arr.push(i)
                 }
-                /*await Promise.all(clockSize.map(async (cs) => {
-                    const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * cs))
-                    await masterController.timeReservation(masterId, newDateTime.toISOString(), cityId, next)
-                }));*/
+                const timeReservation = (cs) => {
+                    return new Promise((resolve, reject) => {
+                        const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * cs))
+                        MasterBusyDate.findOne({where: {masterId, dateTime: String(newDateTime)}})
+                            .then(dt => {
+                                    if (dt) reject(ApiError.BadRequest("this master is already working at this time"))
+                                }
+                            )
+                        resolve(newDateTime)
+                    })
+                }
+                let orderDateTime
+                let newOrder
+                let count = 0
+                Promise.all(arr.map(cs => timeReservation(cs)))
+                    .then(results => {
+                        results.map(newDateTime => {
+                                const dt = newDateTime.toISOString()
+                                MasterBusyDate.create({masterId, dateTime: dt})
+                                    .then((results) => {
+                                        if (count === 0) {
+                                            new Promise(() => {
+                                                    count++
+                                                    const dt = new Date(dateTime).toISOString()
+                                                    MasterBusyDate.findOne({where: {masterId, dateTime: dt}})
+                                                        .then(mbd => {
+                                                                orderDateTime = mbd.dateTime
+                                                                return new Promise(() => {
+                                                                        Order.create({
+                                                                            email: email,
+                                                                            userId: user.id,
+                                                                            clockSize,
+                                                                            masterBusyDateId: mbd.id,
+                                                                            cityId,
+                                                                            originalCityName: city.cityName,
+                                                                            status: STATUSES.Approval,
+                                                                            masterId: master.id,
+                                                                            dealPrice: city.price
+                                                                        }).then(result => {
+                                                                                return new Promise(() => {
+                                                                                    newOrder = result
+                                                                                    mail.sendMailToNewUser(email, master.name, orderDateTime, clockSize, password.slice(0, 6), activationLink)
+                                                                                        .then(() => {
+                                                                                            res.status(201).json(newOrder)
+                                                                                        })
 
-                const order = await Order.create({
-                    email: email,
-                    userId: user.id,
-                    clockSize,
-                    masterBusyDateId: masterBusyDate.id,
-                    cityId,
-                    originalCityName: city.cityName,
-                    status: STATUSES.Approval,
-                    masterId: master.id,
-                    dealPrice: city.price
-                })
-                await mail.sendMailToNewUser(email, master.name, masterBusyDate.dateTime, clockSize, password.slice(0, 6), activationLink)
-                res.status(201).json(order)
+                                                                                })
+                                                                            }
+                                                                        )
+                                                                    }
+                                                                )
+                                                            }
+                                                        )
+                                                }
+                                            )
+                                        }
+
+                                    })
+                            }
+                        )
+                    })
             } else {
                 const master = await Master.findOne({where: {id: masterId}})
                 const city = await City.findOne({where: {id: cityId}})
-
-                for (let i = 1; i < clockSize; i++) {
-                    const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * i))
-                    await masterController.timeReservation(masterId, newDateTime.toISOString(), cityId, next)
+                let arr = []
+                for (let i = 0; i < clockSize; i++) {
+                    arr.push(i)
                 }
-                /*const timeReservation = (cs) => {
-                    return new Promise(function (resolve, reject) {
+                const timeReservation = (cs) => {
+                    return new Promise((resolve, reject) => {
                         const newDateTime = (new Date(new Date(dateTime).getTime() + 3600000 * cs))
-                        resolve(MasterBusyDate.findOne({where: {masterId, newDateTime}}))
-                        reject(ApiError.BadRequest("this master is already working at this time"))
+                        MasterBusyDate.findOne({where: {masterId, dateTime: String(newDateTime)}})
+                            .then(dt => {
+                                    if (dt) reject(ApiError.BadRequest("this master is already working at this time"))
+                                }
+                            )
+                        resolve(newDateTime)
                     })
                 }
-                Promise.all(clockSize.map(timeReservation))
+                let orderDateTime
+                let newOrder
+                let count = 0
+                Promise.all(arr.map(cs => timeReservation(cs)))
                     .then(results => {
-                            results.map(dateTime => MasterBusyDate.create({masterId, dateTime: String(dateTime)}))
-                        },
-                        error => next(error)
-                    )*/
+                            results.map(newDateTime => {
+                                    const dt = newDateTime.toISOString()
+                                    MasterBusyDate.create({masterId, dateTime: dt})
+                                        .then((results) => {
+                                            if (count === 0) {
+                                                new Promise(() => {
+                                                        count++
+                                                        const dt = new Date(dateTime).toISOString()
+                                                        MasterBusyDate.findOne({where: {masterId, dateTime: dt}})
+                                                            .then(mbd => {
+                                                                    orderDateTime = mbd.dateTime
+                                                                    return new Promise(() => {
+                                                                            Order.create({
+                                                                                email: email,
+                                                                                userId: user.id,
+                                                                                clockSize,
+                                                                                masterBusyDateId: mbd.id,
+                                                                                cityId,
+                                                                                originalCityName: city.cityName,
+                                                                                status: STATUSES.Approval,
+                                                                                masterId: master.id,
+                                                                                dealPrice: city.price
+                                                                            }).then(result => {
+                                                                                    return new Promise(() => {
+                                                                                        newOrder = result
+                                                                                        mail.sendMail(email, master.name, orderDateTime, clockSize)
+                                                                                            .then(() => res.status(201).json(newOrder))
+                                                                                    })
+                                                                                }
+                                                                            )
+                                                                        }
+                                                                    )
+                                                                }
+                                                            )
+                                                    }
+                                                )
+                                            }
 
-                const order = await Order.create({
-                    email: email,
-                    userId: user.id,
-                    clockSize,
-                    masterBusyDateId: masterBusyDate.id,
-                    cityId,
-                    originalCityName: city.cityName,
-                    status: STATUSES.Approval,
-                    masterId: master.id,
-                    dealPrice: city.price
-                })
-                await mail.sendMail(email, master.name, masterBusyDate.dateTime, clockSize)
-                res.status(201).json(order)
+                                        })
+                                }
+                            )
+                        }
+                    )
             }
         } catch (e) {
             console.log(e)
@@ -165,4 +235,5 @@ class OrderController {
     }
 }
 
-module.exports = new OrderController()
+module
+    .exports = new OrderController()

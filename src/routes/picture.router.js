@@ -2,12 +2,13 @@ const Router =require('express').Router;
 const router = new Router();
 const pictureController = require('../controller/picture.controller')
 
-const {body} = require("express-validator");
-const checkRules = require("../middlwares/checkRuleMiddleware");
-const checkRules2 = require("../middlwares/checkRulesMiddleware");
+const checkRoles = require("../middlwares/checkRolesMiddleware");
+const {ROLE} = require("../models/models");
 
+router.post('/:orderId', pictureController.createPictures);
+router.get('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), pictureController.getPictures)
+router.delete('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), pictureController.deletePictures);
 
-router.post('/', pictureController.createPicture);
 
 
 

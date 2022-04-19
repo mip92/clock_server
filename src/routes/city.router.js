@@ -1,7 +1,6 @@
 const Router =require('express').Router;
 const router = new Router();
 const cityController = require('../controller/city.controller')
-
 const checkRoles = require("../middlwares/checkRolesMiddleware");
 const {body} = require("express-validator");
 const checkRules = require("../middlwares/checkRuleMiddleware");

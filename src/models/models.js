@@ -5,10 +5,10 @@ const User = sequelize.define('user', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     email: {type: DataTypes.STRING, unique: true},
     role: {type: DataTypes.STRING, defaultValue: "USER"},
-    name:{type: DataTypes.STRING, allowNull: false},
-    password:{type:DataTypes.STRING, unique: false, allowNull: true},
-    activationLink:{type: DataTypes.STRING, allowNull: true},
-    isActivated:{type: DataTypes.BOOLEAN, defaultValue: false}
+    name: {type: DataTypes.STRING, allowNull: false},
+    password: {type: DataTypes.STRING, unique: false, allowNull: true},
+    activationLink: {type: DataTypes.STRING, allowNull: true},
+    isActivated: {type: DataTypes.BOOLEAN, defaultValue: false}
 })
 
 /*const Status = sequelize.define('status', {
@@ -22,10 +22,10 @@ const Master = sequelize.define('master', {
     email: {type: DataTypes.STRING, unique: true, allowNull: false},
     rating: {type: DataTypes.INTEGER, allowNull: false, defaultValue: 5},
     role: {type: DataTypes.STRING, defaultValue: "MASTER"},
-    password:{type:DataTypes.STRING, unique: false, allowNull: false},
-    activationLink:{type: DataTypes.STRING, allowNull: true},
-    isActivated:{type: DataTypes.BOOLEAN, defaultValue: false},
-    isApproved:{type: DataTypes.BOOLEAN, defaultValue: false},
+    password: {type: DataTypes.STRING, unique: false, allowNull: false},
+    activationLink: {type: DataTypes.STRING, allowNull: true},
+    isActivated: {type: DataTypes.BOOLEAN, defaultValue: false},
+    isApproved: {type: DataTypes.BOOLEAN, defaultValue: false},
 })
 
 const Order = sequelize.define('order', {
@@ -33,22 +33,22 @@ const Order = sequelize.define('order', {
     clockSize: {type: DataTypes.INTEGER, allowNull: false},
     originalCityName: {type: DataTypes.STRING, allowNull: false},
     dealPrice: {type: DataTypes.FLOAT, allowNull: false},
-    userId:{
+    userId: {
         type: DataTypes.INTEGER,
-        references:{
+        references: {
             model: User,
-            key:'id'
+            key: 'id'
         }
     },
     status: {type: DataTypes.STRING, allowNull: false},
-/*    statusId:{
-        type: DataTypes.INTEGER,
-        references:{
-            model: Status,
-            key:'id'
-        },
-        defaultValue: 1
-    }*/
+    /*    statusId:{
+            type: DataTypes.INTEGER,
+            references:{
+                model: Status,
+                key:'id'
+            },
+            defaultValue: 1
+        }*/
     /*masterId:{
         type: DataTypes.INTEGER,
         references:{
@@ -60,33 +60,33 @@ const Order = sequelize.define('order', {
 
 const Picture = sequelize.define('picture', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    name: {type: DataTypes.STRING, unique: true, allowNull: false},
+    path: {type: DataTypes.STRING, unique: true, allowNull: true},
 })
 const OrderPicture = sequelize.define('orderPicture', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    orderId:{
+    orderId: {
         type: DataTypes.INTEGER,
-        references:{
+        references: {
             model: Order,
-            key:'id',
+            key: 'id',
         }
     },
-    pictureId:{
+    pictureId: {
         type: DataTypes.INTEGER,
-        references:{
+        references: {
             model: Picture,
-            key:'id',
+            key: 'id',
         }
-    },
+    }
 })
 
 const City = sequelize.define('city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     cityName: {type: DataTypes.STRING, unique: true, allowNull: false},
-    price:{type: DataTypes.FLOAT, allowNull: false},
+    price: {type: DataTypes.FLOAT, allowNull: false},
 })
 
-const Admin= sequelize.define('admin', {
+const Admin = sequelize.define('admin', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
     email: {type: DataTypes.STRING, unique: true, allowNull: false},
     password: {type: DataTypes.STRING, allowNull: false},
@@ -95,11 +95,11 @@ const Admin= sequelize.define('admin', {
 
 const MasterBusyDate = sequelize.define('master_busyDate', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    masterId:{
+    masterId: {
         type: DataTypes.INTEGER,
-        references:{
+        references: {
             model: Master,
-            key:'id',
+            key: 'id',
         }
     },
     dateTime: {type: DataTypes.STRING},
@@ -107,7 +107,7 @@ const MasterBusyDate = sequelize.define('master_busyDate', {
 
 const MasterCity = sequelize.define('master_city', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-    masterId: {
+/*    masterId: {
         type: DataTypes.INTEGER,
         references: {
             model: Master,
@@ -120,7 +120,7 @@ const MasterCity = sequelize.define('master_city', {
             model: City,
             key: 'id'
         }
-    }
+    }*/
 })
 const Rating = sequelize.define('rating', {
     id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
@@ -141,8 +141,14 @@ const Rating = sequelize.define('rating', {
     }
 })
 
-const STATUSES ={Approval:"Approval", Canceled:"Canceled", Confirmed:"Confirmed", Completed:"Completed", NotCompleted:"NotCompleted"}
-const ROLE={User:"USER", Admin:"ADMIN", Master:"MASTER"}
+const STATUSES = {
+    Approval: "Approval",
+    Canceled: "Canceled",
+    Confirmed: "Confirmed",
+    Completed: "Completed",
+    NotCompleted: "NotCompleted"
+}
+const ROLE = {User: "USER", Admin: "ADMIN", Master: "MASTER"}
 
 /*Rating.hasMany(Order);
 Order.belongsTo(Rating);*/
@@ -154,10 +160,12 @@ User.hasMany(Order);
 Order.belongsTo(User);
 
 Picture.hasMany(OrderPicture);
-OrderPicture.belongsTo(Picture);
+OrderPicture.belongsTo(Picture)
+/*Picture.hasMany(OrderPicture);
+OrderPicture.belongsTo(Picture);*/
 
-Order.hasMany(Picture);
-Picture.belongsTo(Order);
+Order.hasMany(OrderPicture);
+OrderPicture.belongsTo(Order);
 
 MasterBusyDate.hasMany(Order);
 Order.belongsTo(MasterBusyDate);
@@ -181,6 +189,8 @@ module.exports = {
     MasterCity,
     Admin,
     Order,
+    OrderPicture,
+    Picture,
     MasterBusyDate,
     User,
     STATUSES,

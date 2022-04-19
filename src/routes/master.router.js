@@ -11,7 +11,7 @@ const {ROLE}=require("../models/models")
 validationCreateMasterBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
     body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
-    body('cities_id', 'city_id is required').not().isEmpty().escape()
+    body('citiesId', 'cityId is required').not().isEmpty().escape()
 ];
 validationGetFreeMastersBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
@@ -32,10 +32,10 @@ validationChangeEmailBodyRules = [
     body('role', 'role must be not null').not()
 ];
 
-router.post('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules, masterController.createMaster);
+router.post('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, masterController.createMaster);
 router.get('/', masterController.getAllMasters);
 router.get('/:masterId', masterController.getOneMaster);
-router.put('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules, masterController.updateMaster);
+router.put('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, masterController.updateMaster);
 router.delete('/:masterId', checkRoles([ROLE.Admin]), masterController.deleteMaster);
 router.get('/approve/:masterId', checkRoles([ROLE.Admin]), masterController.approveMaster);
 /*router.post('/timeReservation'/!*,checkRole("ADMIN")*!/,masterController.timeReservation);*/

@@ -18,10 +18,25 @@ class UserController {
     async createUser(req, res, next) {
         try {
             const {email, name} = req.body
-            const isUserCreated = await User.findOne({where: {email}})
-            if (isUserCreated) return res.status(201).json(isUserCreated)
+            const isUserUnique = await User.findOne({where: {email}})
+            if (isUserUnique) return next(ApiError.ExpectationFailed({
+                value: email,
+                msg: `User with this email is already registered`,
+                param: "email",
+                location: "body"
+            }))
             else {
-                const newUser = await User.create({name, email});
+                const password = uuid.v4();
+                const hashPassword = await bcrypt.hash(password.slice(0, 6), 5)
+                const activationLink = uuid.v4();
+                const newUser = await User.create({
+                    password: hashPassword,
+                    email,
+                    role: ROLE.User,
+                    name,
+                    activationLink
+                })
+                await mail.sendActivationMail(email, activationLink, ROLE.User, password.slice(0, 6))
                 return res.status(201).json(newUser)
             }
         } catch (e) {
@@ -73,13 +88,20 @@ class UserController {
         try {
             const {id, newEmail, newName} = req.body
             const user = await User.findOne({where: {id}})
-            if (!user) return next(ApiError.BadRequest("User not found"))
-            const isEmailUniq = await User.findOne({where: {email: newEmail}})
-            if (isEmailUniq) return next(ApiError.BadRequest("User with this email is already be exist"))
-            await user.update({email: newEmail, name: newName})
+            if (!user) return next(ApiError.ExpectationFailed({
+                value: newEmail,
+                msg: `User with this id is not found`,
+                param: "newEmailOfUser",
+                location: "body"
+            }))
+            const isUserUnique = await User.findOne({where: {email: newEmail}})
+            if (isUserUnique && isUserUnique.id !== id) {
+                return  res.status(417).json({message: `User with this email is already registered`})
+            } else await user.update({email: newEmail, name: newName})
             const newUser = {id, email: newEmail, name: newName}
             res.status(200).json(newUser)
         } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e.parent.detail))
         }
     }
@@ -113,7 +135,7 @@ class UserController {
                 const user = await User.create({
                     password: hashPassword,
                     email,
-                    role: "USER",
+                    role: ROLE.User,
                     name,
                     activationLink
                 })
