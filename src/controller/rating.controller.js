@@ -1,4 +1,4 @@
-const {Rating} = require('../models/models')
+const {Rating} = require('../models/index');
 const ApiError = require('../exeptions/api-error')
 
 
