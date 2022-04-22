@@ -85,6 +85,12 @@ export interface UpdateUserBody{
 export type DeleteUserParams={
     userId: string
 }
+export interface CreateRatingBody {
+    orderId: number,
+    masterId: number,
+    rating: number
+}
+export type GetRatingByMasterParams ={ masterId:string }
 
 export interface CustomRequest<U, T extends Params | null,
     C extends Query | null, K extends FileList| null> extends Express.Request {

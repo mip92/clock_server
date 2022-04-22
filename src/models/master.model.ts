@@ -5,7 +5,7 @@ export interface MasterAttributes {
     id: number;
     email: string;
     name:string;
-    role: typeof ROLE;
+    role: string;
     password: string;
     activationLink: string;
     isActivated: boolean;
@@ -28,7 +28,7 @@ export function MasterFactory (sequelize: Sequelize): MasterStatic {
         name: {type: DataTypes.STRING, allowNull: false},
         email: {type: DataTypes.STRING, unique: true, allowNull: false},
         rating: {type: DataTypes.INTEGER, allowNull: false, defaultValue: 5},
-        role: {type: DataTypes.STRING, defaultValue: ROLE.Master},
+        role: {type: DataTypes.STRING, defaultValue: "MASTER"},
         password: {type: DataTypes.STRING, unique: false, allowNull: false},
         activationLink: {type: DataTypes.STRING, allowNull: true},
         isActivated: {type: DataTypes.BOOLEAN, defaultValue: false},

@@ -12,9 +12,10 @@ import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize from "sequelize";
-import {PictureModel} from "../models/picture.model";
+import {dbConfig} from "../models";
+import {log} from "util";
+import {MasterCityModel} from "../models/masterCity.model";
 
-const sequelize = require("../db");
 const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../models/index');
 const ApiError = require('../exeptions/api-error')
 const uuid = require('uuid')
@@ -74,6 +75,7 @@ class MasterController {
                                     if (count == citiesID.length) {
                                         Master.findOne({
                                             where: {email},
+                                            attributes: {exclude: ['password', 'activationLink']},
                                             include: [{model: City}]
                                         }).then((master: MasterModel) => res.status(201).json(master))
                                     }
@@ -98,6 +100,7 @@ class MasterController {
             if (!city_id) {
                 const masters: MasterModel[] = await Master.findAndCountAll({
                     where: {isActivated: true}, //отображать мастеров которые подтвердили свою почту
+                    attributes: {exclude: ['password', 'activationLink']},
                     include: {model: City, required: false},
                     limit,
                     offset
@@ -116,6 +119,7 @@ class MasterController {
                         model: City,
                         required: true
                     }],
+                    attributes: {exclude: ['password', 'activationLink']},  ///
                     limit,
                     offset
                 })
@@ -134,6 +138,7 @@ class MasterController {
             const master: MasterModel = await Master.findOne({
                     include: {all: true},
                     where: {id: masterId},
+                    attributes: {exclude: ['password', 'activationLink']},
                 }
             )
             if (!master) return next(ApiError.BadRequest("Master not found"))
@@ -174,7 +179,12 @@ class MasterController {
                 .then(results => {
                         results.map(() => {
                             count++
-                            if (count == citiesID.length) Master.findOne({where: {id}, include: [{model: City}]})
+                            if (count == citiesID.length) Master.findOne({
+                                    where: {id},
+                                    include: [{model: City}],
+                                    attributes: {exclude: ['password', 'activationLink']}
+                                }
+                            )
                                 .then((master: MasterModel) => {
                                     master.update({name, email})
                                         .then((master: MasterModel) => res.status(200).json(master))
@@ -196,7 +206,7 @@ class MasterController {
             const candidate: MasterModel = await Master.findOne({where: {id: masterId}})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
             const masterBusyDate: MasterBusyDateModel = await MasterBusyDate.destroy({where: {masterId}})
-            const master:MasterModel = await Master.destroy({where: {id: masterId}})
+            const master: MasterModel = await Master.destroy({where: {id: masterId}})
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
         } catch (e) {
             next(ApiError.BadRequest(e))
@@ -289,34 +299,88 @@ class MasterController {
         const hashPassword: string = await bcrypt.hash(firstPassword, 5)
         const activationLink: string = uuid.v4();
         try {
-            let result: MasterModel = await sequelize.transaction(async (t:Sequelize.Transaction) => {
-                const newMaster: MasterModel = await Master.create({
-                    name,
-                    email,
-                    password: hashPassword,
-                    role: ROLE.Master,
-                    activationLink
-                }, {transaction: t});
-                if (!newMaster) throw new Error('Error with creating master');
-                for (let i = 0; i < citiesId.length; i++) {
-                    const city = await City.findOne({where: {id: citiesId[i]}, transaction: t})
-                    if (!city) throw ApiError.BadRequest(`city with this id :${citiesId[i]} is not found`);
-                    await MasterCity.create({masterId: newMaster.id, cityId: citiesId[i]}, {transaction: t})
+            let result: MasterModel = await dbConfig.transaction(async (t: Sequelize.Transaction) => {
+                const findCity = (cityId: number): Promise<CityModel> => {
+                    return new Promise((resolve, reject) => {
+                        City.findOne({where: {id: cityId}, transaction: t}).then((city: CityModel) => {
+                                if (city == null) reject(`City with id: ${cityId} is not found`)
+                                return resolve(city)
+                            }
+                        ).catch((err: Error) => {
+                            console.log(99)
+                            reject(err)
+                        })
+                    })
                 }
-                return newMaster
-            });
+                let count = 0
+                return new Promise((resolve, reject) => {
+                    Master.create({
+                        name,
+                        email,
+                        password: hashPassword,
+                        role: "MASTER",
+                        activationLink
+                    }, {transaction: t})
+                        .then((newMaster: MasterModel) => {
+                                if (!newMaster) reject('Master creation error')
+                                Promise.all(citiesId.map(cityId => findCity(cityId)))
+                                    .then((cities: CityModel[]) => {
+                                            cities.map((city: CityModel) => {
+                                                    MasterCity.create({
+                                                        masterId: newMaster.id,
+                                                        cityId: city.id
+                                                    }, {transaction: t})
+                                                        .then(() => {
+                                                                count++
+                                                                console.log(count, citiesId.length)
+                                                                if (count == citiesId.length) {
+                                                                    resolve(newMaster)
+                                                                }
+                                                            }
+                                                        ).catch((err: Error) => {
+                                                        console.log(88)
+                                                        console.log(err)
+                                                    })
+                                                }
+                                            )
+                                        }
+                                    ).catch((err: Error) => {
+                                    console.log(77)
+                                    console.log(err)
+                                })
+                            }
+                        ).catch((err: Error) => {
+                        console.log(66)
+                        console.log(err)
+                    })
+                })
+            }).catch((e: Error) => {
+                console.log(55)
+                console.log(e)
+            })
+            console.log(result)
             await mail.sendActivationMail(email,
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,
                 result.role
             )
-            interface MasterModelWithCity extends MasterModel{
+
+            interface MasterModelWithCity extends MasterModel {
                 dataValues: CityModel
             }
+
             const master: MasterModelWithCity = await Master.findOne(
-                {where: {email: result.email}, include: [{model: City}]})
-            const token:string = tokenService.generateJwt(master.id, master.email, master.role)
+                {
+                    where: {email: result.email},
+                    attributes: {exclude: ['password', 'activationLink']},
+                    include: [{model: City}]
+                },
+            )
+            console.log(master)
+            const token: string = tokenService.generateJwt(master.id, master.email, master.role)
             return res.status(201).json({token})
-        } catch (err) {
+        } catch
+            (err) {
+            console.log(err)
             next(err)
         }
     }
@@ -339,7 +403,11 @@ class MasterController {
                 location: "body"
             }))
             const activationLink: string = uuid.v4();
-            const changedMaster: MasterModel = await master.update({email: newEmail, isActivated: false, activationLink})
+            const changedMaster: MasterModel = await master.update({
+                email: newEmail,
+                isActivated: false,
+                activationLink
+            })
             const token: string = tokenService.generateJwt(changedMaster.id, changedMaster.email, changedMaster.role)
             await mail.sendActivationMail(newEmail,
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,

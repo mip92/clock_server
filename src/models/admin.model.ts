@@ -5,7 +5,7 @@ export interface AdminAttributes {
     id: number;
     email: string,
     password: string,
-    role: typeof ROLE,
+    role: string,
 }
 export interface AdminModel extends Model<AdminAttributes>, AdminAttributes {}
 export class Admin extends Model<AdminModel, AdminAttributes> {}
@@ -19,6 +19,6 @@ export function AdminFactory (sequelize: Sequelize): AdminStatic {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         email: {type: DataTypes.STRING, unique: true, allowNull: false},
         password: {type: DataTypes.STRING, allowNull: false},
-        role: {type: DataTypes.STRING, allowNull: false, defaultValue: ROLE.Admin},
+        role: {type: DataTypes.STRING, allowNull: false, defaultValue: "ADMIN"},
     });
 }

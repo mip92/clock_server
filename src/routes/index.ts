@@ -8,6 +8,7 @@ const userRouter=require('./user.router')
 const authRouter=require('./auth.router')
 const statusRouter=require('./status.router')
 const pictureRouter=require('./picture.router')
+const ratingRouter=require('./rating.router')
 
 router.use('/cities', cityRouter)
 router.use('/masters',masterRouter)
@@ -16,5 +17,6 @@ router.use('/users',userRouter)
 router.use('/auth',authRouter)
 router.use('/status',statusRouter)
 router.use('/picture',pictureRouter)
+router.use('/rating',ratingRouter)
 
 module.exports=router

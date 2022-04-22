@@ -4,7 +4,7 @@ import {ROLE} from "./index";
 export interface UserAttributes {
     id: number;
     email: string;
-    role: typeof ROLE;
+    role: string;
     name: string;
     password: string;
     activationLink: string;
@@ -23,7 +23,7 @@ export function UserFactory (sequelize: Sequelize): UserStatic {
     return <UserStatic>sequelize.define("user", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         email: {type: DataTypes.STRING, unique: true},
-        role: {type: DataTypes.STRING, defaultValue: ROLE.User},
+        role: {type: DataTypes.STRING, defaultValue: "USER"},
         name: {type: DataTypes.STRING, allowNull: false},
         password: {type: DataTypes.STRING, unique: false, allowNull: true},
         activationLink: {type: DataTypes.STRING, allowNull: true},

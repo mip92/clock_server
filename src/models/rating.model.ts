@@ -21,12 +21,13 @@ export type RatingStatic = typeof Model & {
 export function RatingFactory(sequelize: Sequelize): RatingStatic {
     return <RatingStatic>sequelize.define("rating", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
-        rating: {type: DataTypes.INTEGER, allowNull: false},
+        rating: {type: DataTypes.INTEGER, allowNull: true},
         /*masterId: {
             type: DataTypes.INTEGER,
             references: {model: Master, key: 'id'}
-        },
-        orderId: {
+        },*/
+        orderId: {type: DataTypes.INTEGER, unique: true}
+        /*orderId: {
             type: DataTypes.INTEGER, /!*unique: true,*!/
             references: {model: Order, key: 'id'}
         }*/

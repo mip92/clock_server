@@ -71,6 +71,9 @@ Order.belongsTo(City)
 Master.hasMany(Rating)
 Rating.belongsTo(Master)
 
+Order.hasOne(Rating, {foreignKey: 'orderId'})
+Rating.belongsTo(Order, {foreignKey: 'orderId'})
+
 /*Master.hasMany(MasterCity,{ foreignKey: 'masterId'});
 MasterCity.belongsTo(Master, {foreignKey: 'masterId'});*/
 

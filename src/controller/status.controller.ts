@@ -19,7 +19,7 @@ class StatusController {
         }
     }
 
-    async changeStatus(req: CustomRequest<ChangeStatusBody, CreatePicturesParams, null, any>, res: Response, next: NextFunction) {
+    async changeStatus(req: CustomRequest<ChangeStatusBody, CreatePicturesParams, null, null>, res: Response, next: NextFunction) {
         try {
             const {orderId} = req.params
             const {status} = req.body
