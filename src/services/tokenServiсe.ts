@@ -1,6 +1,6 @@
 export {};
 const jwt = require('jsonwebtoken')
-const {ROLE} = require('../models/index');
+const {ROLE} = require('../myModels/index');
 
 class TokenService {
     generateJwt(id: number, email: string, role: typeof ROLE) {

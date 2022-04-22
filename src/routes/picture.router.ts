@@ -4,7 +4,7 @@ const router = new Router();
 const pictureController = require('../controller/picture.controller')
 
 const checkRoles = require("../middlwares/checkRolesMiddleware");
-const {ROLE} = require("../models/index")
+const {ROLE} = require("../myModels/index")
 
 router.post('/:orderId', pictureController.createPictures);
 router.get('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), pictureController.getPictures)

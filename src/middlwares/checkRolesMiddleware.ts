@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 import * as express from 'express';
-const {ROLE} = require('../models/index');
+const {ROLE} = require('../myModels/index');
 
 module.exports = function (roles : typeof ROLE[]) {
     return function (req:express.Request, res:express.Response, next:express.NextFunction) {

@@ -1,5 +1,5 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-const {Order, Picture} = require('../models/index');
+const {Order, Picture} = require('.//index');
 
 
 export interface OrderPictureAttributes {

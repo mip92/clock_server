@@ -6,10 +6,10 @@ import {
     UpdateCityBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {CityModel} from "../models/city.model";
+import {CityModel} from "../myModels/city.model";
 
 const ApiError = require('../exeptions/api-error')
-const {City} = require('../models/index');
+const {City} = require('../myModels/index');
 
 
 class CityController {

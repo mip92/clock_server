@@ -1,5 +1,5 @@
 import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
-const {City, Master} = require('../models/index');
+const {City, Master} = require('.//index');
 
 
 export interface MasterCityAttributes {

@@ -2,7 +2,7 @@ import {Transporter} from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 
 
-const {ROLE} = require("../models/index")
+const {ROLE} = require("../myModels/index")
 const nodemailer = require('nodemailer');
 
 class MailService {

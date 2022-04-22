@@ -5,8 +5,8 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 
-import {RatingModel} from "../models/rating.model";
-const {Rating} = require('../models/index');
+import {RatingModel} from "../myModels/rating.model";
+const {Rating} = require('../myModels/index');
 
 const ApiError = require('../exeptions/api-error')
 
@@ -53,7 +53,8 @@ class RatingController {
             let arr=[] as number[]
             ratings.forEach((r)=>arr.push(r.rating))
             const sum = arr.reduce((a, b) => a + b, 0);
-            const average = Math.round(sum / arr.length);
+            const average = (Math.ceil((sum / arr.length)*10)/10)
+            //const average = Math.floor(sum / arr.length);
             res.status(200).json({averageRating: average, masterId: +masterId, ratings})
         } catch (e) {
             next(ApiError.BadRequest(e))

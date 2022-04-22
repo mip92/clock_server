@@ -8,15 +8,15 @@ import {
     MasterId, UpdateMasterBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {MasterModel} from "../models/master.model";
-import {CityModel} from "../models/city.model";
-import {MasterBusyDateModel} from "../models/masterBusyDate.model";
+import {MasterModel} from "../myModels/master.model";
+import {CityModel} from "../myModels/city.model";
+import {MasterBusyDateModel} from "../myModels/masterBusyDate.model";
 import Sequelize from "sequelize";
-import {dbConfig} from "../models";
+import {dbConfig} from "../myModels";
 import {log} from "util";
-import {MasterCityModel} from "../models/masterCity.model";
+import {MasterCityModel} from "../myModels/masterCity.model";
 
-const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../models/index');
+const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../myModels/index');
 const ApiError = require('../exeptions/api-error')
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')

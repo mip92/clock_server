@@ -8,7 +8,7 @@ const cors = require('cors')
 const errorMiddleware=require('./middlwares/error-middleware')
 const router = require('./routes')
 const fileupload = require("express-fileupload");
-const {dbConfig}= require("./models/index");
+const {dbConfig}= require("./myModels/index");
 
 const app = express()
 app.use(express.json())

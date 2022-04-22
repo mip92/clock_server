@@ -7,9 +7,9 @@ import {
     UpdateUserBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {UserModel} from "../models/user.model";
+import {UserModel} from "../myModels/user.model";
 
-const {User, ROLE} = require('../models/index');
+const {User, ROLE} = require('../myModels/index');
 const ApiError = require('../exeptions/api-error')
 const tokenService = require('../services/tokenServiсe')
 const uuid = require('uuid')

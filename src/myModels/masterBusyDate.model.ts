@@ -1,6 +1,6 @@
 import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 
-const {Master} = require('../models/index');
+const {Master} = require('.//index');
 
 export interface MasterBusyDateAttributes {
     id: number;

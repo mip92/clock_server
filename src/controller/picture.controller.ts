@@ -1,10 +1,10 @@
 import {NextFunction, Response} from "express";
 import {CreatePicturesParams, CustomRequest, DeletePicturesBody} from "../interfaces/RequestInterfaces";
-import {OrderModel} from "../models/order.model";
+import {OrderModel} from "../myModels/order.model";
 import ErrnoException = NodeJS.ErrnoException;
-import {PictureModel} from "../models/picture.model";
-import {OrderPictureModel} from "../models/orderPicture.model";
-import {CityModel} from "../models/city.model";
+import {PictureModel} from "../myModels/picture.model";
+import {OrderPictureModel} from "../myModels/orderPicture.model";
+import {CityModel} from "../myModels/city.model";
 
 const fs = require('fs');
 require("dotenv").config({path: `.env.${process.env.NODE_ENV}`})
@@ -12,7 +12,7 @@ const ApiError = require('../exeptions/api-error')
 const cloudinary = require("cloudinary").v2
 const uuid = require('uuid')
 const path = require("path")
-const {Picture, OrderPicture, Order} = require('../models/index');
+const {Picture, OrderPicture, Order} = require('../myModels/index');
 
 interface MyFile extends File {
     data: Buffer,

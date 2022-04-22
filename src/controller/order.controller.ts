@@ -1,13 +1,13 @@
 import {CreateOrderBody, CustomRequest, GetAllOrders, GetOneOrderParams} from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {UserModel} from "../models/user.model";
-import {MasterModel} from "../models/master.model";
-import {CityModel} from "../models/city.model";
-import {MasterBusyDateModel} from "../models/masterBusyDate.model";
-import {OrderModel} from "../models/order.model";
+import {UserModel} from "../myModels/user.model";
+import {MasterModel} from "../myModels/master.model";
+import {CityModel} from "../myModels/city.model";
+import {MasterBusyDateModel} from "../myModels/masterBusyDate.model";
+import {OrderModel} from "../myModels/order.model";
 
 const ApiError = require('../exeptions/api-error')
-const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models/index');
+const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../myModels/index');
 const mail = require("../services/mailServiсe");
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')

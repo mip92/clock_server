@@ -1,9 +1,9 @@
 import {NextFunction, Response, Request} from "express";
 import {CreatePicturesParams, CustomRequest} from "../interfaces/RequestInterfaces";
-import {OrderModel} from "../models/order.model";
+import {OrderModel} from "../myModels/order.model";
 
 const ApiError = require('../exeptions/api-error')
-const {STATUSES, Order} = require('../models/index');
+const {STATUSES, Order} = require('../myModels/index');
 
 export interface ChangeStatusBody {
     status: string

@@ -1,11 +1,11 @@
 import {Response, NextFunction} from 'express';
-import {UserModel} from "../models/user.model";
-import {MasterModel} from "../models/master.model";
-import {AdminModel} from "../models/admin.model";
+import {UserModel} from "../myModels/user.model";
+import {MasterModel} from "../myModels/master.model";
+import {AdminModel} from "../myModels/admin.model";
 import {AuthRegistrationBody, CustomRequest, Link, LoginBody} from "../interfaces/RequestInterfaces";
 
 const ApiError = require('../exeptions/api-error');
-const {Master, User, Admin} = require('../models/index');
+const {Master, User, Admin} = require('../myModels/index');
 const userController = require("./user.controller");
 const masterController = require("./master.controller");
 const bcrypt = require('bcrypt')
