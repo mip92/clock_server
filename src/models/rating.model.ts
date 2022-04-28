@@ -1,5 +1,4 @@
 import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
-const {Master, Order} = require('.//index');
 
 export interface RatingAttributes {
     id: number;

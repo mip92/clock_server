@@ -8,15 +8,13 @@ import {
     MasterId, UpdateMasterBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {MasterModel} from "../myModels/master.model";
-import {CityModel} from "../myModels/city.model";
-import {MasterBusyDateModel} from "../myModels/masterBusyDate.model";
+import {MasterModel} from "../models/master.model";
+import {CityModel} from "../models/city.model";
+import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize from "sequelize";
-import {dbConfig} from "../myModels";
-import {log} from "util";
-import {MasterCityModel} from "../myModels/masterCity.model";
+import {dbConfig} from "../models";
 
-const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../myModels/index');
+const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../models');
 const ApiError = require('../exeptions/api-error')
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
@@ -72,7 +70,7 @@ class MasterController {
                             count++
                             MasterCity.create({masterId: newMaster.id, cityId: city.id})
                                 .then(() => {
-                                    if (count == citiesID.length) {
+                                    if (count === citiesID.length) {
                                         Master.findOne({
                                             where: {email},
                                             attributes: {exclude: ['password', 'activationLink']},
@@ -84,8 +82,6 @@ class MasterController {
                     },
                     error => next(error)
                 )
-            /*const master = await Master.findOne({where: {email}, include: [{model: City}]})
-            return res.status(201).json(master)*/
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e))
@@ -99,7 +95,7 @@ class MasterController {
             if (!offset) offset = '0'
             if (!city_id) {
                 const masters: MasterModel[] = await Master.findAndCountAll({
-                    where: {isActivated: true}, //отображать мастеров которые подтвердили свою почту
+                    where: {isActivated: true}, //display masters who have confirmed their mail
                     attributes: {exclude: ['password', 'activationLink']},
                     include: {model: City, required: false},
                     limit,
@@ -179,16 +175,15 @@ class MasterController {
                 .then(results => {
                         results.map(() => {
                             count++
-                            if (count == citiesID.length) Master.findOne({
+                            if (count === citiesID.length) Master.findOne({
                                     where: {id},
                                     include: [{model: City}],
                                     attributes: {exclude: ['password', 'activationLink']}
                                 }
-                            )
-                                .then((master: MasterModel) => {
-                                    master.update({name, email})
-                                        .then((master: MasterModel) => res.status(200).json(master))
-                                })
+                            ).then((master: MasterModel) => {
+                                master.update({name, email})
+                                    .then((master: MasterModel) => res.status(200).json(master))
+                            })
                         })
                     },
                     error => next(error)
@@ -258,22 +253,41 @@ class MasterController {
                 }],
             })
             if (masters.length === 0) return next(ApiError.BadRequest("masters is not found"))
-            const freeMasters = []
-            for (let i = 0; i < masters.length; i++) {
-                let isThisMasterBusy = false
-                for (let cs = 0; cs < clockSize; cs++) {
+
+            const isThisTimeBusy = (cs: number, master: MasterModel): Promise<boolean> => {
+                return new Promise((resolve, reject) => {
                     const time = new Date(dateTime)
+                    let count = 0
                     time.setHours(time.getHours() + cs)
-                    const busy: MasterBusyDateModel = await MasterBusyDate.findOne({
+                    MasterBusyDate.findOne({
                         where: {
-                            masterId: masters[i].id,
+                            masterId: master.id,
                             dateTime: String(time.toISOString())
                         }
+                    }).then((busy: MasterBusyDateModel) => {
+                        console.log(!!busy)
+                        if (busy) resolve(true)
+                        resolve(false)
                     })
-                    if (busy) isThisMasterBusy = true
-                }
-                if (!isThisMasterBusy) freeMasters.push(masters[i])
+                })
             }
+
+            const isMasterFree = (master: MasterModel): Promise<MasterModel> => {
+                return new Promise((resolve, reject) => {
+                    const arrayOfClockSize: number[] = Array.from({length: clockSize}, (_, i) => i + 1)
+                    Promise.all(arrayOfClockSize.map(cs => isThisTimeBusy(cs, master))).then((timeStatusArr) => {
+                        timeStatusArr.map((timeStatus) => {
+                            if (timeStatus) reject(master)
+                        })
+                        resolve(master)
+                    })
+                })
+            }
+            const allMasters = await Promise.allSettled(masters.map(master => isMasterFree(master)))
+            let freeMasters: MasterModel[] = []
+            allMasters.forEach(master => {
+                if (master.status == 'fulfilled') freeMasters.push(master.value)
+            })
             if (freeMasters.length === 0) return next(ApiError.BadRequest("masters is not found"))
             res.status(200).json(freeMasters)
         } catch (e) {
@@ -303,7 +317,7 @@ class MasterController {
                 const findCity = (cityId: number): Promise<CityModel> => {
                     return new Promise((resolve, reject) => {
                         City.findOne({where: {id: cityId}, transaction: t}).then((city: CityModel) => {
-                                if (city == null) reject(`City with id: ${cityId} is not found`)
+                                if (city === null) reject(`City with id: ${cityId} is not found`)
                                 return resolve(city)
                             }
                         ).catch((err: Error) => {
@@ -333,7 +347,7 @@ class MasterController {
                                                         .then(() => {
                                                                 count++
                                                                 console.log(count, citiesId.length)
-                                                                if (count == citiesId.length) {
+                                                                if (count === citiesId.length) {
                                                                     resolve(newMaster)
                                                                 }
                                                             }
@@ -414,7 +428,7 @@ class MasterController {
                 changedMaster.role)
             return res.status(200).json({token})
         } catch (e) {
-            console.log(e)
+            next(ApiError.Internal(`server error`))
         }
     }
 }

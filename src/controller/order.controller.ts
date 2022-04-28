@@ -1,13 +1,14 @@
 import {CreateOrderBody, CustomRequest, GetAllOrders, GetOneOrderParams} from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {UserModel} from "../myModels/user.model";
-import {MasterModel} from "../myModels/master.model";
-import {CityModel} from "../myModels/city.model";
-import {MasterBusyDateModel} from "../myModels/masterBusyDate.model";
-import {OrderModel} from "../myModels/order.model";
+import {UserModel} from "../models/user.model";
+import {MasterModel} from "../models/master.model";
+import {CityModel} from "../models/city.model";
+import {MasterBusyDateModel} from "../models/masterBusyDate.model";
+import {OrderModel} from "../models/order.model";
+import Model, {Attributes, FindAndCountOptions} from "sequelize";
 
 const ApiError = require('../exeptions/api-error')
-const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../myModels/index');
+const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models');
 const mail = require("../services/mailServiсe");
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
@@ -30,10 +31,7 @@ class OrderController {
                 })
                 const master: MasterModel = await Master.findOne({where: {id: masterId}})
                 const city: CityModel = await City.findOne({where: {id: cityId}})
-                let arr = [] as number[]
-                for (let i: number = 0; i < clockSize; i++) {
-                    arr.push(i)
-                }
+                const arrayOfClockSize = Array.from({length: clockSize}, (_, i) => i + 1)
                 const timeReservation = (cs: number): Promise<Date> => {
                     return new Promise((resolve, reject) => {
                         const newDateTime: Date = new Date(new Date(dateTime).getTime() + 3600000 * cs)
@@ -49,7 +47,7 @@ class OrderController {
                 let orderDateTime: string
                 let newOrder: OrderModel
                 let count = 0
-                Promise.all(arr.map(cs => timeReservation(cs)))
+                Promise.all(arrayOfClockSize.map(cs => timeReservation(cs)))
                     .then(results => {
                         results.map(newDateTime => {
                                 const dt = newDateTime.toISOString()
@@ -58,7 +56,7 @@ class OrderController {
                                         if (count === 0) {
                                             new Promise(() => {
                                                     count++
-                                                    const dt = new Date(dateTime).toISOString()
+                                                    //const dt = new Date(dateTime).toISOString()
                                                     MasterBusyDate.findOne({where: {masterId, dateTime: dt}})
                                                         .then((mbd: MasterBusyDateModel) => {
                                                                 orderDateTime = mbd.dateTime
@@ -99,10 +97,7 @@ class OrderController {
             } else {
                 const master: MasterModel = await Master.findOne({where: {id: masterId}})
                 const city: CityModel = await City.findOne({where: {id: cityId}})
-                let arr = []
-                for (let i = 0; i < clockSize; i++) {
-                    arr.push(i)
-                }
+                const arrayOfClockSize = Array.from({length: clockSize}, (_, i) => i + 1)
                 const timeReservation = (cs: number): Promise<Date> => {
                     return new Promise((resolve, reject) => {
                         const newDateTime: Date = new Date(new Date(dateTime).getTime() + 3600000 * cs)
@@ -118,7 +113,7 @@ class OrderController {
                 let orderDateTime: string
                 let newOrder: OrderModel
                 let count = 0
-                Promise.all(arr.map(cs => timeReservation(cs)))
+                Promise.all(arrayOfClockSize.map(cs => timeReservation(cs)))
                     .then(results => {
                             results.map(newDateTime => {
                                     const dt = newDateTime.toISOString()
@@ -127,7 +122,7 @@ class OrderController {
                                             if (count === 0) {
                                                 new Promise(() => {
                                                         count++
-                                                        const dt = new Date(dateTime).toISOString()
+                                                        //const dt = new Date(dateTime).toISOString()
                                                         MasterBusyDate.findOne({where: {masterId, dateTime: dt}})
                                                             .then((mbd: MasterBusyDateModel) => {
                                                                     orderDateTime = mbd.dateTime
@@ -166,49 +161,48 @@ class OrderController {
             }
         } catch (e) {
             console.log(e)
-            next(ApiError.Internal(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
     async getAllOrders(req: CustomRequest<null, null, GetAllOrders, null>, res: Response, next: NextFunction) {
         try {
             let {limit, offset, masterId, userId} = req.query
-            if (limit && +limit > 50) limit = '50'
-            if (!offset) offset = '0'
-            let where
-            if (userId) where = {'userId': +userId}
-            else if (masterId) where = {'masterId': +masterId}
+            const options: Omit<FindAndCountOptions<Attributes<typeof Order>>, "group"> = {}
 
-            const options: any = {
-                where,
-                include: [
+            if (limit && +limit > 50) options.limit = 50
+            if (!offset) options.offset = 0
+
+            if (userId && masterId) {
+                options.include = [
+                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
                     {model: City},
                     {model: MasterBusyDate}
-                ],
-                limit,
-                offset
-            }
-            if (userId) {
-                options.include.push(
+                ];
+                options.where = {'userId': +userId, 'masterId': +masterId}
+            } else if (userId) {
+                options.include = [
                     {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
-                    {model: Master, attributes: {exclude: ['password', 'activationLink']}})
-            } else if (masterId) {
-                options.include.push({
-                        model: Master,
-                        where: {id: masterId},
-                        attributes: {exclude: ['password', 'activationLink']}
-                    },
-                    {model: User, attributes: {exclude: ['password', 'activationLink']}})
-            } else {
-                options.include.push(
                     {model: Master, attributes: {exclude: ['password', 'activationLink']}},
-                    {model: User, attributes: {exclude: ['password', 'activationLink']}})
+                    {model: City},
+                    {model: MasterBusyDate}
+                ];
+                options.where = {'userId': +userId}
+            } else if (masterId) {
+                options.include = [
+                    {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: City},
+                    {model: MasterBusyDate}
+                ];
+                options.where = {'masterId': +masterId}
             }
             const orders: OrderModel = await Order.findAndCountAll(options)
             res.status(200).json(orders)
         } catch (e) {
             console.log(e)
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -234,12 +228,12 @@ class OrderController {
         try {
             const {orderId} = req.params
             if (!orderId) next(ApiError.BadRequest("id is not defined"))
-            const candidate:OrderModel = await Order.findOne({where: {id: orderId}})
+            const candidate: OrderModel = await Order.findOne({where: {id: orderId}})
             if (!candidate) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
             await candidate.destroy()
             res.status(200).json({message: `order with id:${orderId} was deleted`, order: candidate})
         } catch (e) {
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 }

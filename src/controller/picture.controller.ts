@@ -1,10 +1,9 @@
 import {NextFunction, Response} from "express";
 import {CreatePicturesParams, CustomRequest, DeletePicturesBody} from "../interfaces/RequestInterfaces";
-import {OrderModel} from "../myModels/order.model";
+import {OrderModel} from "../models/order.model";
 import ErrnoException = NodeJS.ErrnoException;
-import {PictureModel} from "../myModels/picture.model";
-import {OrderPictureModel} from "../myModels/orderPicture.model";
-import {CityModel} from "../myModels/city.model";
+import {PictureModel} from "../models/picture.model";
+import {OrderPictureModel} from "../models/orderPicture.model";
 
 const fs = require('fs');
 require("dotenv").config({path: `.env.${process.env.NODE_ENV}`})
@@ -12,7 +11,7 @@ const ApiError = require('../exeptions/api-error')
 const cloudinary = require("cloudinary").v2
 const uuid = require('uuid')
 const path = require("path")
-const {Picture, OrderPicture, Order} = require('../myModels/index');
+const {Picture, OrderPicture, Order} = require('../models');
 
 interface MyFile extends File {
     data: Buffer,
@@ -56,20 +55,17 @@ class PictureController {
     static createOnePicture(file: MyFile, next: NextFunction) {
         const name: string = file.name
         const fileExtension: string | undefined = name.split('.').pop()
-        const arr: string[] = ['jpeg', 'JPEG', 'jpg', 'JPG', 'png', 'PNG'] //'BMP', 'bmp', 'GIF', 'gif', 'ico', 'ICO'
-        let isOk: null | string = null
-        for (let i = 0; i < arr.length; i++) {
-            if (fileExtension == arr[i]) isOk = "ok"
+        const allowedTypes: string[] = ['jpeg', 'JPEG', 'jpg', 'JPG', 'png', 'PNG'] //'BMP', 'bmp', 'GIF', 'gif', 'ico', 'ICO'
+        if (!allowedTypes.some(fileType => fileType === fileExtension)){
+            return next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
         }
-        if (isOk == null) return next(ApiError.BadRequest(`Файла ${name} не является картинкой`))
-        if (file.size > 1048576) return next(ApiError.BadRequest(`Размер файла ${name} больше 1 Мб`))
+        if (file.size > 1048576) return next(ApiError.BadRequest(`File with name: ${name} is larger than 1 MB`))
         const fileName: string = uuid.v4() + '.' + fileExtension
         const filePath: string = path.resolve(__dirname, '..', 'static', `imageFile`)
         if (!fs.existsSync(filePath)) {
             fs.mkdirSync(filePath, {recursive: true})
         }
         const picturePath: string = path.resolve(filePath, fileName)
-
         fs.writeFileSync(picturePath, file.data)
         return picturePath
     }
@@ -77,18 +73,18 @@ class PictureController {
     static deleteOnePicture(path: string, next: NextFunction) {
         fs.unlink(path, (err: ErrnoException) => {
             if (err) return next(err)
-            console.log('Файл успешно удалён');
+            console.log('File deleted successfully');
         });
     }
 
-    async createPictures(req: CustomRequest<null, CreatePicturesParams, null, any>, res: Response, next: NextFunction) {
+    async createPictures(req: CustomRequest<null, CreatePicturesParams, null, any | null>, res: Response, next: NextFunction) {
         try {
             const {orderId} = req.params
-            let picturesArr = [] as MyFile[]
-            for (let i = 0; i < 5; i++) {
-                const propName = `picture${i}`
-                if (req.files[propName]) picturesArr.push(req.files[propName])
-            }
+            let picturesArr:MyFile[] = []
+            if (req.files === null) return res.status(201).json({message:'Order without pictures'})
+            Object.keys(req.files).forEach(function(key) {
+                if (key) picturesArr.push(req.files[key])
+            }, req.files);
             const order: OrderModel = await Order.findOne({where: {id: orderId}})
             if (!order) return next(ApiError.BadRequest(`Order is not found`))
 
@@ -156,7 +152,7 @@ class PictureController {
 
     async deletePictures(req: CustomRequest<DeletePicturesBody, CreatePicturesParams, null, null>, res: Response, next: NextFunction) {
         const {orderId} = req.params
-        const arr = /*JSON.parse(*/req.body.picturesId
+        const arrayPicturesId = /*JSON.parse(*/req.body.picturesId
 
         const deleteOnePicture = (pictureId: number):Promise<number> => {
             return new Promise((resolve, reject) => {
@@ -164,7 +160,7 @@ class PictureController {
                         if (orderPicture == null) reject(`Picture with this id: ${pictureId} does not belong to order with this id: ${orderId}`)
                         Picture.findByPk(pictureId).then((picture:PictureModel)=>{
                             cloudinary.uploader.destroy(picture.path).then((cd: { result: string })=>{
-                                if(cd.result!== 'ok') reject(`Cloudinary server error`)
+                                if(cd.result !== 'ok') reject(`Cloudinary server error`)
                                 else picture.destroy().then(()=>{
                                     orderPicture.destroy().then(()=>{
                                         return resolve(picture.id)
@@ -178,7 +174,7 @@ class PictureController {
                 })
             })
         }
-        Promise.all(arr.map(deleteOnePicture)).then((picturesId:number[])=>{
+        Promise.all(arrayPicturesId.map(deleteOnePicture)).then((picturesId:number[])=>{
             console.log(picturesId)
             res.status(200).json({message:`pictures with id: ${picturesId} was deleted`, picturesId})
         })

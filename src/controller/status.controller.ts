@@ -1,9 +1,9 @@
 import {NextFunction, Response, Request} from "express";
 import {CreatePicturesParams, CustomRequest} from "../interfaces/RequestInterfaces";
-import {OrderModel} from "../myModels/order.model";
+import {OrderModel} from "../models/order.model";
 
 const ApiError = require('../exeptions/api-error')
-const {STATUSES, Order} = require('../myModels/index');
+const {STATUSES, Order} = require('../models');
 
 export interface ChangeStatusBody {
     status: string
@@ -26,7 +26,7 @@ class StatusController {
             const order: OrderModel = await Order.findByPk(orderId)
             if (!order) return next(ApiError.BadRequest("Order is not found"))
             if (STATUSES[status]) {
-                const update = await order.update({status: STATUSES[status]})
+                const update: OrderModel = await order.update({status: STATUSES[status]})
                 res.status(200).json(status)
             } else return next(ApiError.BadRequest("Status not found"))
         } catch (e) {

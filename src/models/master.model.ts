@@ -1,5 +1,4 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {ROLE} from "./index"
 
 export interface MasterAttributes {
     id: number;
@@ -13,8 +12,8 @@ export interface MasterAttributes {
     isApproved: boolean;
     createdAt?: Date;
     updatedAt?: Date;
-
 }
+
 export interface MasterModel extends Model<MasterAttributes>, MasterAttributes {}
 export class Master extends Model<MasterModel, MasterAttributes> {}
 

@@ -1,16 +1,15 @@
 import {Response, NextFunction} from 'express';
-import {UserModel} from "../myModels/user.model";
-import {MasterModel} from "../myModels/master.model";
-import {AdminModel} from "../myModels/admin.model";
+import {UserModel} from "../models/user.model";
+import {MasterModel} from "../models/master.model";
+import {AdminModel} from "../models/admin.model";
 import {AuthRegistrationBody, CustomRequest, Link, LoginBody} from "../interfaces/RequestInterfaces";
 
 const ApiError = require('../exeptions/api-error');
-const {Master, User, Admin} = require('../myModels/index');
+const {Master, User, Admin} = require('../models');
 const userController = require("./user.controller");
 const masterController = require("./master.controller");
 const bcrypt = require('bcrypt')
 const tokenService = require('../services/tokenServiсe')
-
 
 class AuthController {
 
@@ -43,7 +42,7 @@ class AuthController {
             const token = tokenService.generateJwt(user.id, user.email, user.role)
             return res.status(200).json({token, name: "name" in user ? user.name : "admin"})
         } catch (e) {
-            console.log(e)
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -59,7 +58,7 @@ class AuthController {
             if (!isMaster) await userController.registration(req, res, next)
             else await masterController.registration(req, res, next)
         } catch (e) {
-            console.log(e)
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -78,7 +77,7 @@ class AuthController {
             }
             return next(ApiError.BadRequest('Incorrect activation link'))
         } catch (e) {
-            console.log(e)
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -97,7 +96,7 @@ class AuthController {
             }
             return next(ApiError.BadRequest('Incorrect activation link'))
         } catch (e) {
-            console.log(e)
+            next(ApiError.Internal(`server error`))
         }
     }
 }

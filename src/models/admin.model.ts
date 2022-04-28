@@ -1,5 +1,4 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {ROLE} from "./index";
 
 export interface AdminAttributes {
     id: number;

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 import * as express from 'express';
-const {ROLE} = require('../myModels/index');
+const {ROLE} = require('../models');
 
 module.exports = function (roles : typeof ROLE[]) {
     return function (req:express.Request, res:express.Response, next:express.NextFunction) {
@@ -17,12 +17,6 @@ module.exports = function (roles : typeof ROLE[]) {
             if (isTrue) {
                 return next()
             }
-            /*for (let i = 0; i < roles.length; i++) {
-                if (decoded.role === roles[i]) {
-                    req.user = decoded;
-                    return next()
-                }
-            }*/
             return res.status(403).json({message: "Forbidden"})
 
         } catch (e) {

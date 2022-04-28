@@ -1,6 +1,4 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-const {Order, Picture} = require('.//index');
-
 
 export interface OrderPictureAttributes {
     id: number;

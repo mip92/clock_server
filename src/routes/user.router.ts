@@ -5,7 +5,7 @@ const userController = require('../controller/user.controller')
 const checkRoles = require('../middlwares/checkRolesMiddleware')
 const checkRules2 = require("../middlwares/checkRulesMiddleware");
 const {body} = require('express-validator');
-const {ROLE}=require("../myModels/index")
+const {ROLE}=require("../models")
 
 const validationCreateUserBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),

@@ -7,9 +7,9 @@ import {
     UpdateUserBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {UserModel} from "../myModels/user.model";
+import {UserModel} from "../models/user.model";
 
-const {User, ROLE} = require('../myModels/index');
+const {User, ROLE} = require('../models');
 const ApiError = require('../exeptions/api-error')
 const tokenService = require('../services/tokenServiсe')
 const uuid = require('uuid')
@@ -43,7 +43,7 @@ class UserController {
                 return res.status(201).json(newUser)
             }
         } catch (e) {
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -54,7 +54,7 @@ class UserController {
             if (isUserCreated) return next(ApiError.BadRequest("User with this email is already registered"))
             else res.status(200).json(email)
         } catch (e) {
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -67,7 +67,7 @@ class UserController {
             if (!users) return next(ApiError.BadRequest("Users not found"))
             res.status(200).json(users)
         } catch (e) {
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -82,7 +82,7 @@ class UserController {
             if (!user) return next(ApiError.BadRequest("User not found"))
             res.status(200).json(user)
         } catch (e) {
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -104,7 +104,7 @@ class UserController {
             res.status(200).json(newUser)
         } catch (e) {
             console.log(e)
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -117,7 +117,7 @@ class UserController {
             await User.destroy({where: {id: userId}})
             res.status(200).json({message: `user with id:${userId} was deleted`, user: candidate})
         } catch (e) {
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -149,7 +149,7 @@ class UserController {
             }
         } catch (e) {
             console.log(e)
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 
@@ -178,7 +178,7 @@ class UserController {
                 changedUser.role)
             return res.status(200).json({token})
         } catch (e) {
-            console.log(e)
+            next(ApiError.Internal(`server error`))
         }
     }
 }

@@ -5,7 +5,7 @@ const orderController = require('../controller/order.controller')
 const {body} = require("express-validator");
 const checkRules = require('../middlwares/checkRuleMiddleware')
 const checkRoles = require("../middlwares/checkRolesMiddleware");
-const {ROLE}=require("../myModels/index")
+const {ROLE}=require("../models")
 
 const validationCreateOrderBodyRules = [
     body('cityId', 'city_id is required').not().isEmpty().escape(),

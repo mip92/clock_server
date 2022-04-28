@@ -6,11 +6,10 @@ import {
     UpdateCityBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {CityModel} from "../myModels/city.model";
+import {CityModel} from "../models/city.model";
 
 const ApiError = require('../exeptions/api-error')
-const {City} = require('../myModels/index');
-
+const {City} = require('../models');
 
 class CityController {
     async createCity(req: CustomRequest<CreateCityBody, null, null, null>, res: Response, next: NextFunction) {
@@ -43,6 +42,7 @@ class CityController {
                     ],
                 }
             )
+            console.log(cities)
             if (!cities) return next(ApiError.BadRequest("Сities not found"))
             res.status(200).json(cities)
         } catch (e) {
@@ -82,7 +82,7 @@ class CityController {
         try {
             const {cityId} = req.params
             if (!cityId) next(ApiError.BadRequest("id is not defined"))
-            const candidate = await City.findOne({where: {id: cityId}})
+            const candidate: CityModel = await City.findOne({where: {id: cityId}})
             if (!candidate) next(ApiError.BadRequest(`city with id:${cityId} is not defined`))
             await City.destroy({where: {id: cityId}})
             res.status(200).json({message: `city with id:${cityId} was deleted`, city: candidate})

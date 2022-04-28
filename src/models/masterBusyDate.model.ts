@@ -1,7 +1,5 @@
 import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 
-const {Master} = require('.//index');
-
 export interface MasterBusyDateAttributes {
     id: number;
     masterId: number
@@ -10,11 +8,9 @@ export interface MasterBusyDateAttributes {
     updatedAt?: Date;
 }
 
-export interface MasterBusyDateModel extends Model<MasterBusyDateAttributes>, MasterBusyDateAttributes {
-}
+export interface MasterBusyDateModel extends Model<MasterBusyDateAttributes>, MasterBusyDateAttributes {}
 
-export class MasterBusyDate extends Model<MasterBusyDateModel, MasterBusyDateAttributes> {
-}
+export class MasterBusyDate extends Model<MasterBusyDateModel, MasterBusyDateAttributes> {}
 
 export type MasterBusyDateStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): MasterBusyDateModel;

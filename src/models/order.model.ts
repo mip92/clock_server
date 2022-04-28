@@ -1,6 +1,5 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
 import {STATUSES} from "./index";
-const {User} = require('.//index');
 
 export interface OrderAttributes {
     id: number;

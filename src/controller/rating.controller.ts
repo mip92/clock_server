@@ -4,10 +4,9 @@ import {
     GetRatingByMasterParams
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
+import {RatingModel} from "../models/rating.model";
 
-import {RatingModel} from "../myModels/rating.model";
-const {Rating} = require('../myModels/index');
-
+const {Rating} = require('../models');
 const ApiError = require('../exeptions/api-error')
 
 class RatingController {
@@ -50,14 +49,14 @@ class RatingController {
                 }
             )
             if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
-            let arr=[] as number[]
-            ratings.forEach((r)=>arr.push(r.rating))
-            const sum = arr.reduce((a, b) => a + b, 0);
-            const average = (Math.ceil((sum / arr.length)*10)/10)
+            let arrayOfRatings:number[] = []
+            ratings.forEach((r)=>arrayOfRatings.push(r.rating))
+            const sum = arrayOfRatings.reduce((a, b) => a + b, 0);
+            const average = (Math.ceil((sum / arrayOfRatings.length)*10)/10)
             //const average = Math.floor(sum / arr.length);
             res.status(200).json({averageRating: average, masterId: +masterId, ratings})
         } catch (e) {
-            next(ApiError.BadRequest(e))
+            next(ApiError.Internal(`server error`))
         }
     }
 

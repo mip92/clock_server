@@ -4,9 +4,8 @@ const router = new Router();
 const cityController = require('../controller/city.controller')
 const checkRoles = require("../middlwares/checkRolesMiddleware");
 const {body} = require("express-validator");
-const checkRules = require("../middlwares/checkRuleMiddleware");
 const checkRules2 = require("../middlwares/checkRulesMiddleware");
-const {ROLE}=require("../myModels/index")
+const {ROLE}=require("../models")
 
 const validationCreateCityBodyRules = [
     body('city', "city name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),

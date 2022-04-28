@@ -3,9 +3,7 @@ const Router = require('express').Router;
 const router = new Router();
 const ratingController = require('../controller/rating.controller')
 const {body} = require("express-validator");
-const checkRoles = require("../middlwares/checkRolesMiddleware");
 const checkRules = require('../middlwares/checkRuleMiddleware')
-
 
 const validationCreateRatingBodyRules = [
     body('orderId', "orderId is required").not().isEmpty(),

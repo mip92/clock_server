@@ -1,12 +1,12 @@
 import {Transporter} from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 
-
-const {ROLE} = require("../myModels/index")
+const {ROLE} = require("../models")
 const nodemailer = require('nodemailer');
 
 class MailService {
     private transporter: Transporter<SMTPTransport.SentMessageInfo>;
+
     constructor() {
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
@@ -19,14 +19,14 @@ class MailService {
         });
     }
 
-    async sendMailToNewUser(to:string, masterName: string, date: Date, clockSize: number,
-                            password:string, activationLink:string) {
+    async sendMailToNewUser(to: string, masterName: string, date: Date, clockSize: number,
+                            password: string, activationLink: string) {
         const dateTime = new Date(date)
         const year = dateTime.getFullYear()
         const month = dateTime.getMonth() + 1
         const day = dateTime.getDate()
         const hours = dateTime.getHours()
-        const url =`${process.env.API_URL}/api/auth/login/activate/${activationLink}`
+        const url = `${process.env.API_URL}/api/auth/login/activate/${activationLink}`
         await this.transporter.sendMail(
             {
                 from: process.env.SMTP_USER,
@@ -69,7 +69,6 @@ class MailService {
     }
 
     async sendActivationMail(to: string, link: string, role: typeof ROLE, password = null) {
-
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
@@ -87,7 +86,7 @@ class MailService {
         })
     }
 
-    async sendApproveMail(to: string, status:boolean) {
+    async sendApproveMail(to: string, status: boolean) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
@@ -99,7 +98,6 @@ class MailService {
                         <div>Ваш статус мастера был изменен на значение</div>
                         <div>${status ? "подтвержден" : "не подтвержден"}</div>
                     </div>
-                    
                 `
         })
     }
