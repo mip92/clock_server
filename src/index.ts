@@ -1,3 +1,6 @@
+import {CustomRequest, GetOneOrderParams} from "./interfaces/RequestInterfaces";
+import {NextFunction, Response} from "express";
+
 export {};
 const express = require('express')
 require("dotenv").config({
@@ -5,21 +8,20 @@ require("dotenv").config({
 })
 const PORT = process.env.PORT || 5000
 const cors = require('cors')
-const errorMiddleware=require('./middlwares/error-middleware')
+const errorMiddleware = require('./middlwares/error-middleware')
 const router = require('./routes')
 const fileupload = require("express-fileupload");
-const {dbConfig}= require("./models")
+const {dbConfig} = require("./models")
 //const {db}= require("./models/index");
 
 const app = express()
 app.use(express.json())
 app.use(cors({
-    credentials:true,
+    credentials: true,
     origin: process.env.CLIENT_URL
 }))
 app.use(fileupload())
-app.use('/api',router)
-
+app.use('/api', router)
 app.use(errorMiddleware)
 
 const start = async () => {
