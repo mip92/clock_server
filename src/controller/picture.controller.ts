@@ -53,13 +53,14 @@ interface OrderPictureModelWithPicture extends OrderPictureModel {
 
 class PictureController {
     static createOnePicture(file: MyFile, next: NextFunction) {
+        const MAX_FILE_SIZE=1048576 //1024*1024 1mb
         const name: string = file.name
         const fileExtension: string | undefined = name.split('.').pop()
         const allowedTypes: string[] = ['jpeg', 'JPEG', 'jpg', 'JPG', 'png', 'PNG'] //'BMP', 'bmp', 'GIF', 'gif', 'ico', 'ICO'
         if (!allowedTypes.some(fileType => fileType === fileExtension)){
             return next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
         }
-        if (file.size > 1048576) return next(ApiError.BadRequest(`File with name: ${name} is larger than 1 MB`))
+        if (file.size > MAX_FILE_SIZE) return next(ApiError.BadRequest(`File with name: ${name} is larger than 1 MB`))
         const fileName: string = uuid.v4() + '.' + fileExtension
         const filePath: string = path.resolve(__dirname, '..', 'static', `imageFile`)
         if (!fs.existsSync(filePath)) {

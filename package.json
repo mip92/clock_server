@@ -1,14 +1,13 @@
 {
   "name": "server",
   "version": "1.0.0",
-
   "description": "",
   "main": "src/index.ts",
   "scripts": {
     "start": "cross-env NODE_ENV=production node src/index.ts",
     "start:dev": "cross-env NODE_ENV=development ts-node src/index.ts",
-    "migration:up:all":"cd src && npx sequelize-cli db:migrate",
-    "migration:down:one":"cd src && npx sequelize-cli db:migrate:undo"
+    "migration:up:all": "cd src && npx sequelize-cli db:migrate",
+    "migration:down:one": "cd src && npx sequelize-cli db:migrate:undo"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +23,7 @@
     "express-validator": "^6.12.1",
     "jsonwebtoken": "^8.5.1",
     "nodemailer": "^6.6.5",
+    "paypal-rest-sdk": "^1.8.1",
     "pg": "^8.6.0",
     "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.1.13",
