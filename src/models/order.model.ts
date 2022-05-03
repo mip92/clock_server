@@ -7,7 +7,8 @@ export interface OrderAttributes {
     originalCityName: string,
     dealPrice: number,
     userId: number,
-    status: typeof STATUSES
+    status: typeof STATUSES,
+    payPalOrderId: number,
 }
 export interface OrderModel extends Model<OrderAttributes>, OrderAttributes {}
 export class Order extends Model<OrderModel, OrderAttributes> {}
@@ -30,5 +31,6 @@ export function OrderFactory (sequelize: Sequelize): OrderStatic {
             }
         },*/
         status: {type: DataTypes.STRING, allowNull: false},
+        payPalOrderId: {type: DataTypes.STRING, allowNull: true},
     });
 }

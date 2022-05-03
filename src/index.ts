@@ -18,8 +18,9 @@ const app = express()
 app.use(express.json())
 app.use(cors({
     credentials: true,
-    origin: process.env.CLIENT_URL
+    origin: [process.env.CLIENT_URL, 'https://api-m.sandbox.paypal.com']
 }))
+/*app.use(cors({credentials: true, origin: 'https://api-m.sandbox.paypal.com'}))*/
 app.use(fileupload())
 app.use('/api', router)
 app.use(errorMiddleware)

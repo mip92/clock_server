@@ -1,5 +1,3 @@
-import {NextFunction} from "express";
-
 export {};
 const Router = require('express')
 const router = new Router()

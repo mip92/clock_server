@@ -2,17 +2,73 @@ import {CustomRequest} from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {OrderModel} from "../models/order.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
+import axios from "axios";
 
 const ApiError = require('../exeptions/api-error')
 const paypal = require('paypal-rest-sdk');
-const {Order, MasterBusyDate}= require('../models');
-interface link{
-    href:string,
-    rel:string,
-    method:string
+const {MasterBusyDate, Order, STATUSES} = require('../models');
+
+interface link {
+    href: string,
+    rel: string,
+    method: string
 }
 
-class PayPallController {
+class PayPalController {
+    async addPayPalIdToOrder(req: CustomRequest<any, null, null, null>, res: Response, next: NextFunction) {
+        try {
+            const payPalOrderId = req.body.resource.supplementary_data.related_ids.order_id
+            const payPalClientId = process.env.PAYPAL_CLIENT_ID
+            const secrete = process.env.PAYPAL_SECRETE
+            if (!payPalClientId || !secrete) {
+                console.log('PayPalClientId or secrete is not found')
+                return
+            }
+            const basicToken = Buffer.from(`${payPalClientId}:${secrete}`, 'utf8').toString('base64')
+            console.log(basicToken)
+            const token = await axios.post(`https://api.sandbox.paypal.com/v1/oauth2/token`, {"grant_type":"client_credentials"}
+                 , {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    'Authorization': `Basic ${basicToken}`,
+                },
+                /*data: {
+                   /!* "username": payPalClientId,
+                    "password": secrete,*!/
+                    "grant_type": "client_credentials"
+                }*/
+/*                headers: {
+                    'Authorization': `Basic ${basicToken}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },*/
+            })
+
+
+            /*            const token = await axios.post(`https://api.sandbox.paypal.com/v1/oauth2/token`, {}, {
+                            auth: {
+                                username: payPalClientId,
+                                password: secrete
+                            }
+                        });*/
+            console.log(token)
+
+            /* const response = await axios.get(`https://api.sandbox.paypal.com/v2/checkout/orders/${payPalOrderId}`, {
+                 headers: {
+                     'Authorization': `Bearer A21AAIDoaBaiPMhGVl9m2MHZdj6GqCHRKqRM6mBhPkiiRkixzoQNA404uioPrZiVua4W4qs32yE6nTiU3yu1QRxYIGwAfqyng`
+                 }
+             })
+             const description = response.data.purchase_units[0].description
+             const orderId=Number(description.replace(/\D+/g,""))
+             const order: OrderModel = await Order.findOne({where: {id: orderId}})
+             await order.update({payPalOrderId:payPalOrderId, status:STATUSES.Confirmed})*/
+
+            //res.status(200).json(order)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+
     async createOrder(req: CustomRequest<any, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {orderId} = req.body
@@ -20,6 +76,7 @@ class PayPallController {
             interface OrderModelWithMasterBusyDate extends OrderModel {
                 dataValues: MasterBusyDateModel
             }
+
             const order: OrderModelWithMasterBusyDate = await Order.findOne({
                 where: {id: orderId},
                 include: [
@@ -61,12 +118,12 @@ class PayPallController {
                     "description": `watch repair in the ${order.originalCityName} city on ${year}.${month}.${day} at ${hours}:00`
                 }]
             };
-            paypal.payment.create(create_payment_json, function (error:Error, payment:any) {
+            paypal.payment.create(create_payment_json, function (error: Error, payment: any) {
                 if (error) {
                     throw error;
                 } else {
                     console.log(payment)
-                    const approvalUrl =payment.links.find((link: link) => link.rel==='approval_url');
+                    const approvalUrl = payment.links.find((link: link) => link.rel === 'approval_url');
                     return res.status(200).json(approvalUrl.href)
                 }
             });
@@ -74,6 +131,7 @@ class PayPallController {
             next(ApiError.Internal(`server error`))
         }
     }
+
     async paid(req: CustomRequest<any, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {orderId} = req.body
@@ -81,6 +139,7 @@ class PayPallController {
             interface OrderModelWithMasterBusyDate extends OrderModel {
                 dataValues: MasterBusyDateModel
             }
+
             const order: OrderModelWithMasterBusyDate = await Order.findOne({
                 where: {id: orderId},
                 include: [
@@ -122,12 +181,12 @@ class PayPallController {
                     "description": `watch repair in the ${order.originalCityName} city on ${year}.${month}.${day} at ${hours}:00`
                 }]
             };
-            paypal.payment.create(create_payment_json, function (error:Error, payment:any) {
+            paypal.payment.create(create_payment_json, function (error: Error, payment: any) {
                 if (error) {
                     throw error;
                 } else {
                     console.log(payment)
-                    const approvalUrl =payment.links.find((link: link) => link.rel==='approval_url');
+                    const approvalUrl = payment.links.find((link: link) => link.rel === 'approval_url');
                     return res.status(200).json(approvalUrl.href)
                 }
             });
@@ -137,4 +196,4 @@ class PayPallController {
     }
 }
 
-module.exports = new PayPallController()
+module.exports = new PayPalController()
