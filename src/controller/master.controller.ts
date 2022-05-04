@@ -11,7 +11,7 @@ import {NextFunction, Response} from "express";
 import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
-import Sequelize from "sequelize";
+import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
 import {dbConfig} from "../models";
 
 const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../models');
@@ -90,38 +90,33 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset, city_id} = req.query
-            if (limit && +limit > 50) limit = '50'
-            if (!offset) offset = '0'
-            if (!city_id) {
-                const masters: MasterModel[] = await Master.findAndCountAll({
-                    where: {isActivated: true}, //display masters who have confirmed their mail
-                    attributes: {exclude: ['password', 'activationLink']},
-                    include: {model: City, required: false},
-                    limit,
-                    offset
-                })
-                if (!masters) return next(ApiError.BadRequest("Masters not found"))
-                res.status(200).json(masters)
+            let {limit, offset, sortBy, select, cities} = req.query
+             const citiesID: "" | string[] | undefined = cities && cities.split(',');
+            const options: Omit<FindAndCountOptions<Attributes<typeof Master>>, "group"> = {}
+            console.log(limit, offset, sortBy, select, cities)
+            if (limit && +limit > 50) options.limit = 50
+            if (!offset) options.offset = 0
+            if (sortBy && select) options.order = [[sortBy, select]]
+            if (!cities) {
+                options.include = {model: City, required: false}
             }
-            if (city_id) {
-                const masters: MasterModel[] = await Master.findAndCountAll({
-                    include: [{
-                        where: {
-                            id: city_id,
-                            isActivated: true,
-                            isApproved: true
-                        },
-                        model: City,
-                        required: true
-                    }],
-                    attributes: {exclude: ['password', 'activationLink']},  ///
-                    limit,
-                    offset
-                })
-                if (!masters) return next(ApiError.BadRequest("Masters not found"))
-                res.status(200).json(masters)
+            console.log(citiesID)
+            if (cities) {
+                options.include = [{
+                    where: {
+                        id: citiesID,
+                        //isActivated: true,
+                        //isApproved: true
+                    },
+                    model: City,
+                    required: true
+                }]
             }
+            options.attributes = {exclude: ['password', 'activationLink']}
+            options.where = {isActivated: true}
+            const masters: MasterModel[] = await Master.findAndCountAll(options)
+            if (!masters) return next(ApiError.BadRequest("Masters not found"))
+            res.status(200).json(masters)
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e))
@@ -148,6 +143,7 @@ class MasterController {
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, name, email, citiesId} = req.body
+            console.log(id, name, email, citiesId)
             const isEmailUniq: MasterModel = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
@@ -155,8 +151,9 @@ class MasterController {
                 param: "email",
                 location: "body"
             }))
-            const citiesID: number[] = JSON.parse(citiesId)
-            //const citiesID: number[] = citiesId.split(',');
+
+            //const citiesID: number[] = JSON.parse(citiesId)
+            const citiesID: string[] = citiesId.split(',');
             if (!citiesID) return next(ApiError.ExpectationFailed({
                 value: citiesId,
                 msg: `CitiesId field must have at least 1 items`,
@@ -164,7 +161,7 @@ class MasterController {
                 location: "body"
             }))
             await MasterCity.destroy({where: {masterId: id}})
-            const createMasterCity = (cityId: number): Promise<CityModel> => {
+            const createMasterCity = (cityId: string): Promise<CityModel> => {
                 return new Promise(function (resolve, reject) {
                     resolve(MasterCity.create({masterId: id, cityId: Number(cityId)}))
                     reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))

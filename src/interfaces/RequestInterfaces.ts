@@ -45,7 +45,9 @@ export interface ChangeEmailBody {
 export type GetAllMastersQuery = {
     limit?: string,
     offset?: string,
-    city_id?: string
+    cities?: string,
+    sortBy?:string,
+    select?: string
 }
 export type MasterId = { masterId: string }
 export type CityIdType = {cityId: string}
