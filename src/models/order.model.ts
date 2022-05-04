@@ -8,7 +8,7 @@ export interface OrderAttributes {
     dealPrice: number,
     userId: number,
     status: typeof STATUSES,
-    payPalOrderId: number,
+    payPalOrderId: string,
 }
 export interface OrderModel extends Model<OrderAttributes>, OrderAttributes {}
 export class Order extends Model<OrderModel, OrderAttributes> {}

@@ -5,13 +5,8 @@ const Router = require('express')
 const router = new Router()
 const payPalController = require('../controller/payPal.controller')
 
-router.post('/created', (req: any, res: Express.Response, next: NextFunction) => {
-    console.log(111)
-
-    console.log(req.body.resource)
-    console.log(req.body.resource.links)
-})
-router.post('/paid', payPalController.addPayPalIdToOrder)
+router.post('/created/:orderId', payPalController.createPayPalOrder)
+router.post('/paid', payPalController.orderHasBeenPaid)
     /*console.log(222)
     console.log(req.body.resource)
     console.log(req.body.resource.links)

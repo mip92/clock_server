@@ -92,6 +92,10 @@ export interface CreateRatingBody {
 }
 export type GetRatingByMasterParams ={ masterId:string }
 
+export interface CreatePayPalOrderBody {
+    payPalOrderId: string
+}
+
 export interface CustomRequest<U, T extends Params | null,
     C extends Query | null, K extends FileList| null> extends Express.Request {
     body: U,

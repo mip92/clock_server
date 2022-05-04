@@ -32,12 +32,13 @@ const Rating = RatingFactory(dbConfig);
 const MasterCity = MasterCityFactory(dbConfig);
 const Admin = AdminFactory(dbConfig);
 
-export enum STATUSES{
-    Approval= "Approval",
-    Canceled="Canceled",
-    Confirmed="Confirmed",
-    Completed="Completed",
-    NotCompleted="NotCompleted"
+export enum STATUSES {
+    Approval = "Approval",
+    Canceled = "Canceled",
+    Confirmed = "Confirmed",
+    Completed = "Completed",
+    NotCompleted = "NotCompleted",
+    AwaitingPayment = "AwaitingPayment"
 }
 
 export enum ROLE {

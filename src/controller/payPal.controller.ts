@@ -1,4 +1,8 @@
-import {CustomRequest} from "../interfaces/RequestInterfaces";
+import {
+    CreatePayPalOrderBody,
+    CustomRequest,
+    GetOneOrderParams
+} from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {OrderModel} from "../models/order.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
@@ -15,42 +19,60 @@ interface link {
 }
 
 class PayPalController {
-    async addPayPalIdToOrder(req: CustomRequest<any, null, null, null>, res: Response, next: NextFunction) {
+    async createPayPalOrder(req: CustomRequest<CreatePayPalOrderBody, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
         try {
+            const {payPalOrderId} = req.body
+            const {orderId} = req.params
+            console.log(payPalOrderId)
+            const order:OrderModel = await Order.findOne({where: {id: orderId},})
+            if(!order) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
+            await order.update({payPalOrderId:payPalOrderId, status:STATUSES.AwaitingPayment})
+            res.status(200).json({message: `payPal order was created`})
+        } catch (e) {
+            next(ApiError.Internal(`server error`))
+        }
+    }
+
+    async orderHasBeenPaid(req: CustomRequest<any, null, null, null>, res: Response, next: NextFunction) {
+        try {
+            console.log(req.body.resource.supplementary_data)
             const payPalOrderId = req.body.resource.supplementary_data.related_ids.order_id
-            const payPalClientId = process.env.PAYPAL_CLIENT_ID
+            const order: OrderModel = await Order.findOne({where: {payPalOrderId}})
+            await order.update({status:STATUSES.Confirmed})
+            /*const payPalClientId = process.env.PAYPAL_CLIENT_ID
             const secrete = process.env.PAYPAL_SECRETE
             if (!payPalClientId || !secrete) {
                 console.log('PayPalClientId or secrete is not found')
                 return
             }
             const basicToken = Buffer.from(`${payPalClientId}:${secrete}`, 'utf8').toString('base64')
-            console.log(basicToken)
-            const token = await axios.post(`https://api.sandbox.paypal.com/v1/oauth2/token`, {"grant_type":"client_credentials"}
-                 , {
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    'Authorization': `Basic ${basicToken}`,
-                },
-                /*data: {
-                   /!* "username": payPalClientId,
-                    "password": secrete,*!/
-                    "grant_type": "client_credentials"
-                }*/
-/*                headers: {
-                    'Authorization': `Basic ${basicToken}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },*/
-            })
+
+            const token = await axios.post(`https://api.sandbox.paypal.com/v1/oauth2/token`,
+                {"grant_type": "client_credentials"},
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        'Authorization': `Basic ${basicToken}`,
+                    },
+                    data: {
+                       "username": payPalClientId,
+                        "password": secrete,
+                        "grant_type": "client_credentials"
+                    }
+                                    headers: {
+                                        'Authorization': `Basic ${basicToken}`,
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                })
 
 
-            /*            const token = await axios.post(`https://api.sandbox.paypal.com/v1/oauth2/token`, {}, {
+                        const token = await axios.post(`https://api.sandbox.paypal.com/v1/oauth2/token`, {}, {
                             auth: {
                                 username: payPalClientId,
                                 password: secrete
                             }
-                        });*/
-            console.log(token)
+                        });
+            console.log(token)*/
 
             /* const response = await axios.get(`https://api.sandbox.paypal.com/v2/checkout/orders/${payPalOrderId}`, {
                  headers: {
