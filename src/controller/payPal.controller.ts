@@ -26,6 +26,7 @@ class PayPalController {
             console.log(req.body.resource.supplementary_data)
             const payPalOrderId = req.body.resource.supplementary_data.related_ids.order_id
             const order: OrderModel = await Order.findOne({where: {payPalOrderId}})
+            console.log(order)
             await order.update({status:STATUSES.Confirmed})
         } catch (e) {
             console.log(e)

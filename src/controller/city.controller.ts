@@ -42,7 +42,6 @@ class CityController {
                     ],
                 }
             )
-            console.log(cities)
             if (!cities) return next(ApiError.BadRequest("Сities not found"))
             res.status(200).json(cities)
         } catch (e) {
