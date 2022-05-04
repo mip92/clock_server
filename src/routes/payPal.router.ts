@@ -1,15 +1,16 @@
-import {NextFunction} from "express";
-
 export {};
 const Router = require('express')
 const router = new Router()
+const {body} = require("express-validator");
 const payPalController = require('../controller/payPal.controller')
+const checkRules = require('../middlwares/checkRuleMiddleware')
 
-router.post('/created/:orderId', payPalController.createPayPalOrder)
+const createPayPalOrderBodyRules = [
+    body('payPalOrderId', 'dateTime is required').not().isEmpty(),
+];
+
+router.post('/created/:orderId', createPayPalOrderBodyRules, checkRules, payPalController.createPayPalOrder)
 router.post('/paid', payPalController.orderHasBeenPaid)
-    /*console.log(222)
-    console.log(req.body.resource)
-    console.log(req.body.resource.links)
-})*/
+
 
 module.exports = router
