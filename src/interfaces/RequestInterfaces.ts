@@ -47,7 +47,8 @@ export type GetAllMastersQuery = {
     offset?: string,
     cities?: string,
     sortBy?:string,
-    select?: string
+    select?: string,
+    filter?: string
 }
 export type MasterId = { masterId: string }
 export type CityIdType = {cityId: string}

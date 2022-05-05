@@ -90,10 +90,14 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset, sortBy, select, cities} = req.query
-             const citiesID: "" | string[] | undefined = cities && cities.split(',');
+            let {limit, offset, sortBy, select, cities, filter} = req.query
+            const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<typeof Master>>, "group"> = {}
-            console.log(limit, offset, sortBy, select, cities)
+            // @ts-ignore
+            options.distinct = "Master.id"
+           // options.where = {isActivated: true, isApproved: true}
+            options.attributes = {exclude: ['password', 'activationLink']}
+            console.log(limit, offset, sortBy, select, cities, filter)
             if (limit && +limit > 50) options.limit = 50
             if (!offset) options.offset = 0
             if (sortBy && select) options.order = [[sortBy, select]]
@@ -112,9 +116,11 @@ class MasterController {
                     required: true
                 }]
             }
-            options.attributes = {exclude: ['password', 'activationLink']}
-            options.where = {isActivated: true}
+
+            if (filter) options.where={name:filter}
+
             const masters: MasterModel[] = await Master.findAndCountAll(options)
+            console.log(options)
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
         } catch (e) {
