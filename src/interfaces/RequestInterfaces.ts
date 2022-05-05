@@ -54,7 +54,10 @@ export type MasterId = { masterId: string }
 export type CityIdType = {cityId: string}
 export type LimitOffsetType = {
     limit?: string,
-    offset?: string
+    offset?: string,
+    sortBy?:string,
+    select?: string,
+    filter?: string
 }
 export type Link={ link: string }
 export interface CreateOrderBody {

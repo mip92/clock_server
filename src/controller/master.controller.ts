@@ -12,14 +12,15 @@ import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
-import {dbConfig} from "../models";
+import {MasterCityModel} from "../models/masterCity.model";
 
-const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../models');
+const {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} = require('../models');
 const ApiError = require('../exeptions/api-error')
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
 const mail = require("../services/mailServiсe");
 const tokenService = require('../services/tokenServiсe')
+const Op = require('Sequelize').Op;
 
 class MasterController {
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
@@ -90,12 +91,16 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset, sortBy, select, cities, filter} = req.query
+            const {limit, offset, sortBy, select, cities, filter} = req.query
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<typeof Master>>, "group"> = {}
+            options.where = {}
+            if ((filter !== '') && (filter != undefined) && filter) options.where[Op.or] = [
+                {name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
             // @ts-ignore
             options.distinct = "Master.id"
-           // options.where = {isActivated: true, isApproved: true}
+            //options.where.isActivated = true
+            //options.where.isApproved = true
             options.attributes = {exclude: ['password', 'activationLink']}
             console.log(limit, offset, sortBy, select, cities, filter)
             if (limit && +limit > 50) options.limit = 50
@@ -104,23 +109,14 @@ class MasterController {
             if (!cities) {
                 options.include = {model: City, required: false}
             }
-            console.log(citiesID)
             if (cities) {
                 options.include = [{
-                    where: {
-                        id: citiesID,
-                        //isActivated: true,
-                        //isApproved: true
-                    },
+                    where: {id: citiesID},
                     model: City,
                     required: true
                 }]
             }
-
-            if (filter) options.where={name:filter}
-
             const masters: MasterModel[] = await Master.findAndCountAll(options)
-            console.log(options)
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
         } catch (e) {
@@ -201,12 +197,14 @@ class MasterController {
         try {
             const {masterId} = req.params
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: MasterModel = await Master.findOne({where: {id: masterId}})
+            const candidate: MasterModel = await Master.findOne({where: {id: masterId}, include: [{ all: true }]})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-            const masterBusyDate: MasterBusyDateModel = await MasterBusyDate.destroy({where: {masterId}})
-            const master: MasterModel = await Master.destroy({where: {id: masterId}})
+/*            const masterBusyDate: MasterBusyDateModel = await MasterBusyDate.destroy({where: {masterId}})
+            const masterCity: MasterCityModel =await MasterCity.destroy({where: {masterId}})*/
+            await candidate.destroy({ force: true })
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
         } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
