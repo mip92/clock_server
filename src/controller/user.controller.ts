@@ -74,8 +74,8 @@ class UserController {
             else options.offset = +offset
             if (sortBy && select) options.order = [[sortBy, select]]
             // @ts-ignore
-            options.distinct = "User.id"
-            let users: UserModel = await User.findAndCountAll(options)
+            //options.distinct = "User.id"
+            const users: UserModel = await User.findAndCountAll(options)
             if (!users) return next(ApiError.BadRequest("Users not found"))
             res.status(200).json(users)
         } catch (e) {

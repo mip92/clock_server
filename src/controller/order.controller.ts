@@ -6,12 +6,15 @@ import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {OrderModel} from "../models/order.model";
 import Model, {Attributes, FindAndCountOptions} from "sequelize";
+import Sequelize from "sequelize";
+import {dbConfig} from "../models";
 
 const ApiError = require('../exeptions/api-error')
 const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models');
 const mail = require("../services/mailServiсe");
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
+const Op = require('Sequelize').Op;
 
 class OrderController {
     async createOrder(req: CustomRequest<CreateOrderBody, null, null, null>, res: Response, next: NextFunction) {
@@ -167,37 +170,83 @@ class OrderController {
 
     async getAllOrders(req: CustomRequest<null, null, GetAllOrders, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset, masterId, userId} = req.query
-            const options: Omit<FindAndCountOptions<Attributes<typeof Order>>, "group"> = {}
+            const {limit, offset, masterId, userId, cities, sortBy, select, filter} = req.query;
+            const options: Omit<FindAndCountOptions<Attributes<typeof Order>>, "group"> = {};
 
-            if (limit && +limit > 50) options.limit = 50
-            if (!offset) options.offset = 0
+            if (limit && +limit > 50) options.limit = 50;
+            if (!offset) options.offset = 0;
+            options.include = [
+                {model: City},
+                {model: MasterBusyDate}
+            ];
+            options.where = {}
+            if ((filter !== '') && (filter != undefined) && filter) options.where[Op.or] = [
+                {Master, name: {[Op.iLike]: `%${filter}%`}}, {Master, email: {[Op.iLike]: `%${filter}%`}}]
+         /*   // @ts-ignore
+            options.include[1].order;
+            console.log(options.include);
+            // @ts-ignore
+            const option = options.include.filter((o)=>{return o.model==MasterBusyDate});
+            // @ts-ignore
+            console.log(option[0]);*/
+
 
             if (userId && masterId) {
-                options.include = [
-                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
-                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
-                    {model: City},
-                    {model: MasterBusyDate}
-                ];
+                options.include = [...options.include,
+                    {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
+                ]
                 options.where = {'userId': +userId, 'masterId': +masterId}
             } else if (userId) {
-                options.include = [
+                options.include = [...options.include,
                     {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: Master, attributes: {exclude: ['password', 'activationLink']}},
-                    {model: City},
-                    {model: MasterBusyDate}
                 ];
                 options.where = {'userId': +userId}
             } else if (masterId) {
-                options.include = [
+                options.include = [...options.include,
                     {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, attributes: {exclude: ['password', 'activationLink']}},
-                    {model: City},
-                    {model: MasterBusyDate}
                 ];
                 options.where = {'masterId': +masterId}
+            } else {
+                options.include = [...options.include,
+                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
+                ]
             }
+            if (sortBy && select) {
+                switch (sortBy) {
+                    case "dateTime": options.order = [[MasterBusyDate, 'dateTime', select]];
+                        break;
+                    case "masterEmail": options.order = [[Master, 'email', select]];
+                        break;
+                    case "masterName": options.order = [[Master, 'name', select]];
+                        break;
+                    case "userEmail": options.order = [[User, 'email', select]];
+                        break;
+                    case "userName": options.order = [[User, 'name', select]];
+                        break;
+                    case "city": options.order = [['originalCityName', select]];
+                        break;
+                    case "clockSize": options.order = [["clockSize", select]];
+                        break;
+                    case "dealPrice": options.order = [["dealPrice", select]];
+                        break;
+                    case "totalPrice": {
+                        options.attributes =  [dbConfig.fn('sum',dbConfig.col('dealPrice'), dbConfig.col('clockSize')), 'total'],
+                            //options.group = ['SaleItem.itemId'],
+                            options.raw = true,
+                            options.order = dbConfig.literal('total DESC')
+                        //options.order = [[[sequelize.fn('min', sequelize.col('price')), 'minPrice'], select]];
+                    }
+                        break;
+                    case "status": options.order = [[sortBy, select]];
+                        break;
+                }
+                //options.order = [[sortBy, select]]
+            }
+            console.log(options)
             const orders: OrderModel = await Order.findAndCountAll(options)
             res.status(200).json(orders)
         } catch (e) {

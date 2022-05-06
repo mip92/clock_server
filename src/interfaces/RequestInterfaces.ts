@@ -73,6 +73,10 @@ export type GetAllOrders={
     offset?: string,
     masterId?: string
     userId?: string
+    cities?: string,
+    sortBy?:string,
+    select?: string,
+    filter?: string
 }
 export type GetOneOrderParams={orderId:string}
 export type CreatePicturesParams={orderId:string}
