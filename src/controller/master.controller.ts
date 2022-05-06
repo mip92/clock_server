@@ -12,7 +12,6 @@ import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
-import {MasterCityModel} from "../models/masterCity.model";
 
 const {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} = require('../models');
 const ApiError = require('../exeptions/api-error')
