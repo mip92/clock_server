@@ -37,7 +37,8 @@ export enum STATUSES{
     Canceled="Canceled",
     Confirmed="Confirmed",
     Completed="Completed",
-    NotCompleted="NotCompleted"
+    NotCompleted="NotCompleted",
+    AwaitingPayment = "AwaitingPayment"
 }
 
 export enum ROLE {
