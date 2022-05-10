@@ -210,6 +210,52 @@ class OrderController {
         }
     }
 
+    async createExcel(req: CustomRequest<null, null, GetAllOrders, null>, res: Response, next: NextFunction) {
+        try {
+            let {limit, offset, masterId, userId} = req.query
+            const options: Omit<FindAndCountOptions<Attributes<typeof Order>>, "group"> = {}
+
+            if (limit && +limit > 50) options.limit = 50
+            if (!offset) options.offset = 0
+
+            options.include = [
+                {model: City},
+                {model: MasterBusyDate}
+            ];
+
+            if (userId && masterId) {
+                options.include = [...options.include,
+                    {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
+                ]
+                options.where = {'userId': +userId, 'masterId': +masterId}
+            } else if (userId) {
+                options.include = [...options.include,
+                    {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
+                ];
+                options.where = {'userId': +userId}
+            } else if (masterId) {
+                options.include = [...options.include,
+                    {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
+                ];
+                options.where = {'masterId': +masterId}
+            } else {
+                options.include = [...options.include,
+                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
+                ]
+            }
+            const orders: OrderModel = await Order.findAndCountAll(options)
+            res.status(200).json(orders)
+        } catch (e) {
+            console.log(e)
+            next(ApiError.Internal(`server error`))
+        }
+    }
+
+
     /*async getOneOrder(req: CustomRequest<null, GetOneOrderParams, null>, res: Response, next: NextFunction) {
         try {
             const orderId = req.params.orderId
