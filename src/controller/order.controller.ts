@@ -16,6 +16,10 @@ const uuid = require('uuid')
 const bcrypt = require('bcrypt')
 const Op = require('Sequelize').Op;
 
+type maxMinParam ={
+    masterId: string
+}
+
 class OrderController {
     async createOrder(req: CustomRequest<CreateOrderBody, null, null, null>, res: Response, next: NextFunction) {
         try {
@@ -168,18 +172,29 @@ class OrderController {
         }
     }
 
-    async findMaxAndMinPrice(req: Request, res: Response, next: NextFunction) {
+
+    async findMaxAndMinPrice(req: CustomRequest<null, maxMinParam, null, null>,  res: Response, next: NextFunction) {
+
         try {
-            const range = await Order.findAll({
-                attributes: [
-                    [dbConfig.fn('min', dbConfig.col('dealPrice')), 'minDealPrice'],
-                    [dbConfig.fn('max', dbConfig.col('dealPrice')), 'maxDealPrice'],
-                    [dbConfig.fn('min', dbConfig.col('totalPrice')), 'minTotalPrice'],
-                    [dbConfig.fn('max', dbConfig.col('totalPrice')), 'maxTotalPrice']
-                ]
-            });
-            res.status(201).json(range[0])
+            const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
+            const {masterId} = req.params
+            console.log(masterId)
+            options.where={}
+            options.attributes=[
+                [dbConfig.fn('min', dbConfig.col('dealPrice')), 'minDealPrice'],
+                [dbConfig.fn('max', dbConfig.col('dealPrice')), 'maxDealPrice'],
+                [dbConfig.fn('min', dbConfig.col('totalPrice')), 'minTotalPrice'],
+                [dbConfig.fn('max', dbConfig.col('totalPrice')), 'maxTotalPrice']
+            ]
+            if (masterId) {
+                // @ts-ignore
+                options.where = {masterId}
+            }
+            const range = await Order.findAll(options);
+            console.log(range)
+            res.status(200).json(range[0])
         } catch (e) {
+            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -236,6 +251,7 @@ class OrderController {
                 const statuses: string[]  = status &&status.split(',');
                 const result: string[] =[]
                 statuses.map((c: string |'')=>{result.push(c)})
+                console.log(result)
                 options.where.status ={[Op.or]: result}
             }
             if (minDealPrice && maxDealPrice) {
