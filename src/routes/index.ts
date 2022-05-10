@@ -1,4 +1,3 @@
-export {};
 const Router = require('express')
 const router = new Router()
 const cityRouter=require('./city.router')

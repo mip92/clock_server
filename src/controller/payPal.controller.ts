@@ -11,7 +11,6 @@ class PayPalController {
         try {
             const {payPalOrderId} = req.body
             const {orderId} = req.params
-            console.log(payPalOrderId)
             const order:OrderModel = await Order.findOne({where: {id: orderId},})
             if(!order) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
             await order.update({payPalOrderId:payPalOrderId, status:STATUSES.AwaitingPayment})
@@ -23,7 +22,6 @@ class PayPalController {
 
     async orderHasBeenPaid(req: CustomRequest<any, null, null, null>, res: Response, next: NextFunction) {
         try {
-            console.log(req.body.resource.supplementary_data)
             const payPalOrderId = req.body.resource.supplementary_data.related_ids.order_id
             const order: OrderModel = await Order.findOne({where: {payPalOrderId}})
             console.log(order)
