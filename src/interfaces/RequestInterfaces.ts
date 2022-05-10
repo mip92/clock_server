@@ -76,7 +76,16 @@ export type GetAllOrders={
     cities?: string,
     sortBy?:string,
     select?: string,
-    filter?: string
+    filterMaster? :string,
+    filterUser? :string,
+    minDealPrice? :string,
+    maxDealPrice? :string,
+    minTotalPrice? :string,
+    maxTotalPrice? :string,
+    dateStart? :string,
+    dateFinish? :string,
+    clockSize? :string,
+    status? :string
 }
 export type GetOneOrderParams={orderId:string}
 export type CreatePicturesParams={orderId:string}
