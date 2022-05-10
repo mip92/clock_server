@@ -7,9 +7,11 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {CityModel} from "../models/city.model";
+import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
 
 const ApiError = require('../exeptions/api-error')
 const {City} = require('../models');
+const Op = require('Sequelize').Op;
 
 class CityController {
     async createCity(req: CustomRequest<CreateCityBody, null, null, null>, res: Response, next: NextFunction) {
@@ -31,20 +33,19 @@ class CityController {
 
     async getCities(req: CustomRequest<null, null, LimitOffsetType, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset} = req.query
-            if (limit && +limit > 50) limit = '50'
-            if (!offset) offset = '0'
-            const cities: CityModel = await City.findAndCountAll({
-                    limit,
-                    offset,
-                    order: [
-                        ['createdAt', 'ASC']
-                    ],
-                }
-            )
+            const {limit, offset, sortBy, select, filter} = req.query
+            const options: Omit<FindAndCountOptions<Attributes<typeof City>>, "group"> = {}
+            options.where = {}
+            if ((filter !== '') && (filter != undefined) && filter) options.where = {cityName: {[Op.iLike]: `%${filter}%`}}
+            if (limit && +limit > 50) options.limit = 50
+            if (!offset) options.offset = 0
+            if (sortBy && select) options.order = [[sortBy, select]]
+            //options.order = [['createdAt', 'ASC']]
+            const cities: CityModel[] = await City.findAndCountAll(options)
             if (!cities) return next(ApiError.BadRequest("Сities not found"))
             res.status(200).json(cities)
         } catch (e) {
+            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }

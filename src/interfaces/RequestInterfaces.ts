@@ -45,13 +45,19 @@ export interface ChangeEmailBody {
 export type GetAllMastersQuery = {
     limit?: string,
     offset?: string,
-    city_id?: string
+    cities?: string,
+    sortBy?:string,
+    select?: string,
+    filter?: string
 }
 export type MasterId = { masterId: string }
 export type CityIdType = {cityId: string}
 export type LimitOffsetType = {
     limit?: string,
-    offset?: string
+    offset?: string,
+    sortBy?:string,
+    select?: string,
+    filter?: string
 }
 export type Link={ link: string }
 export interface CreateOrderBody {
@@ -67,6 +73,19 @@ export type GetAllOrders={
     offset?: string,
     masterId?: string
     userId?: string
+    cities?: string,
+    sortBy?:string,
+    select?: string,
+    filterMaster? :string,
+    filterUser? :string,
+    minDealPrice? :string,
+    maxDealPrice? :string,
+    minTotalPrice? :string,
+    maxTotalPrice? :string,
+    dateStart? :string,
+    dateFinish? :string,
+    clockSize? :string,
+    status? :string
 }
 export type GetOneOrderParams={orderId:string}
 export type CreatePicturesParams={orderId:string}

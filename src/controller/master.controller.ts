@@ -11,15 +11,15 @@ import {NextFunction, Response} from "express";
 import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
-import Sequelize from "sequelize";
-import {dbConfig} from "../models";
+import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
 
-const {Master, MasterCity, City, MasterBusyDate, ROLE} = require('../models');
+const {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} = require('../models');
 const ApiError = require('../exeptions/api-error')
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
 const mail = require("../services/mailServiсe");
 const tokenService = require('../services/tokenServiсe')
+const Op = require('Sequelize').Op;
 
 class MasterController {
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
@@ -90,38 +90,34 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset, city_id} = req.query
-            if (limit && +limit > 50) limit = '50'
-            if (!offset) offset = '0'
-            if (!city_id) {
-                const masters: MasterModel[] = await Master.findAndCountAll({
-                    where: {isActivated: true}, //display masters who have confirmed their mail
-                    attributes: {exclude: ['password', 'activationLink']},
-                    include: {model: City, required: false},
-                    limit,
-                    offset
-                })
-                if (!masters) return next(ApiError.BadRequest("Masters not found"))
-                res.status(200).json(masters)
+            const {limit, offset, sortBy, select, cities, filter} = req.query
+            const citiesID: "" | string[] | undefined = cities && cities.split(',');
+            const options: Omit<FindAndCountOptions<Attributes<typeof Master>>, "group"> = {}
+            options.where = {}
+            if ((filter !== '') && (filter != undefined) && filter) options.where[Op.or] = [
+                {name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            // @ts-ignore
+            options.distinct = "Master.id"
+            //options.where.isActivated = true
+            //options.where.isApproved = true
+            options.attributes = {exclude: ['password', 'activationLink']}
+            console.log(limit, offset, sortBy, select, cities, filter)
+            if (limit && +limit > 50) options.limit = 50
+            if (!offset) options.offset = 0
+            if (sortBy && select) options.order = [[sortBy, select]]
+            if (!cities) {
+                options.include = {model: City, required: false}
             }
-            if (city_id) {
-                const masters: MasterModel[] = await Master.findAndCountAll({
-                    include: [{
-                        where: {
-                            id: city_id,
-                            isActivated: true,
-                            isApproved: true
-                        },
-                        model: City,
-                        required: true
-                    }],
-                    attributes: {exclude: ['password', 'activationLink']},  ///
-                    limit,
-                    offset
-                })
-                if (!masters) return next(ApiError.BadRequest("Masters not found"))
-                res.status(200).json(masters)
+            if (cities) {
+                options.include = [{
+                    where: {id: citiesID},
+                    model: City,
+                    required: true
+                }]
             }
+            const masters: MasterModel[] = await Master.findAndCountAll(options)
+            if (!masters) return next(ApiError.BadRequest("Masters not found"))
+            res.status(200).json(masters)
         } catch (e) {
             console.log(e)
             next(ApiError.BadRequest(e))
@@ -148,6 +144,7 @@ class MasterController {
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, name, email, citiesId} = req.body
+            console.log(id, name, email, citiesId)
             const isEmailUniq: MasterModel = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
@@ -155,8 +152,9 @@ class MasterController {
                 param: "email",
                 location: "body"
             }))
-            const citiesID: number[] = JSON.parse(citiesId)
-            //const citiesID: number[] = citiesId.split(',');
+
+            //const citiesID: number[] = JSON.parse(citiesId)
+            const citiesID: string[] = citiesId.split(',');
             if (!citiesID) return next(ApiError.ExpectationFailed({
                 value: citiesId,
                 msg: `CitiesId field must have at least 1 items`,
@@ -164,7 +162,7 @@ class MasterController {
                 location: "body"
             }))
             await MasterCity.destroy({where: {masterId: id}})
-            const createMasterCity = (cityId: number): Promise<CityModel> => {
+            const createMasterCity = (cityId: string): Promise<CityModel> => {
                 return new Promise(function (resolve, reject) {
                     resolve(MasterCity.create({masterId: id, cityId: Number(cityId)}))
                     reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
@@ -198,12 +196,14 @@ class MasterController {
         try {
             const {masterId} = req.params
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: MasterModel = await Master.findOne({where: {id: masterId}})
+            const candidate: MasterModel = await Master.findOne({where: {id: masterId}, include: [{ all: true }]})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-            const masterBusyDate: MasterBusyDateModel = await MasterBusyDate.destroy({where: {masterId}})
-            const master: MasterModel = await Master.destroy({where: {id: masterId}})
+/*            const masterBusyDate: MasterBusyDateModel = await MasterBusyDate.destroy({where: {masterId}})
+            const masterCity: MasterCityModel =await MasterCity.destroy({where: {masterId}})*/
+            await candidate.destroy({ force: true })
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
         } catch (e) {
+            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }

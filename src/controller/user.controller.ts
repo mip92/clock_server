@@ -8,6 +8,7 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {UserModel} from "../models/user.model";
+import {Attributes, FindAndCountOptions} from "sequelize";
 
 const {User, ROLE} = require('../models');
 const ApiError = require('../exeptions/api-error')
@@ -15,6 +16,7 @@ const tokenService = require('../services/tokenServiсe')
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
 const mail = require("../services/mailServiсe");
+const Op = require('Sequelize').Op;
 
 class UserController {
     async createUser(req: CustomRequest<CreateUserBody, null, null, null>, res: Response, next: NextFunction) {
@@ -60,10 +62,20 @@ class UserController {
 
     async getAllUsers(req: CustomRequest<null, null, LimitOffsetType, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset} = req.query
-            if (limit && +limit > 50) limit = '50'
-            if (!offset) offset = '0'
-            let users: UserModel = await User.findAndCountAll({limit, offset})
+            const {limit, offset, sortBy, select, filter} = req.query
+            console.log(limit, offset, sortBy, select, filter)
+            const options: Omit<FindAndCountOptions<Attributes<typeof User>>, "group"> = {}
+            options.where = {}
+            //if ((filter !== '') && (filter != undefined) && filter) options.where = {name: {[Op.iLike]: `%${filter}%`}}
+            if ((filter !== '') && (filter != undefined) && filter) options.where[Op.or] = [{name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            if (limit && +limit > 50) options.limit = 50
+            else if(limit) options.limit = +limit
+            if (!offset) options.offset = 0
+            else options.offset = +offset
+            if (sortBy && select) options.order = [[sortBy, select]]
+            // @ts-ignore
+            //options.distinct = "User.id"
+            const users: UserModel = await User.findAndCountAll(options)
             if (!users) return next(ApiError.BadRequest("Users not found"))
             res.status(200).json(users)
         } catch (e) {
