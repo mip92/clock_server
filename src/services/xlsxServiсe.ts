@@ -14,12 +14,13 @@ class ExcelService {
         const workSheet = xlsx.utils.aoa_to_sheet(workSheetData)
         xlsx.utils.book_append_sheet(workBook, workSheet, workSheetName)
         xlsx.writeFile(workBook, path.resolve(filePath))
+
     }
 
     exportOrdersToExcel(orders: OrderModel[],workSheetColumnNames: string[], workSheetName: string, filePath: string) {
         try {
             // @ts-ignore
-            console.log(orders.rows[0].master_busyDate.dateTime)
+            //console.log(orders.rows[0].master_busyDate.dateTime)
             const data = orders.map(order => {
                 // @ts-ignore
                 return [order.id, order.master_busyDate.dateTime, order.user.email, order.user.name, order.originalCityName, order.clockSize, order.dealPrice, order.totalPrice, order.status]

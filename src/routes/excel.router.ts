@@ -1,7 +1,7 @@
 export {};
 const Router = require('express').Router;
 const router = new Router();
-const excelController = require('../controller/xlsx.controller')
+const excelController = require('../controller/excel.controller')
 
 router.get('/', excelController.createExcel);
 

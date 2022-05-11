@@ -8,7 +8,7 @@ import {OrderModel} from "../models/order.model";
 import Model, {Attributes, FindAndCountOptions} from "sequelize";
 import {dbConfig} from "../models";
 
-const excel = require("../controller/xlsx.controller");
+const excel = require("./excel.controller");
 const ApiError = require('../exeptions/api-error')
 const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models');
 const mail = require("../services/mailServiсe");
@@ -16,6 +16,13 @@ const uuid = require('uuid')
 const bcrypt = require('bcrypt')
 const Op = require('Sequelize').Op;
 
+
+export interface OrderModelWithMasterBusyDateAndUsers extends OrderModelWithMasterBusyDate{
+    user:UserModel
+}
+export interface OrderModelWithMasterBusyDate extends OrderModel {
+    master_busyDate: MasterBusyDateModel
+}
 
 type maxMinParam ={
     masterId: string
@@ -376,7 +383,7 @@ class OrderController {
             const {limit, offset, masterId, userId, cities, sortBy, select,
                 filterMaster, filterUser, minDealPrice, maxDealPrice, minTotalPrice,
                 maxTotalPrice, dateStart, dateFinish, clockSize, status} = req.query;
-            const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
+            const options: Omit<FindAndCountOptions<Attributes<OrderModelWithMasterBusyDateAndUsers>>, "group"> = {};
             options.where = {}
             options.include = []
             if (cities) {
@@ -449,7 +456,7 @@ class OrderController {
             if ((filterMaster !== '') && (filterMaster !== null) && (filterMaster != undefined) && filterMaster) {
                 const option = options.include.filter((o) => {
                     // @ts-ignore
-                    return o.model == Master
+                    return o.model === Master
                 });
                 // @ts-ignore
                 option[0].where = {[Op.or]: [{name: {[Op.iLike]: `%${filterMaster}%`}}, {email: {[Op.iLike]: `%${filterMaster}%`}}]}
@@ -497,8 +504,13 @@ class OrderController {
                         break;
                 }
             }
-            const orders: OrderModel = await Order.findAndCountAll(options)
-            await excel.createExcel(orders)
+
+            const orders: OrderModelWithMasterBusyDateAndUsers[] = await Order.findAll(options)
+            const {fileName, filePath} = await excel.getExcel(orders, next)
+            res.status(200).json(`${process.env.API_URL}/excelFile/${fileName}`)
+            setTimeout(async () => {
+                await excel.deleteExcel(filePath)
+            }, 60000);
         } catch (e) {
             console.log(e)
             next(ApiError.Internal(`server error`))
