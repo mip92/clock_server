@@ -21,5 +21,6 @@ router.get('/', checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), orderControlle
 /*router.get('/:orderId', checkRoles([ROLE.Admin]), orderController.getOneOrder);*/
 router.delete('/:orderId', checkRoles([ROLE.Admin]), orderController.deleteOrder);
 router.get('/minMax/:masterId', orderController.findMaxAndMinPrice);
+router.get('/getExcel', orderController.getExcel);
 
 module.exports=router

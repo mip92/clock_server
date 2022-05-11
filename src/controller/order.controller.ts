@@ -8,6 +8,7 @@ import {OrderModel} from "../models/order.model";
 import Model, {Attributes, FindAndCountOptions} from "sequelize";
 import {dbConfig} from "../models";
 
+const excel = require("../controller/xlsx.controller");
 const ApiError = require('../exeptions/api-error')
 const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models');
 const mail = require("../services/mailServiсe");
@@ -177,7 +178,6 @@ class OrderController {
         try {
             const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
             const {masterId} = req.params
-            console.log(masterId)
             options.where={}
             options.attributes=[
                 [dbConfig.fn('min', dbConfig.col('dealPrice')), 'minDealPrice'],
@@ -185,7 +185,7 @@ class OrderController {
                 [dbConfig.fn('min', dbConfig.col('totalPrice')), 'minTotalPrice'],
                 [dbConfig.fn('max', dbConfig.col('totalPrice')), 'maxTotalPrice']
             ]
-            if (masterId) {
+            if (masterId && masterId!=='all') {
                 // @ts-ignore
                 options.where = {masterId}
             }
@@ -371,14 +371,55 @@ class OrderController {
         }
     }
 
-    async createExcel(req: CustomRequest<null, null, GetAllOrders, null>, res: Response, next: NextFunction) {
+    async getExcel(req: CustomRequest<null, null, GetAllOrders, null>, res: Response, next: NextFunction) {
         try {
-            let {limit, offset, masterId, userId} = req.query
-            const options: Omit<FindAndCountOptions<Attributes<typeof Order>>, "group"> = {}
-
-            if (limit && +limit > 50) options.limit = 50
-            if (!offset) options.offset = 0
-
+            const {limit, offset, masterId, userId, cities, sortBy, select,
+                filterMaster, filterUser, minDealPrice, maxDealPrice, minTotalPrice,
+                maxTotalPrice, dateStart, dateFinish, clockSize, status} = req.query;
+            const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
+            options.where = {}
+            options.include = []
+            if (cities) {
+                const citiesID: "" | string[] | undefined = cities && cities.split(',');
+                options.include = [{
+                    where: {id: citiesID},
+                    model: City,
+                    required: true
+                }]
+            } else {
+                options.include = [
+                    {model: City},
+                ];
+            }
+            if (clockSize) {
+                // @ts-ignore
+                const clock: string[]  = clockSize && clockSize.split(',');
+                const result: string[] =[]
+                clock.map((c: string |'')=>{result.push(c)})
+                options.where.clockSize ={[Op.or]: result}
+            }
+            if (status) {
+                // @ts-ignore
+                const statuses: string[]  = status &&status.split(',');
+                const result: string[] =[]
+                statuses.map((c: string |'')=>{result.push(c)})
+                console.log(result)
+                options.where.status ={[Op.or]: result}
+            }
+            if (minDealPrice && maxDealPrice) {
+                options.where.dealPrice = {[Op.between]: [minDealPrice, maxDealPrice]}
+            }
+            if (minTotalPrice && maxTotalPrice) {
+                options.where.totalPrice = {[Op.between]: [minTotalPrice, maxTotalPrice]}
+            }
+            if (dateStart && dateStart!=='null' && dateFinish && dateFinish!=='null') {
+                options.include.push({
+                    model: MasterBusyDate,
+                    where: {dateTime: {[Op.between]: [new Date(dateStart), new Date(dateFinish)]}}
+                })
+            } else {
+                options.include.push({model: MasterBusyDate})
+            }
             options.include = [
                 {model: City},
                 {model: MasterBusyDate}
@@ -389,27 +430,75 @@ class OrderController {
                     {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
                 ]
-                options.where = {'userId': +userId, 'masterId': +masterId}
             } else if (userId) {
                 options.include = [...options.include,
                     {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: Master, attributes: {exclude: ['password', 'activationLink']}},
                 ];
-                options.where = {'userId': +userId}
             } else if (masterId) {
                 options.include = [...options.include,
                     {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, attributes: {exclude: ['password', 'activationLink']}},
                 ];
-                options.where = {'masterId': +masterId}
             } else {
                 options.include = [...options.include,
                     {model: Master, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, attributes: {exclude: ['password', 'activationLink']}},
                 ]
             }
+            if ((filterMaster !== '') && (filterMaster !== null) && (filterMaster != undefined) && filterMaster) {
+                const option = options.include.filter((o) => {
+                    // @ts-ignore
+                    return o.model == Master
+                });
+                // @ts-ignore
+                option[0].where = {[Op.or]: [{name: {[Op.iLike]: `%${filterMaster}%`}}, {email: {[Op.iLike]: `%${filterMaster}%`}}]}
+            }
+            if ((filterUser !== '') && (filterUser != undefined) && filterUser) {
+
+                const option = options.include.filter((o) => {
+                    // @ts-ignore
+                    return o.model == User
+                });
+                // @ts-ignore
+                option[0].where = {[Op.or]: [{name: {[Op.iLike]: `%${filterUser}%`}}, {email: {[Op.iLike]: `%${filterUser}%`}}]}
+            }
+            if (sortBy && select) {
+                switch (sortBy) {
+                    case "dateTime":
+                        options.order = [[MasterBusyDate, 'dateTime', select]];
+                        break;
+                    case "masterEmail":
+                        options.order = [[Master, 'email', select]];
+                        break;
+                    case "masterName":
+                        options.order = [[Master, 'name', select]];
+                        break;
+                    case "userEmail":
+                        options.order = [[User, 'email', select]];
+                        break;
+                    case "userName":
+                        options.order = [[User, 'name', select]];
+                        break;
+                    case "city":
+                        options.order = [['originalCityName', select]];
+                        break;
+                    case "clockSize":
+                        options.order = [["clockSize", select]];
+                        break;
+                    case "dealPrice":
+                        options.order = [["dealPrice", select]];
+                        break;
+                    case "totalPrice":
+                        options.order = [["totalPrice", select]];
+                        break;
+                    case "status":
+                        options.order = [[sortBy, select]];
+                        break;
+                }
+            }
             const orders: OrderModel = await Order.findAndCountAll(options)
-            res.status(200).json(orders)
+            await excel.createExcel(orders)
         } catch (e) {
             console.log(e)
             next(ApiError.Internal(`server error`))

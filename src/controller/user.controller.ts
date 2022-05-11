@@ -8,8 +8,9 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {UserModel} from "../models/user.model";
+import {OrderModel} from "../models/order.model";
 
-const {User, ROLE} = require('../models');
+const {User, ROLE, Order} = require('../models/index');
 const ApiError = require('../exeptions/api-error')
 const tokenService = require('../services/tokenServiсe')
 const uuid = require('uuid')
@@ -112,11 +113,13 @@ class UserController {
         try {
             const {userId} = req.params
             if (!userId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: UserModel = await User.findOne({where: {id: userId}})
+            const candidate: UserModel = await User.findOne({where: {id: userId}, include:{all:true}})
             if (!candidate) next(ApiError.BadRequest(`user with id:${userId} is not defined`))
-            await User.destroy({where: {id: userId}})
+            const order: OrderModel = await Order.destroy({where: {userId}})
+            await candidate.destroy({force: true})
             res.status(200).json({message: `user with id:${userId} was deleted`, user: candidate})
         } catch (e) {
+            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }

@@ -17,11 +17,18 @@ class ExcelService {
     }
 
     exportOrdersToExcel(orders: OrderModel[],workSheetColumnNames: string[], workSheetName: string, filePath: string) {
-        const data =orders.map( order=>{
-            return [order.status, order.clockSize, order.dealPrice]
-        })
-        console.log(data)
-        this.exportExcel(data, workSheetColumnNames, workSheetName, filePath)
+        try {
+            // @ts-ignore
+            console.log(orders.rows[0].master_busyDate.dateTime)
+            const data = orders.map(order => {
+                // @ts-ignore
+                return [order.id, order.master_busyDate.dateTime, order.user.email, order.user.name, order.originalCityName, order.clockSize, order.dealPrice, order.totalPrice, order.status]
+            })
+            console.log(workSheetColumnNames, workSheetName, filePath)
+            this.exportExcel(data, workSheetColumnNames, workSheetName, filePath)
+        }catch (e) {
+            console.log(e)
+        }
     }
 }
 
