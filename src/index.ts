@@ -1,6 +1,3 @@
-import {CustomRequest, GetOneOrderParams} from "./interfaces/RequestInterfaces";
-import {NextFunction, Response} from "express";
-
 export {};
 const express = require('express')
 require("dotenv").config({
