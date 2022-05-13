@@ -163,7 +163,7 @@ class MasterController {
                 location: "body"
             }))
             await MasterCity.destroy({where: {masterId: id}})
-            const createMasterCity = (cityId: string): Promise<CityModel> => {
+            const createMasterCity = (cityId: number): Promise<CityModel> => {
                 return new Promise(function (resolve, reject) {
                     resolve(MasterCity.create({masterId: id, cityId: Number(cityId)}))
                     reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
