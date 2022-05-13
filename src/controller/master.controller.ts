@@ -154,7 +154,8 @@ class MasterController {
             }))
 
             //const citiesID: number[] = JSON.parse(citiesId)
-            const citiesID: string[] = citiesId.split(',');
+            // @ts-ignore
+            const citiesID: number[] = citiesId.split(',');
             if (!citiesID) return next(ApiError.ExpectationFailed({
                 value: citiesId,
                 msg: `CitiesId field must have at least 1 items`,

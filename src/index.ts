@@ -1,4 +1,5 @@
 export {};
+import path from "path";
 const express = require('express')
 require("dotenv").config({
     path: `.env.${process.env.NODE_ENV}`,
@@ -9,7 +10,6 @@ const errorMiddleware = require('./middlwares/error-middleware')
 const router = require('./routes')
 const fileupload = require("express-fileupload");
 const {dbConfig} = require("./models")
-//const {db}= require("./models/index");
 
 const app = express()
 app.use(express.json())
@@ -17,8 +17,11 @@ app.use(cors({
     credentials: true,
     origin: process.env.CLIENT_URL
 }))
+
 app.use(fileupload())
 app.use('/api', router)
+app.use(express.static(path.join(__dirname, 'static')))
+
 app.use(errorMiddleware)
 
 const start = async () => {

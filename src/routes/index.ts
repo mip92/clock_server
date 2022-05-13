@@ -9,6 +9,7 @@ const statusRouter=require('./status.router')
 const pictureRouter=require('./picture.router')
 const ratingRouter=require('./rating.router')
 const payPalRouter=require('./payPal.router')
+const excelRouter=require('./excel.router')
 
 
 router.use('/cities', cityRouter)
@@ -20,6 +21,7 @@ router.use('/status',statusRouter)
 router.use('/picture',pictureRouter)
 router.use('/rating',ratingRouter)
 router.use('/payPal', payPalRouter)
+router.use('/excel', excelRouter)
 
 
 module.exports=router

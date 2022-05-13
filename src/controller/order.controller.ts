@@ -7,14 +7,20 @@ import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {OrderModel} from "../models/order.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
 import {dbConfig} from "../models";
-
-
+const excel = require("./excel.controller");
 const ApiError = require('../exeptions/api-error')
 const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models');
 const mail = require("../services/mailServiсe");
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
 const Op = require('Sequelize').Op;
+
+export interface OrderModelWithMasterBusyDateAndUsers extends OrderModelWithMasterBusyDate{
+    user:UserModel
+}
+export interface OrderModelWithMasterBusyDate extends OrderModel {
+    master_busyDate: MasterBusyDateModel
+}
 
 type maxMinParam ={
     masterId: string
@@ -172,13 +178,11 @@ class OrderController {
         }
     }
 
-
     async findMaxAndMinPrice(req: CustomRequest<null, maxMinParam, null, null>,  res: Response, next: NextFunction) {
 
         try {
             const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
             const {masterId} = req.params
-            console.log(masterId)
             options.where={}
             options.attributes=[
                 [dbConfig.fn('min', dbConfig.col('dealPrice')), 'minDealPrice'],
@@ -186,7 +190,8 @@ class OrderController {
                 [dbConfig.fn('min', dbConfig.col('totalPrice')), 'minTotalPrice'],
                 [dbConfig.fn('max', dbConfig.col('totalPrice')), 'maxTotalPrice']
             ]
-            if (masterId) {
+
+            if (masterId && masterId!=='all') {
                 // @ts-ignore
                 options.where = {masterId}
             }
@@ -372,6 +377,144 @@ class OrderController {
         }
     }
 
+    async getExcel(req: CustomRequest<null, null, GetAllOrders, null>, res: Response, next: NextFunction) {
+        try {
+            const {limit, offset, masterId, userId, cities, sortBy, select,
+                filterMaster, filterUser, minDealPrice, maxDealPrice, minTotalPrice,
+                maxTotalPrice, dateStart, dateFinish, clockSize, status} = req.query;
+            const options: Omit<FindAndCountOptions<Attributes<OrderModelWithMasterBusyDateAndUsers>>, "group"> = {};
+            options.where = {}
+            options.include = []
+            if (cities) {
+                const citiesID: "" | string[] | undefined = cities && cities.split(',');
+                options.include = [{
+                    where: {id: citiesID},
+                    model: City,
+                    required: true
+                }]
+            } else {
+                options.include = [
+                    {model: City},
+                ];
+            }
+            if (clockSize) {
+                // @ts-ignore
+                const clock: string[]  = clockSize && clockSize.split(',');
+                const result: string[] =[]
+                clock.map((c: string |'')=>{result.push(c)})
+                options.where.clockSize ={[Op.or]: result}
+            }
+            if (status) {
+                // @ts-ignore
+                const statuses: string[]  = status &&status.split(',');
+                const result: string[] =[]
+                statuses.map((c: string |'')=>{result.push(c)})
+                console.log(result)
+                options.where.status ={[Op.or]: result}
+            }
+            if (minDealPrice && maxDealPrice) {
+                options.where.dealPrice = {[Op.between]: [minDealPrice, maxDealPrice]}
+            }
+            if (minTotalPrice && maxTotalPrice) {
+                options.where.totalPrice = {[Op.between]: [minTotalPrice, maxTotalPrice]}
+            }
+            if (dateStart && dateStart!=='null' && dateFinish && dateFinish!=='null') {
+                options.include.push({
+                    model: MasterBusyDate,
+                    where: {dateTime: {[Op.between]: [new Date(dateStart), new Date(dateFinish)]}}
+                })
+            } else {
+                options.include.push({model: MasterBusyDate})
+            }
+            options.include = [
+                {model: City},
+                {model: MasterBusyDate}
+            ];
+
+            if (userId && masterId) {
+                options.include = [...options.include,
+                    {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
+                ]
+            } else if (userId) {
+                options.include = [...options.include,
+                    {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
+                ];
+            } else if (masterId) {
+                options.include = [...options.include,
+                    {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
+                ];
+            } else {
+                options.include = [...options.include,
+                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: User, attributes: {exclude: ['password', 'activationLink']}},
+                ]
+            }
+            if ((filterMaster !== '') && (filterMaster !== null) && (filterMaster != undefined) && filterMaster) {
+                const option = options.include.filter((o) => {
+                    // @ts-ignore
+                    return o.model === Master
+                });
+                // @ts-ignore
+                option[0].where = {[Op.or]: [{name: {[Op.iLike]: `%${filterMaster}%`}}, {email: {[Op.iLike]: `%${filterMaster}%`}}]}
+            }
+            if ((filterUser !== '') && (filterUser != undefined) && filterUser) {
+
+                const option = options.include.filter((o) => {
+                    // @ts-ignore
+                    return o.model == User
+                });
+                // @ts-ignore
+                option[0].where = {[Op.or]: [{name: {[Op.iLike]: `%${filterUser}%`}}, {email: {[Op.iLike]: `%${filterUser}%`}}]}
+            }
+            if (sortBy && select) {
+                switch (sortBy) {
+                    case "dateTime":
+                        options.order = [[MasterBusyDate, 'dateTime', select]];
+                        break;
+                    case "masterEmail":
+                        options.order = [[Master, 'email', select]];
+                        break;
+                    case "masterName":
+                        options.order = [[Master, 'name', select]];
+                        break;
+                    case "userEmail":
+                        options.order = [[User, 'email', select]];
+                        break;
+                    case "userName":
+                        options.order = [[User, 'name', select]];
+                        break;
+                    case "city":
+                        options.order = [['originalCityName', select]];
+                        break;
+                    case "clockSize":
+                        options.order = [["clockSize", select]];
+                        break;
+                    case "dealPrice":
+                        options.order = [["dealPrice", select]];
+                        break;
+                    case "totalPrice":
+                        options.order = [["totalPrice", select]];
+                        break;
+                    case "status":
+                        options.order = [[sortBy, select]];
+                        break;
+                }
+            }
+
+            const orders: OrderModelWithMasterBusyDateAndUsers[] = await Order.findAll(options)
+            const {fileName, filePath} = await excel.getExcel(orders, next)
+            res.status(200).json(`${process.env.API_URL}/excelFile/${fileName}`)
+            setTimeout(async () => {
+                await excel.deleteExcel(filePath)
+            }, 60000);
+        } catch (e) {
+            console.log(e)
+            next(ApiError.Internal(`server error`))
+        }
+    }
 
     /*async getOneOrder(req: CustomRequest<null, GetOneOrderParams, null>, res: Response, next: NextFunction) {
         try {
