@@ -40,8 +40,8 @@ class ExcelController {
 
     async getExcel(orders: OrderModelWithMasterBusyDateAndUsers[], next: NextFunction) {
         try {
-            const workSheetColumnNames: string[] = ['id', "date time", "user email", "user name", "city",
-                "clock size", "deal price", "total price", "status"]
+            const workSheetColumnNames: string[] = ['Id', "Date time", "User email", "User name", "City",
+                "Clock size", "Deal price", "Total price", "Status"]
             const fileName: string = uuid.v4() + '.xlsx'
             const directoryPath: string = path.resolve(__dirname, '..', 'static', `excelFile`)
             if (!fs.existsSync(directoryPath)) {

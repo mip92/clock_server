@@ -266,6 +266,7 @@ class OrderController {
                 options.where.totalPrice = {[Op.between]: [minTotalPrice, maxTotalPrice]}
             }
             if (dateStart && dateStart!=='null' && dateFinish && dateFinish!=='null') {
+                console.log(dateStart, 1111111)
                 options.include.push({
                     model: MasterBusyDate,
                     where: {dateTime: {[Op.between]: [new Date(dateStart), new Date(dateFinish)]}}
@@ -284,12 +285,6 @@ class OrderController {
                const option = options.include.filter((o)=>{return o.model==MasterBusyDate});
                // @ts-ignore
                console.log(option[0]);*/
-
-
-            options.include = [
-                {model: City},
-                {model: MasterBusyDate}
-            ];
 
             if (userId && masterId) {
                 options.include = [...options.include,
@@ -426,10 +421,6 @@ class OrderController {
             } else {
                 options.include.push({model: MasterBusyDate})
             }
-            options.include = [
-                {model: City},
-                {model: MasterBusyDate}
-            ];
 
             if (userId && masterId) {
                 options.include = [...options.include,
