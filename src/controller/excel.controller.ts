@@ -31,7 +31,7 @@ class ExcelController {
     deleteExcel(path:string) {
         try {
             fs.unlink(path, (err: ErrnoException) => {
-                console.log(err)
+
             });
         } catch (e) {
             console.log(e)

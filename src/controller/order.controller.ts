@@ -196,7 +196,6 @@ class OrderController {
                 options.where = {masterId}
             }
             const range = await Order.findAll(options);
-            console.log(range)
             res.status(200).json(range[0])
         } catch (e) {
             console.log(e)
@@ -209,7 +208,6 @@ class OrderController {
             const {limit, offset, masterId, userId, cities, sortBy, select,
                 filterMaster, filterUser, minDealPrice, maxDealPrice, minTotalPrice,
                 maxTotalPrice, dateStart, dateFinish, clockSize, status} = req.query;
-            console.log(limit, offset, masterId, userId, cities, sortBy, select, filterMaster, filterUser, minDealPrice, maxDealPrice)
             const totalPrice: OrderModel[] = await Order.findAll({where: {totalPrice: null}})
 
             const addTotalPrice = (order: OrderModel): Promise<OrderModel> => {
@@ -256,7 +254,6 @@ class OrderController {
                 const statuses: string[]  = status &&status.split(',');
                 const result: string[] =[]
                 statuses.map((c: string |'')=>{result.push(c)})
-                console.log(result)
                 options.where.status ={[Op.or]: result}
             }
             if (minDealPrice && maxDealPrice) {
@@ -273,42 +270,21 @@ class OrderController {
             } else {
                 options.include.push({model: MasterBusyDate})
             }
-
-            /*options.where = {}
-            if ((filterMaster !== '') && (filterMaster != undefined) && filterMaster) options.where[Op.or] = [
-                {[Master.name]: {[Op.iLike]: `%${filterMaster}%`}}, {[Master.email]: {[Op.iLike]: `%${filterMaster}%`}}]*/
-            /*   // @ts-ignore
-               options.include[1].order;
-               console.log(options.include);
-               // @ts-ignore
-               const option = options.include.filter((o)=>{return o.model==MasterBusyDate});
-               // @ts-ignore
-               console.log(option[0]);*/
-
-
-            options.include = [
-                {model: City},
-                {model: MasterBusyDate}
-            ];
-
             if (userId && masterId) {
                 options.include = [...options.include,
                     {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
                 ]
-                //options.where = {masterId: +masterId, userId: +userId}
             } else if (userId) {
                 options.include = [...options.include,
                     {model: User, where: {id: userId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: Master, attributes: {exclude: ['password', 'activationLink']}},
                 ];
-                //options.where = {'userId': +userId}
             } else if (masterId) {
                 options.include = [...options.include,
                     {model: Master, where: {id: masterId}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, attributes: {exclude: ['password', 'activationLink']}},
                 ];
-                //options.where = {'masterId': +masterId}
             } else {
                 options.include = [...options.include,
                     {model: Master, attributes: {exclude: ['password', 'activationLink']}},
@@ -366,9 +342,7 @@ class OrderController {
                         options.order = [[sortBy, select]];
                         break;
                 }
-                //options.order = [[sortBy, select]]
             }
-            console.log(options)
             const orders: OrderModel = await Order.findAndCountAll(options)
             res.status(200).json(orders)
         } catch (e) {
@@ -409,7 +383,6 @@ class OrderController {
                 const statuses: string[]  = status &&status.split(',');
                 const result: string[] =[]
                 statuses.map((c: string |'')=>{result.push(c)})
-                console.log(result)
                 options.where.status ={[Op.or]: result}
             }
             if (minDealPrice && maxDealPrice) {
@@ -426,10 +399,6 @@ class OrderController {
             } else {
                 options.include.push({model: MasterBusyDate})
             }
-            options.include = [
-                {model: City},
-                {model: MasterBusyDate}
-            ];
 
             if (userId && masterId) {
                 options.include = [...options.include,
@@ -515,24 +484,6 @@ class OrderController {
             next(ApiError.Internal(`server error`))
         }
     }
-
-    /*async getOneOrder(req: CustomRequest<null, GetOneOrderParams, null>, res: Response, next: NextFunction) {
-        try {
-            const orderId = req.params.orderId
-            const order:OrderModel = await Order.findOne({
-                    include: {all: true},
-                    where: {id: orderId},
-                }
-            )
-            if (!order) return next(ApiError.BadRequest("Order not found"))
-            const user:UserModel = await User.findOne({where: {id: order.userId}})
-            const master:MasterModel = await Master.findOne({where: {id: order.masterBusyDate.id}})
-            const result = new oneOrder(order, user, master)
-            res.status(200).json({result})
-        } catch (e) {
-            next(ApiError.BadRequest(e.parent.detail))
-        }
-    }*/
 
     async deleteOrder(req: CustomRequest<null, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
         try {

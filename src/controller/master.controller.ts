@@ -101,7 +101,6 @@ class MasterController {
             //options.where.isActivated = true
             //options.where.isApproved = true
             options.attributes = {exclude: ['password', 'activationLink']}
-            console.log(limit, offset, sortBy, select, cities, filter)
             if (limit && +limit > 50) options.limit = 50
             if (!offset) options.offset = 0
             if (sortBy && select) options.order = [[sortBy, select]]
@@ -144,7 +143,6 @@ class MasterController {
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, name, email, citiesId} = req.body
-            console.log(id, name, email, citiesId)
             const isEmailUniq: MasterModel = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
@@ -266,7 +264,6 @@ class MasterController {
                             dateTime: String(time.toISOString())
                         }
                     }).then((busy: MasterBusyDateModel) => {
-                        console.log(!!busy)
                         if (busy) resolve(true)
                         resolve(false)
                     })
@@ -322,7 +319,7 @@ class MasterController {
                                 return resolve(city)
                             }
                         ).catch((err: Error) => {
-                            console.log(99)
+
                             reject(err)
                         })
                     })
@@ -347,33 +344,27 @@ class MasterController {
                                                     }, {transaction: t})
                                                         .then(() => {
                                                                 count++
-                                                                console.log(count, citiesId.length)
                                                                 if (count === citiesId.length) {
                                                                     resolve(newMaster)
                                                                 }
                                                             }
                                                         ).catch((err: Error) => {
-                                                        console.log(88)
                                                         console.log(err)
                                                     })
                                                 }
                                             )
                                         }
                                     ).catch((err: Error) => {
-                                    console.log(77)
                                     console.log(err)
                                 })
                             }
                         ).catch((err: Error) => {
-                        console.log(66)
                         console.log(err)
                     })
                 })
             }).catch((e: Error) => {
-                console.log(55)
                 console.log(e)
             })
-            console.log(result)
             await mail.sendActivationMail(email,
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,
                 result.role
@@ -390,7 +381,6 @@ class MasterController {
                     include: [{model: City}]
                 },
             )
-            console.log(master)
             const token: string = tokenService.generateJwt(master.id, master.email, master.role)
             return res.status(201).json({token})
         } catch

@@ -176,7 +176,6 @@ class PictureController {
             })
         }
         Promise.all(arrayPicturesId.map(deleteOnePicture)).then((picturesId:number[])=>{
-            console.log(picturesId)
             res.status(200).json({message:`pictures with id: ${picturesId} was deleted`, picturesId})
         })
 /*

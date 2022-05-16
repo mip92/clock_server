@@ -64,7 +64,6 @@ class UserController {
     async getAllUsers(req: CustomRequest<null, null, LimitOffsetType, null>, res: Response, next: NextFunction) {
         try {
             const {limit, offset, sortBy, select, filter} = req.query
-            console.log(limit, offset, sortBy, select, filter)
             const options: Omit<FindAndCountOptions<Attributes<typeof User>>, "group"> = {}
             options.where = {}
             //if ((filter !== '') && (filter != undefined) && filter) options.where = {name: {[Op.iLike]: `%${filter}%`}}
