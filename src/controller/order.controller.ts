@@ -9,7 +9,7 @@ import {Attributes, FindAndCountOptions} from "sequelize";
 import {dbConfig} from "../models";
 const excel = require("./excel.controller");
 const ApiError = require('../exeptions/api-error')
-const {Order, Master, User, City, MasterBusyDate, STATUSES} = require('../models');
+const {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} = require('../models');
 const mail = require("../services/mailServiсe");
 const uuid = require('uuid')
 const bcrypt = require('bcrypt')
@@ -368,6 +368,8 @@ class OrderController {
                 }
                 //options.order = [[sortBy, select]]
             }
+
+            options.include = [...options.include,{model:OrderPicture, include: [{model: Picture}]}]
             console.log(options)
             const orders: OrderModel = await Order.findAndCountAll(options)
             res.status(200).json(orders)

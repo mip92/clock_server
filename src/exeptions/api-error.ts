@@ -5,7 +5,7 @@ interface jsonError {
     location: string
 }
 
-module.exports = class ApiError extends Error {
+export class ApiError extends Error {
     status;
     constructor(status:number, message:string) {
         super(message);
