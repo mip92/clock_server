@@ -1,6 +1,5 @@
-export {};
-const Router =require('express').Router;
-const router = new Router();
+import express from "express";
+const router = express.Router();
 const pictureController = require('../controller/picture.controller')
 
 const checkRoles = require("../middlwares/checkRolesMiddleware");
@@ -13,4 +12,4 @@ router.delete('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), pict
 
 
 
-module.exports=router
+export default router

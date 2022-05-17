@@ -1,6 +1,5 @@
-export {};
-const Router =require('express').Router;
-const router = new Router();
+import express from "express";
+const router = express.Router();
 const orderController = require('../controller/order.controller')
 const {body} = require("express-validator");
 const checkRules = require('../middlwares/checkRuleMiddleware')
@@ -24,4 +23,4 @@ router.get('/minMax/:masterId', orderController.findMaxAndMinPrice);
 router.get('/getExcel', orderController.getExcel);
 
 
-module.exports=router
+export default router

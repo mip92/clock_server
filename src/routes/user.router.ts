@@ -1,6 +1,5 @@
-export {};
-const Router = require('express').Router;
-const router = new Router();
+import express from "express";
+const router = express.Router();
 const userController = require('../controller/user.controller')
 const checkRoles = require('../middlwares/checkRolesMiddleware')
 const checkRules2 = require("../middlwares/checkRulesMiddleware");
@@ -31,4 +30,4 @@ router.put('/',checkRoles([ROLE.Admin]), userController.updateUser);
 router.delete('/:userId',checkRoles([ROLE.Admin]),  userController.deleteUser);
 router.put('/changeEmail', checkRoles([ROLE.User]), validationChangeEmailBodyRules, checkRules2, userController.changeEmail)
 
-module.exports = router
+export default router

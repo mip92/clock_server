@@ -1,15 +1,16 @@
 export {};
 import path from "path";
-const express = require('express')
-require("dotenv").config({
+import express from 'express';
+import dotenv from 'dotenv'
+dotenv.config({
     path: `.env.${process.env.NODE_ENV}`,
 })
 const PORT = process.env.PORT || 5000
-const cors = require('cors')
-const errorMiddleware = require('./middlwares/error-middleware')
-const router = require('./routes')
-const fileupload = require("express-fileupload");
-const {dbConfig} = require("./models")
+import cors from 'cors';
+import errorMiddleware from './middlwares/error-middleware';
+import router from './routes';
+import fileupload from "express-fileupload";
+import {dbConfig} from "./models";
 
 const app = express()
 app.use(express.json())

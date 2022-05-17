@@ -1,6 +1,5 @@
-export {};
-const Router = require('express').Router;
-const router = new Router();
+import express from "express";
+const router = express.Router();
 const masterController = require('../controller/master.controller')
 
 const checkRoles = require("../middlwares/checkRolesMiddleware");
@@ -44,4 +43,4 @@ router.post('/getFreeMasters', validationGetFreeMastersBodyRules, checkRules, ma
 router.put('/changeEmail', checkRoles([ROLE.Master]), validationChangeEmailBodyRules, checkRules2, masterController.changeEmail)
 
 
-module.exports = router
+export default router

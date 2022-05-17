@@ -1,6 +1,5 @@
-export {};
-const Router = require('express').Router;
-const router = new Router();
+import express from "express";
+const router = express.Router();
 const ratingController = require('../controller/rating.controller')
 const {body} = require("express-validator");
 const checkRules = require('../middlwares/checkRuleMiddleware')
@@ -15,4 +14,4 @@ router.post('/',/* checkRoles([ROLE.User]),*/ validationCreateRatingBodyRules, c
 //router.get('/', ratingController.getAllRatings);
 router.get('/:masterId', ratingController.getRatingByMaster);
 
-module.exports = router
+export default router

@@ -1,6 +1,5 @@
-export {};
-const Router = require('express')
-const router = new Router()
+import express from "express";
+const router = express.Router();
 const authController = require('../controller/auth.controller')
 const {body} = require("express-validator");
 const checkRules2 = require("../middlwares/checkRulesMiddleware");
@@ -22,4 +21,4 @@ router.get('/login/activate/:link', authController.loginActivate);
 router.post('/registration', validationRegistrationBodyRules, checkRules2, authController.registration)
 router.get('/activate/:link', authController.activate);
 
-module.exports = router
+export default router
