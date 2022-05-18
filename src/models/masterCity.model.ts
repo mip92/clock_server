@@ -1,4 +1,5 @@
 import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
+import {CityAttributes} from "./city.model";
 
 export interface MasterCityAttributes {
     id: number;
@@ -8,7 +9,7 @@ export interface MasterCityAttributes {
     updatedAt?: Date
 }
 
-export interface MasterCityModel extends Model<MasterCityAttributes>, MasterCityAttributes {}
+export interface MasterCityModel extends Model<Partial<MasterCityAttributes>>, MasterCityAttributes {}
 
 export class MasterCity extends Model<MasterCityModel, MasterCityAttributes> {}
 

@@ -1,17 +1,14 @@
 import {NextFunction} from "express";
-import {OrderModel} from "../models/order.model";
 import ErrnoException = NodeJS.ErrnoException;
-import {OrderModelWithMasterBusyDate, OrderModelWithMasterBusyDateAndUsers} from "./order.controller";
-
-const path = require("path")
-const fs = require('fs');
-const uuid = require('uuid');
-const xlsx = require('xlsx')
+import {OrderModelWithMasterBusyDateAndUsers} from "./order.controller";
+import path from "path";
+import fs from 'fs';
+import uuid from 'uuid';
+import xlsx from 'xlsx';
 
 const ApiError = require('../exeptions/api-error')
 
 class ExcelController {
-
     createExcel(data: any, workSheetColumnNames: string[], workSheetName: string, filePath: string, next: NextFunction) {
         try {
             const workBook = xlsx.utils.book_new()
@@ -30,7 +27,7 @@ class ExcelController {
 
     deleteExcel(path:string) {
         try {
-            fs.unlink(path, (err: ErrnoException) => {
+            fs.unlink(path, (err: ErrnoException | null) => {
                 console.log(err)
             });
         } catch (e) {
@@ -64,4 +61,4 @@ class ExcelController {
 
 }
 
-module.exports = new ExcelController()
+export default new ExcelController()
