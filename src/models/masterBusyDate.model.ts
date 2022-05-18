@@ -9,9 +9,9 @@ export interface MasterBusyDateAttributes {
     updatedAt?: Date;
 }
 
-export interface MasterBusyDateModel extends Model<MasterBusyDateAttributes>, MasterBusyDateAttributes {}
+export interface MasterBusyDateModel extends Model<Partial<MasterBusyDateAttributes>>, MasterBusyDateAttributes {}
 
-export class MasterBusyDate extends Model<Partial<MasterBusyDateModel>, MasterBusyDateAttributes> {}
+export class MasterBusyDate extends Model<MasterBusyDateModel, MasterBusyDateAttributes> {}
 
 export type MasterBusyDateStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): MasterBusyDateModel;

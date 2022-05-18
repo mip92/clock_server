@@ -1,10 +1,10 @@
 import express from "express";
 const router = express.Router();
-const userController = require('../controller/user.controller')
-const checkRoles = require('../middlwares/checkRolesMiddleware')
-const checkRules2 = require("../middlwares/checkRulesMiddleware");
-const {body} = require('express-validator');
-const {ROLE}=require("../models")
+import userController from '../controller/user.controller';
+import checkRoles from '../middlwares/checkRolesMiddleware';
+import checkRules2 from "../middlwares/checkRulesMiddleware";
+import {body} from 'express-validator';
+import {ROLE} from "../models";
 
 const validationCreateUserBodyRules = [
     body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
@@ -22,12 +22,12 @@ const validationChangeEmailBodyRules = [
     body('role', 'role must be not null').not()
 ];
 
-router.post('/', validationCreateUserBodyRules, checkRules2, userController.createUser);
-router.get('/findUser', userController.findUser);
-router.get('/',checkRoles([ROLE.Admin]), userController.getAllUsers);
-router.get('/:userId',checkRoles([ROLE.Admin]), userController.getOneUser);
-router.put('/',checkRoles([ROLE.Admin]), userController.updateUser);
-router.delete('/:userId',checkRoles([ROLE.Admin]),  userController.deleteUser);
-router.put('/changeEmail', checkRoles([ROLE.User]), validationChangeEmailBodyRules, checkRules2, userController.changeEmail)
+router.post('/', validationCreateUserBodyRules, checkRules2, (res: any, req: any, next: any) => {userController.createUser(res, req, next)});
+router.get('/findUser', (res: any, req: any, next: any) => {userController.findUser(res, req, next)});
+router.get('/',checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {userController.getAllUsers(res, req, next)});
+router.get('/:userId',checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {userController.getOneUser(res, req, next)});
+router.put('/',checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {userController.updateUser(res, req, next)});
+router.delete('/:userId',checkRoles([ROLE.Admin]),  (res: any, req: any, next: any) => {userController.deleteUser(res, req, next)});
+router.put('/changeEmail', checkRoles([ROLE.User]), validationChangeEmailBodyRules, checkRules2, (res: any, req: any, next: any) => {userController.changeEmail(res, req, next)})
 
 export default router

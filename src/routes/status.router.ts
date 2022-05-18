@@ -1,11 +1,11 @@
 import express from "express";
 const router = express.Router();
-const statusController = require('../controller/status.controller')
-const checkRoles = require('../middlwares/checkRolesMiddleware')
-const {ROLE}=require("../models")
+import statusController from '../controller/status.controller';
+import checkRoles from '../middlwares/checkRolesMiddleware';
+import {ROLE} from "../models";
 
-router.get('/', checkRoles([ROLE.Admin,ROLE.User, ROLE.Master]), statusController.getStatuses);
-router.put('/:orderId', checkRoles([ROLE.Admin,ROLE.User, ROLE.Master]), statusController.changeStatus);
+router.get('/', checkRoles([ROLE.Admin,ROLE.User, ROLE.Master]), (res: any, req: any, next: any) => {statusController.getStatuses(res, req, next)});
+router.put('/:orderId', checkRoles([ROLE.Admin,ROLE.User, ROLE.Master]), (res: any, req: any, next: any) => {statusController.changeStatus(res, req, next)});
 
 
 export default router

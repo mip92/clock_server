@@ -1,19 +1,21 @@
-const jwt = require('jsonwebtoken')
+import jwt, {JwtPayload} from 'jsonwebtoken';
 import * as express from 'express';
-const {ROLE} = require('../models');
+import {ROLE} from '../models';
 
-module.exports = function (roles : typeof ROLE[]) {
+export default function (roles : ROLE[]) {
     return function (req:express.Request, res:express.Response, next:express.NextFunction) {
         if (req.method === "OPTIONS") {
             next()
         }
         try {
-            const token = req?.headers?.authorization?.split(' ')[1] // Bearer asfasnfkajsfnjk
+            const token: string | undefined  = req?.headers?.authorization?.split(' ')[1] // Bearer asfasnfkajsfnjk
             if (!token) {
                 return res.status(401).json({message: "Unauthorized"})
             }
-            const decoded = jwt.verify(token, process.env.SECRET_KEY)
-            const isTrue = roles.some((r)=>decoded.role === r)
+
+            const decoded: JwtPayload | string = jwt.verify(token, process.env.SECRET_KEY as string)
+            // @ts-ignore
+            const isTrue = roles.some((r)=>decoded?.role == String(r))
             if (isTrue) {
                 return next()
             }

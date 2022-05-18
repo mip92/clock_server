@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import {ROLE} from '../models';
 
 class TokenService {
     generateJwt(id: number, email: string, role: string) {
@@ -11,4 +10,5 @@ class TokenService {
         return token
     }
 }
+//module.exports = new TokenService()
 export default new TokenService()

@@ -16,11 +16,10 @@ import {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} from '../model
 import uuid from 'uuid';
 import bcrypt from 'bcrypt';
 import mail from "../services/mailServiсe";
+import ApiError from '../exeptions/api-error';
 import tokenService from '../services/tokenServiсe';
 import {MasterCityModel} from "../models/masterCity.model";
-
-const ApiError = require('../exeptions/api-error')
-const Op = require('Sequelize').Op;
+import {Op} from 'Sequelize';
 
 class MasterController {
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
@@ -85,7 +84,7 @@ class MasterController {
                     },
                     error => next(error)
                 )
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -97,8 +96,9 @@ class MasterController {
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
             options.where = {}
-            if ((filter !== '') && (filter != undefined) && filter) options.where[Op.or] = [
-                {name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            if ((filter !== '') && (filter != undefined) && filter) { // @ts-ignore
+                options.where[Op.or] = [{name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            }
             // @ts-ignore
             options.distinct = "Master.id"
             //options.where.isActivated = true
@@ -120,7 +120,7 @@ class MasterController {
             const masters: { rows: MasterModel[]; count: number} = await Master.findAndCountAll(options)
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -137,7 +137,7 @@ class MasterController {
             )
             if (!master) return next(ApiError.BadRequest("Master not found"))
             res.status(200).json(master)
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -190,7 +190,7 @@ class MasterController {
                     },
                     error => next(error)
                 )
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -204,7 +204,7 @@ class MasterController {
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
             if (candidate) await candidate.destroy({ force: true })
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -222,7 +222,7 @@ class MasterController {
                 await mail.sendApproveMail(master.email, master.isApproved)
                 res.status(200).json({message: `master with id:${masterId} changed status approve`, master})
             }
-        } catch (e) {
+        } catch (e:any) {
             next(ApiError.BadRequest(e))
         }
     }
@@ -293,7 +293,7 @@ class MasterController {
             })
             if (freeMasters.length === 0) return next(ApiError.BadRequest("masters is not found"))
             res.status(200).json(freeMasters)
-        } catch (e) {
+        } catch (e:any) {
             next(ApiError.BadRequest(e))
         }
     }
@@ -392,8 +392,7 @@ class MasterController {
                 const token: string = tokenService.generateJwt(master.id, master.email, master.role)
                 return res.status(201).json({token})
             }
-        } catch
-            (err) {
+        } catch (err:any) {
             console.log(err)
             next(err)
         }
@@ -427,10 +426,10 @@ class MasterController {
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,
                 changedMaster.role)
             return res.status(200).json({token})
-        } catch (e) {
+        } catch (e:any) {
             next(ApiError.Internal(`server error`))
         }
     }
 }
-
-module.exports = new MasterController()
+export default new MasterController()
+//module.exports = new MasterController()

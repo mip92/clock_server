@@ -9,21 +9,19 @@ import {
 import {NextFunction, Response} from "express";
 import {UserModel} from "../models/user.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
-import {OrderModel} from "../models/order.model";
-
-const {User, ROLE, Order} = require('../models/index');
-const ApiError = require('../exeptions/api-error')
-const tokenService = require('../services/tokenServiсe')
-const uuid = require('uuid')
-const bcrypt = require('bcrypt')
-const mail = require("../services/mailServiсe");
-const Op = require('Sequelize').Op;
+import uuid from 'uuid';
+import bcrypt from 'bcrypt';
+import mail from "../services/mailServiсe";
+import {User, ROLE, Order} from '../models/index';
+import ApiError from '../exeptions/api-error';
+import tokenService from '../services/tokenServiсe';
+import {Op} from 'Sequelize';
 
 class UserController {
     async createUser(req: CustomRequest<CreateUserBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {email, name} = req.body
-            const isUserUnique: UserModel = await User.findOne({where: {email}})
+            const isUserUnique: UserModel | null = await User.findOne({where: {email}})
             if (isUserUnique) return next(ApiError.ExpectationFailed({
                 value: email,
                 msg: `User with this email is already registered`,
@@ -53,7 +51,7 @@ class UserController {
     async findUser(req: CustomRequest<null, null, FindUserQuery, null>, res: Response, next: NextFunction) {
         try {
             const {email} = req.query
-            const isUserCreated: UserModel = await User.findOne({where: {email}})
+            const isUserCreated: UserModel | null = await User.findOne({where: {email}})
             if (isUserCreated) return next(ApiError.BadRequest("User with this email is already registered"))
             else res.status(200).json(email)
         } catch (e) {
@@ -64,18 +62,17 @@ class UserController {
     async getAllUsers(req: CustomRequest<null, null, LimitOffsetType, null>, res: Response, next: NextFunction) {
         try {
             const {limit, offset, sortBy, select, filter} = req.query
-            const options: Omit<FindAndCountOptions<Attributes<typeof User>>, "group"> = {}
+            const options: Omit<FindAndCountOptions<Attributes<UserModel>>, "group"> = {}
             options.where = {}
-            //if ((filter !== '') && (filter != undefined) && filter) options.where = {name: {[Op.iLike]: `%${filter}%`}}
-            if ((filter !== '') && (filter != undefined) && filter) options.where[Op.or] = [{name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            if ((filter !== '') && (filter != undefined) && filter) {// @ts-ignore
+                options.where[Op.or] = [{name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            }
             if (limit && +limit > 50) options.limit = 50
             else if(limit) options.limit = +limit
             if (!offset) options.offset = 0
             else options.offset = +offset
             if (sortBy && select) options.order = [[sortBy, select]]
-            // @ts-ignore
-            //options.distinct = "User.id"
-            const users: UserModel = await User.findAndCountAll(options)
+            const users: { rows: UserModel[]; count: number; } = await User.findAndCountAll(options)
             if (!users) return next(ApiError.BadRequest("Users not found"))
             res.status(200).json(users)
         } catch (e) {
@@ -86,7 +83,7 @@ class UserController {
     async getOneUser(req: CustomRequest<null, GetOneUserParams, null, null>, res: Response, next: NextFunction) {
         try {
             const userId = req.params.userId
-            const user: UserModel = await User.findOne({
+            const user: UserModel | null = await User.findOne({
                     include: {all: true},
                     where: {id: userId},
                 }
@@ -101,7 +98,7 @@ class UserController {
     async updateUser(req: CustomRequest<UpdateUserBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, newEmail, newName} = req.body
-            const user: UserModel = await User.findOne({where: {id}})
+            const user: UserModel | null = await User.findOne({where: {id}})
             if (!user) return next(ApiError.ExpectationFailed({
                 value: newEmail,
                 msg: `User with this id is not found`,
@@ -124,10 +121,10 @@ class UserController {
         try {
             const {userId} = req.params
             if (!userId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: UserModel = await User.findOne({where: {id: userId}, include:{all:true}})
+            const candidate: UserModel | null = await User.findOne({where: {id: userId}, include:{all:true}})
             if (!candidate) next(ApiError.BadRequest(`user with id:${userId} is not defined`))
-            const order: OrderModel = await Order.destroy({where: {userId}})
-            await candidate.destroy({force: true})
+            const order = await Order.destroy({where: {userId}})
+            candidate && await candidate.destroy({force: true})
             res.status(200).json({message: `user with id:${userId} was deleted`, user: candidate})
         } catch (e) {
             console.log(e)
@@ -138,7 +135,7 @@ class UserController {
     async registration(req: CustomRequest<AuthRegistrationBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {email, name, firstPassword} = req.body
-            const user: UserModel = await User.findOne({where: {email}})
+            const user: UserModel | null = await User.findOne({where: {email}})
             if (user) return next(ApiError.ExpectationFailed({
                 value: email,
                 msg: "User with this email is already registered",
@@ -170,7 +167,7 @@ class UserController {
     async changeEmail(req: CustomRequest<ChangeEmailBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {password, currentEmail, newEmail} = req.body
-            const user: UserModel = await User.findOne({where: {email: currentEmail}})
+            const user: UserModel | null  = await User.findOne({where: {email: currentEmail}})
             if (!user) return next(ApiError.ExpectationFailed({
                 value: currentEmail,
                 msg: "User is not found or password is wrong",
@@ -196,5 +193,5 @@ class UserController {
         }
     }
 }
-
-module.exports = new UserController()
+export default new UserController()
+//module.exports = new UserController()

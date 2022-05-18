@@ -10,8 +10,7 @@ import {CityModel} from "../models/city.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
 import {City} from '../models';
 import Sequelize from 'Sequelize';
-
-const ApiError = require('../exeptions/api-error')
+import ApiError from '../exeptions/api-error';
 
 class CityController {
     async createCity(req: CustomRequest<CreateCityBody, null, null, null>, res: Response, next: NextFunction) {

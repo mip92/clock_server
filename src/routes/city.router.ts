@@ -1,10 +1,10 @@
 import express from "express";
 const router = express.Router();
 import cityController from '../controller/city.controller';
-const checkRoles = require("../middlwares/checkRolesMiddleware");
-const {body} = require("express-validator");
-const checkRules2 = require("../middlwares/checkRulesMiddleware");
-const {ROLE} = require("../models")
+import checkRoles from "../middlwares/checkRolesMiddleware";
+import {body} from "express-validator";
+import checkRules2 from "../middlwares/checkRulesMiddleware";
+import {ROLE} from "../models";
 
 const validationCreateCityBodyRules = [
     body('city', "city name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),

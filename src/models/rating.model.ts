@@ -10,9 +10,9 @@ export interface RatingAttributes {
     updatedAt?: Date
 }
 
-export interface RatingModel extends Model<RatingAttributes>, RatingAttributes {}
+export interface RatingModel extends Model<Partial<RatingAttributes>>, RatingAttributes {}
 
-export class Rating extends Model<Partial<RatingModel>, RatingAttributes> {}
+export class Rating extends Model<RatingModel, RatingAttributes> {}
 
 export type RatingStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): RatingModel;

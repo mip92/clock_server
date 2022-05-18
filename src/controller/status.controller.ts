@@ -1,9 +1,8 @@
 import {NextFunction, Response, Request} from "express";
 import {CreatePicturesParams, CustomRequest} from "../interfaces/RequestInterfaces";
 import {OrderModel} from "../models/order.model";
-
-const ApiError = require('../exeptions/api-error')
-const {STATUSES, Order} = require('../models');
+import {STATUSES, Order} from '../models';
+import ApiError from '../exeptions/api-error';
 
 export interface ChangeStatusBody {
     status: string
@@ -23,16 +22,14 @@ class StatusController {
         try {
             const {orderId} = req.params
             const {status} = req.body
-            const order: OrderModel = await Order.findByPk(orderId)
+            const order: OrderModel | null = await Order.findByPk(orderId)
             if (!order) return next(ApiError.BadRequest("Order is not found"))
-            if (STATUSES[status]) {
-                const update: OrderModel = await order.update({status: STATUSES[status]})
-                res.status(200).json(status)
-            } else return next(ApiError.BadRequest("Status not found"))
+            const update: OrderModel = await order.update({status: status})
+            res.status(200).json(status)
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }
     }
 }
-
-module.exports = new StatusController()
+export default new StatusController()
+//module.exports = new StatusController()

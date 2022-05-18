@@ -1,6 +1,4 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {CityAttributes} from "./city.model";
-
 export interface AdminAttributes {
     id: number;
     email: string,
