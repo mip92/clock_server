@@ -5,7 +5,7 @@ import {AdminModel} from "../models/admin.model";
 import {AuthRegistrationBody, CustomRequest, Link, LoginBody} from "../interfaces/RequestInterfaces";
 
 const ApiError = require('../exeptions/api-error');
-import {Master, User, Admin} from '../models';
+const {Master, User, Admin} = require('../models');
 const userController = require("./user.controller");
 const masterController = require("./master.controller");
 const bcrypt = require('bcrypt')

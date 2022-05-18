@@ -7,12 +7,12 @@ import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {OrderModel} from "../models/order.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
 import {dbConfig} from "../models";
-const excel = require("./excel.controller");
+import excel from "./excel.controller";
 const ApiError = require('../exeptions/api-error')
-const {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} = require('../models');
-const mail = require("../services/mailServiсe");
-const uuid = require('uuid')
-const bcrypt = require('bcrypt')
+import {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} from '../models';
+import mail from "../services/mailServiсe";
+import uuid from 'uuid';
+import bcrypt from 'bcrypt';
 const Op = require('Sequelize').Op;
 
 export interface OrderModelWithMasterBusyDateAndUsers extends OrderModelWithMasterBusyDate{
@@ -30,7 +30,7 @@ class OrderController {
     async createOrder(req: CustomRequest<CreateOrderBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {cityId, clockSize, dateTime, email, masterId, name} = req.body
-            let user: UserModel = await User.findOne({where: {email}})
+            let user: UserModel | null = await User.findOne({where: {email}})
             if (!user) {
                 const password: string = uuid.v4();
                 const hashPassword: string = await bcrypt.hash(password.slice(0, 6), 5)

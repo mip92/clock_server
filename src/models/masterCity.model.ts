@@ -11,7 +11,7 @@ export interface MasterCityAttributes {
 
 export interface MasterCityModel extends Model<Partial<MasterCityAttributes>>, MasterCityAttributes {}
 
-export class MasterCity extends Model<MasterCityModel, MasterCityAttributes> {}
+export class MasterCity extends Model<Partial<MasterCityModel>, MasterCityAttributes> {}
 
 export type MasterCityStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): MasterCityModel;

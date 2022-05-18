@@ -1,4 +1,5 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
+import {CityAttributes} from "./city.model";
 
 export interface AdminAttributes {
     id: number;
@@ -6,7 +7,7 @@ export interface AdminAttributes {
     password: string,
     role: string,
 }
-export interface AdminModel extends Model<AdminAttributes>, AdminAttributes {}
+export interface AdminModel extends Model<Partial<AdminAttributes>>, AdminAttributes {}
 export class Admin extends Model<AdminModel, AdminAttributes> {}
 
 export type AdminStatic = typeof Model & {

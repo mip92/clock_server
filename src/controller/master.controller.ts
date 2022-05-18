@@ -8,7 +8,7 @@ import {
     MasterId, UpdateMasterBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
-import {MasterModel, MasterStatic} from "../models/master.model";
+import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";

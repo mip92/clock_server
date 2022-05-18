@@ -1,4 +1,5 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
+import {CityAttributes} from "./city.model";
 
 export interface OrderPictureAttributes {
     id: number;
@@ -7,7 +8,7 @@ export interface OrderPictureAttributes {
     createdAt?: Date;
     updatedAt?: Date;
 }
-export interface OrderPictureModel extends Model<OrderPictureAttributes>, OrderPictureAttributes {}
+export interface OrderPictureModel extends Model<Partial<OrderPictureAttributes>>, OrderPictureAttributes {}
 export class OrderPicture extends Model<OrderPictureModel, OrderPictureAttributes> {}
 
 export type OrderPictureStatic = typeof Model & {

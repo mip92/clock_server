@@ -1,4 +1,5 @@
 import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
+import {CityAttributes} from "./city.model";
 
 export interface RatingAttributes {
     id: number;
@@ -11,7 +12,7 @@ export interface RatingAttributes {
 
 export interface RatingModel extends Model<RatingAttributes>, RatingAttributes {}
 
-export class Rating extends Model<RatingModel, RatingAttributes> {}
+export class Rating extends Model<Partial<RatingModel>, RatingAttributes> {}
 
 export type RatingStatic = typeof Model & {
     new(values?: object, options?: BuildOptions): RatingModel;
