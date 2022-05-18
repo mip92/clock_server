@@ -1,7 +1,7 @@
 import {Transporter} from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
+import {ROLE} from "../models";
 
-const {ROLE} = require("../models")
 const nodemailer = require('nodemailer');
 
 class MailService {
@@ -68,7 +68,7 @@ class MailService {
             })
     }
 
-    async sendActivationMail(to: string, link: string, role: typeof ROLE, password = null) {
+    async sendActivationMail(to: string, link: string, role: string, password:string|null = null) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
@@ -103,4 +103,4 @@ class MailService {
     }
 }
 
-module.exports = new MailService()
+export default new MailService()
