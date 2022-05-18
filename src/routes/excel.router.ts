@@ -1,9 +1,8 @@
-export {};
-const Router = require('express').Router;
-const router = new Router();
+import express from "express";
+const router = express.Router();
 const excelController = require('../controller/excel.controller')
 
 router.get('/', excelController.createExcel);
 
 
-module.exports = router
+export default router

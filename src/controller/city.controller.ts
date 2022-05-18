@@ -7,7 +7,7 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {CityModel} from "../models/city.model";
-import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
+import {Attributes, FindAndCountOptions} from "sequelize";
 
 const ApiError = require('../exeptions/api-error')
 const {City} = require('../models');
@@ -92,4 +92,4 @@ class CityController {
     }
 }
 
-module.exports = new CityController()
+export default new CityController()

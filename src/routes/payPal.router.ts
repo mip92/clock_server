@@ -1,6 +1,5 @@
-export {};
-const Router = require('express')
-const router = new Router()
+import express from "express";
+const router = express.Router();
 const {body} = require("express-validator");
 const payPalController = require('../controller/payPal.controller')
 const checkRules = require('../middlwares/checkRuleMiddleware')
@@ -13,4 +12,4 @@ router.post('/created/:orderId', createPayPalOrderBodyRules, checkRules, payPalC
 router.post('/paid', payPalController.orderHasBeenPaid)
 
 
-module.exports = router
+export default router
