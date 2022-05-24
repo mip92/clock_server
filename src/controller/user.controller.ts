@@ -9,7 +9,7 @@ import {
 import {NextFunction, Response} from "express";
 import {UserModel} from "../models/user.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import mail from "../services/mailServiсe";
 import {User, ROLE, Order} from '../models/index';
@@ -29,10 +29,10 @@ class UserController {
                 location: "body"
             }))
             else {
-                const randomString: string = uuid.v4();
+                const randomString: string = uuidv4();
                 const password: string = randomString.slice(0, 6);
                 const hashPassword: string = await bcrypt.hash(password, 5)
-                const activationLink: string = uuid.v4();
+                const activationLink: string = uuidv4();
                 const newUser:UserModel = await User.create({
                     password: hashPassword,
                     email,
@@ -144,7 +144,7 @@ class UserController {
             }))
             if (!user) {
                 const hashPassword: string = await bcrypt.hash(firstPassword, 5)
-                const activationLink: string = uuid.v4();
+                const activationLink: string = uuidv4();
                 const user: UserModel = await User.create({
                     password: hashPassword,
                     email,
@@ -181,7 +181,7 @@ class UserController {
                 param: "currentEmail",
                 location: "body"
             }))
-            const activationLink:string = uuid.v4();
+            const activationLink:string = uuidv4();
             const changedUser: UserModel = await user.update({email: newEmail, isActivated: false, activationLink})
             const token:string = tokenService.generateJwt(changedUser.id, changedUser.email, changedUser.role)
             await mail.sendActivationMail(newEmail,

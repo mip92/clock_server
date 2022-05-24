@@ -13,7 +13,7 @@ import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
 import {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} from '../models';
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import mail from "../services/mailServiсe";
 import ApiError from '../exeptions/api-error';
@@ -39,10 +39,10 @@ class MasterController {
                 param: "email",
                 location: "body"
             }))
-            const randomString: string = uuid.v4();
+            const randomString: string = uuidv4();
             const password: string = randomString.slice(0, 6)
             const hashPassword: string = await bcrypt.hash(password, 5)
-            const activationLink: string = uuid.v4();
+            const activationLink: string = uuidv4();
             // @ts-ignore
             const newMaster: MasterModel  = await Master.create({
                 name,
@@ -314,7 +314,7 @@ class MasterController {
             location: "body"
         }))
         const hashPassword: string = await bcrypt.hash(firstPassword, 5)
-        const activationLink: string = uuid.v4();
+        const activationLink: string = uuidv4();
         try {
             let result: MasterModel = await dbConfig.transaction(async (t: Sequelize.Transaction) => {
                 const findCity = (cityId: number): Promise<CityModel> => {
@@ -415,7 +415,7 @@ class MasterController {
                 param: "currentEmail",
                 location: "body"
             }))
-            const activationLink: string = uuid.v4();
+            const activationLink: string = uuidv4();
             const changedMaster: MasterModel = await master.update({
                 email: newEmail,
                 isActivated: false,

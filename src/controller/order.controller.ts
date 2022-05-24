@@ -10,7 +10,7 @@ import {dbConfig} from "../models";
 import excel from "./excel.controller";
 import {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} from '../models';
 import mail from "../services/mailServiсe";
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import ApiError from '../exeptions/api-error';
 import {Op} from 'Sequelize';
@@ -34,9 +34,9 @@ class OrderController {
             const {cityId, clockSize, dateTime, email, masterId, name} = req.body
             let user: UserModel | null = await User.findOne({where: {email}})
             if (!user) {
-                const password: string = uuid.v4();
+                const password: string = uuidv4();
                 const hashPassword: string = await bcrypt.hash(password.slice(0, 6), 5)
-                const activationLink: string = uuid.v4();
+                const activationLink: string = uuidv4();
                 user = await User.create({
                     password: hashPassword,
                     email,

@@ -4,7 +4,7 @@ import {OrderModel} from "../models/order.model";
 import ErrnoException = NodeJS.ErrnoException;
 import {PictureModel} from "../models/picture.model";
 import {OrderPictureModel} from "../models/orderPicture.model";
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import path from "path";
 import fs from 'fs';
 import ApiError from '../exeptions/api-error';
@@ -60,7 +60,7 @@ class PictureController {
             return next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
         }
         if (file.size > MAX_FILE_SIZE) return next(ApiError.BadRequest(`File with name: ${name} is larger than 1 MB`))
-        const fileName: string = uuid.v4() + '.' + fileExtension
+        const fileName: string = uuidv4() + '.' + fileExtension
         const filePath: string = path.resolve(__dirname, '..', 'static', `imageFile`)
         if (!fs.existsSync(filePath)) {
             fs.mkdirSync(filePath, {recursive: true})

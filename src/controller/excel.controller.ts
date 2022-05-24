@@ -2,7 +2,7 @@ import ErrnoException = NodeJS.ErrnoException;
 import {OrderModelWithMasterBusyDateAndUsers} from "./order.controller";
 import path from "path";
 import fs from 'fs';
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import xlsx from 'xlsx';
 
 class ExcelController {
@@ -30,7 +30,7 @@ class ExcelController {
     getExcel(orders: OrderModelWithMasterBusyDateAndUsers[]) {
         const workSheetColumnNames: string[] = ['id', "date time", "user email", "user name", "city",
             "clock size", "deal price", "total price", "status"]
-        const fileName: string = uuid.v4() + '.xlsx'
+        const fileName: string = uuidv4() + '.xlsx'
         const directoryPath: string = path.resolve(__dirname, '..', 'static', `excelFile`)
         if (!fs.existsSync(directoryPath)) {
             fs.mkdirSync(directoryPath, {recursive: true})
