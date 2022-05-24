@@ -1,16 +1,14 @@
-const Router = require('express')
-const router = new Router()
-const cityRouter=require('./city.router')
-const masterRouter=require('./master.router')
-const orderRouter=require('./order.router')
-const userRouter=require('./user.router')
-const authRouter=require('./auth.router')
-const statusRouter=require('./status.router')
-const pictureRouter=require('./picture.router')
-const ratingRouter=require('./rating.router')
-const payPalRouter=require('./payPal.router')
-const excelRouter=require('./excel.router')
-
+import express from "express";
+const router = express.Router();
+import cityRouter from './city.router'
+import masterRouter from './master.router'
+import orderRouter from './order.router'
+import userRouter from './user.router'
+import authRouter from './auth.router'
+import statusRouter from './status.router'
+import pictureRouter from './picture.router'
+import ratingRouter from './rating.router'
+import payPalRouter from './payPal.router'
 
 router.use('/cities', cityRouter)
 router.use('/masters',masterRouter)
@@ -21,7 +19,6 @@ router.use('/status',statusRouter)
 router.use('/picture',pictureRouter)
 router.use('/rating',ratingRouter)
 router.use('/payPal', payPalRouter)
-router.use('/excel', excelRouter)
 
 
-module.exports=router
+export default router

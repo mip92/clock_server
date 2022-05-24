@@ -9,7 +9,7 @@ import {MasterBusyDateFactory} from "./masterBusyDate.model";
 import {RatingFactory} from "./rating.model";
 import {CityFactory} from "./city.model";
 import {MasterCityFactory} from "./masterCity.model";
-import {AdminFactory} from "./admin.model";
+import {AdminFactory, AdminModel} from "./admin.model";
 
 export const dbConfig = new Sequelize({
         database: process.env.DB_NAME as string,
@@ -21,16 +21,16 @@ export const dbConfig = new Sequelize({
     },
 );
 
-const User = UserFactory(dbConfig);
-const City = CityFactory(dbConfig);
-const Master = MasterFactory(dbConfig);
-const Order = OrderFactory(dbConfig);
-const Picture = PictureFactory(dbConfig);
-const OrderPicture = OrderPictureFactory(dbConfig);
-const MasterBusyDate = MasterBusyDateFactory(dbConfig);
-const Rating = RatingFactory(dbConfig);
-const MasterCity = MasterCityFactory(dbConfig);
-const Admin = AdminFactory(dbConfig);
+export const User = UserFactory(dbConfig);
+export const City = CityFactory(dbConfig);
+export const Master = MasterFactory(dbConfig);
+export const Order = OrderFactory(dbConfig);
+export const Picture = PictureFactory(dbConfig);
+export const OrderPicture = OrderPictureFactory(dbConfig);
+export const MasterBusyDate = MasterBusyDateFactory(dbConfig);
+export const Rating = RatingFactory(dbConfig);
+export const MasterCity = MasterCityFactory(dbConfig);
+export const Admin = AdminFactory(dbConfig);
 
 export enum STATUSES{
     Approval= "Approval",

@@ -1,15 +1,15 @@
 import {Transporter} from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
+import {ROLE} from "../models";
 
-const {ROLE} = require("../models")
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 class MailService {
     private transporter: Transporter<SMTPTransport.SentMessageInfo>;
 
     constructor() {
-        this.transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
+        // @ts-ignore
+        this.transporter = nodemailer.createTransport({host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT,
             secure: process.env.NODE_ENV === 'production',
             auth: {
@@ -19,7 +19,7 @@ class MailService {
         });
     }
 
-    async sendMailToNewUser(to: string, masterName: string, date: Date, clockSize: number,
+    async sendMailToNewUser(to: string, masterName: string, date: string, clockSize: number,
                             password: string, activationLink: string) {
         const dateTime = new Date(date)
         const year = dateTime.getFullYear()
@@ -46,7 +46,7 @@ class MailService {
             })
     }
 
-    async sendMail(to: string, masterName: string, date: Date, clockSize: number) {
+    async sendMail(to: string, masterName: string, date: string, clockSize: number) {
         const dateTime = new Date(date)
         const year = dateTime.getFullYear()
         const month = dateTime.getMonth() + 1
@@ -68,7 +68,7 @@ class MailService {
             })
     }
 
-    async sendActivationMail(to: string, link: string, role: typeof ROLE, password = null) {
+    async sendActivationMail(to: string, link: string, role: string, password:string|null = null) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
@@ -103,4 +103,5 @@ class MailService {
     }
 }
 
-module.exports = new MailService()
+
+export default new MailService()

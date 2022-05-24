@@ -3,16 +3,14 @@ import {UserModel} from "../models/user.model";
 import {MasterModel} from "../models/master.model";
 import {AdminModel} from "../models/admin.model";
 import {AuthRegistrationBody, CustomRequest, Link, LoginBody} from "../interfaces/RequestInterfaces";
-
-const ApiError = require('../exeptions/api-error');
-const {Master, User, Admin} = require('../models');
-const userController = require("./user.controller");
-const masterController = require("./master.controller");
-const bcrypt = require('bcrypt')
-const tokenService = require('../services/tokenServiсe')
+import {Master, User, Admin} from '../models';
+import userController from "./user.controller";
+import masterController from "./master.controller";
+import bcrypt from 'bcrypt';
+import ApiError from '../exeptions/api-error';
+import tokenService from '../services/tokenServiсe';
 
 class AuthController {
-
     async login(req: CustomRequest<LoginBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const admin: AdminModel[] = await Admin.findAll()
@@ -23,7 +21,7 @@ class AuthController {
                 const admin: AdminModel = await Admin.create({email, password: hashPassword})
             }
             const {email, password} = req.body
-            let user: UserModel | MasterModel | AdminModel = await User.findOne({where: {email: email}})
+            let user: UserModel | MasterModel | AdminModel | null = await User.findOne({where: {email: email}})
             if (!user) user = await Master.findOne({where: {email}})
             if (!user) user = await Admin.findOne({where: {email}})
             if (!user) return next(ApiError.ExpectationFailed({
@@ -42,6 +40,7 @@ class AuthController {
             const token = tokenService.generateJwt(user.id, user.email, user.role)
             return res.status(200).json({token, name: "name" in user ? user.name : "admin"})
         } catch (e) {
+            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -65,12 +64,12 @@ class AuthController {
     async activate(req: CustomRequest<null, Link, null, null>, res: Response, next: NextFunction) {
         try {
             const activationLink: string = req.params.link;
-            const user: UserModel = await User.findOne({where: {activationLink}})
+            const user: UserModel | null = await User.findOne({where: {activationLink}})
             if (user){
                 await user.update({isActivated: true})
                 return res.redirect(`${process.env.CLIENT_URL}`);
             }
-            const master: MasterModel = await Master.findOne({where: {activationLink}})
+            const master: MasterModel | null = await Master.findOne({where: {activationLink}})
             if (master){
                 await master.update({isActivated: true})
                 return res.redirect(`${process.env.CLIENT_URL}`);
@@ -84,12 +83,12 @@ class AuthController {
     async loginActivate(req: CustomRequest<null, Link, null, null>, res: Response, next: NextFunction) {
         try {
             const activationLink: string = req.params.link;
-            const user: UserModel = await User.findOne({where: {activationLink}})
+            const user: UserModel | null = await User.findOne({where: {activationLink}})
             if (user){
                 await user.update({isActivated: true})
                 return res.redirect(process.env.CLIENT_URL + '/login');
             }
-            const master: MasterModel = await Master.findOne({where: {activationLink}})
+            const master: MasterModel | null = await Master.findOne({where: {activationLink}})
             if (master){
                 await master.update({isActivated: true})
                 return res.redirect(process.env.CLIENT_URL + '/login');
@@ -100,5 +99,4 @@ class AuthController {
         }
     }
 }
-
-module.exports = new AuthController()
+export default new AuthController()

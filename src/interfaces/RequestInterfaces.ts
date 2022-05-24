@@ -1,4 +1,5 @@
 import {Params, Query} from "express-serve-static-core";
+import fileUpload from "express-fileupload";
 
 export interface LoginBody {
     email: string,
@@ -116,10 +117,11 @@ export interface CreatePayPalOrderBody {
 }
 
 
+// @ts-ignore
 export interface CustomRequest<U, T extends Params | null,
     C extends Query | null, K extends FileList| null> extends Express.Request {
     body: U,
     params: T,
     query: C,
-    files: K
+    files: K | ( & fileUpload.FileArray) | ( & undefined); //k
 }

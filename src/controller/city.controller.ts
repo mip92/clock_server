@@ -7,24 +7,24 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {CityModel} from "../models/city.model";
-import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
-
-const ApiError = require('../exeptions/api-error')
-const {City} = require('../models');
-const Op = require('Sequelize').Op;
+import {Attributes, FindAndCountOptions} from "sequelize";
+import {City} from '../models';
+import Sequelize from 'Sequelize';
+import ApiError from '../exeptions/api-error';
 
 class CityController {
     async createCity(req: CustomRequest<CreateCityBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {city, price} = req.body
-            const isCityUniq: CityModel = await City.findOne({where: {cityName: city}})
+            const isCityUniq: CityModel | null = await City.findOne({where: {cityName: city}})
             if (isCityUniq) return next(ApiError.ExpectationFailed({
                 value: city,
                 msg: `City with this name: ${city} is not unique`,
                 param: "city",
                 location: "body"
             }))
-            const newCity: CityModel = await City.create({cityName: city, price})
+
+            const newCity = await City.create({cityName: city, price})
             res.status(201).json(newCity)
         } catch (e) {
             next(ApiError.Internal(`server error`))
@@ -34,14 +34,14 @@ class CityController {
     async getCities(req: CustomRequest<null, null, LimitOffsetType, null>, res: Response, next: NextFunction) {
         try {
             const {limit, offset, sortBy, select, filter} = req.query
-            const options: Omit<FindAndCountOptions<Attributes<typeof City>>, "group"> = {}
+            const options: Omit<FindAndCountOptions<Attributes<CityModel>>, "group"> = {}
             options.where = {}
-            if ((filter !== '') && (filter != undefined) && filter) options.where = {cityName: {[Op.iLike]: `%${filter}%`}}
+            if ((filter !== '') && (filter != undefined) && filter) options.where = {cityName: {[Sequelize.Op.iLike]: `%${filter}%`}}
             if (limit && +limit > 50) options.limit = 50
             if (!offset) options.offset = 0
             if (sortBy && select) options.order = [[sortBy, select]]
             //options.order = [['createdAt', 'ASC']]
-            const cities: CityModel[] = await City.findAndCountAll(options)
+            const cities: { rows: CityModel[]; count: number; } = await City.findAndCountAll(options)
             if (!cities) return next(ApiError.BadRequest("Сities not found"))
             res.status(200).json(cities)
         } catch (e) {
@@ -53,7 +53,7 @@ class CityController {
     async getOneCity(req: CustomRequest<null, CityIdType, null, null>, res: Response, next: NextFunction) {
         try {
             const {cityId} = req.params
-            const city: CityModel = await City.findOne({where: {id: +cityId}})
+            const city: CityModel | null = await City.findOne({where: {id: +cityId}})
             res.status(200).json(city)
         } catch (e) {
             next(ApiError.Internal(`server error`))
@@ -64,7 +64,7 @@ class CityController {
         try {
             const {cityId} = req.params
             const {cityName, price} = req.body
-            const city: CityModel = await City.findOne({where: {id: +cityId}})
+            const city: CityModel | null = await City.findOne({where: {id: +cityId}})
             if (!city) return next(ApiError.ExpectationFailed({
                 value: cityId,
                 msg: `City with this id: ${cityId} is not found`,
@@ -82,7 +82,7 @@ class CityController {
         try {
             const {cityId} = req.params
             if (!cityId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: CityModel = await City.findOne({where: {id: cityId}})
+            const candidate: CityModel | null = await City.findOne({where: {id: cityId}})
             if (!candidate) next(ApiError.BadRequest(`city with id:${cityId} is not defined`))
             await City.destroy({where: {id: cityId}})
             res.status(200).json({message: `city with id:${cityId} was deleted`, city: candidate})
@@ -92,4 +92,4 @@ class CityController {
     }
 }
 
-module.exports = new CityController()
+export default new CityController()

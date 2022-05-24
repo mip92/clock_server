@@ -1,5 +1,6 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
 import {STATUSES} from "./index";
+import {CityAttributes} from "./city.model";
 
 export interface OrderAttributes {
     id: number;
@@ -7,11 +8,11 @@ export interface OrderAttributes {
     originalCityName: string,
     dealPrice: number,
     userId: number,
-    status: typeof STATUSES,
+    status: string,
     payPalOrderId: string,
-    totalPrice:number
+    totalPrice:number | null
 }
-export interface OrderModel extends Model<OrderAttributes>, OrderAttributes {}
+export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttributes {}
 export class Order extends Model<OrderModel, OrderAttributes> {}
 
 export type OrderStatic = typeof Model & {

@@ -1,11 +1,10 @@
-export {};
-const Router =require('express').Router;
-const router = new Router();
-const orderController = require('../controller/order.controller')
-const {body} = require("express-validator");
-const checkRules = require('../middlwares/checkRuleMiddleware')
-const checkRoles = require("../middlwares/checkRolesMiddleware");
-const {ROLE}=require("../models")
+import express from "express";
+const router = express.Router();
+import orderController from '../controller/order.controller';
+import {body} from "express-validator";
+import checkRules from '../middlwares/checkRuleMiddleware';
+import checkRoles from "../middlwares/checkRolesMiddleware";
+import {ROLE} from "../models";
 
 const validationCreateOrderBodyRules = [
     body('cityId', 'city_id is required').not().isEmpty().escape(),
@@ -16,12 +15,12 @@ const validationCreateOrderBodyRules = [
     body('dateTime', 'dateTime is required').not().escape(),
 ];
 
-router.post('/', validationCreateOrderBodyRules, checkRules, orderController.createOrder);
-router.get('/', checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), orderController.getAllOrders);
+router.post('/', validationCreateOrderBodyRules, checkRules, (res: any, req: any, next: any) => {orderController.createOrder(res, req, next)});
+router.get('/', checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), (res: any, req: any, next: any) => {orderController.getAllOrders(res, req, next)});
 /*router.get('/:orderId', checkRoles([ROLE.Admin]), orderController.getOneOrder);*/
-router.delete('/:orderId', checkRoles([ROLE.Admin]), orderController.deleteOrder);
-router.get('/minMax/:masterId', orderController.findMaxAndMinPrice);
-router.get('/getExcel', orderController.getExcel);
+router.delete('/:orderId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {orderController.deleteOrder(res, req, next)});
+router.get('/minMax/:masterId', (res: any, req: any, next: any) => {orderController.findMaxAndMinPrice(res, req, next)});
+router.get('/getExcel', (res: any, req: any, next: any) => {orderController.getExcel(res, req, next)});
 
 
-module.exports=router
+export default router

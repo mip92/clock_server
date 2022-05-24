@@ -12,14 +12,14 @@ import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
-
-const {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} = require('../models');
-const ApiError = require('../exeptions/api-error')
-const uuid = require('uuid')
-const bcrypt = require('bcrypt')
-const mail = require("../services/mailServiсe");
-const tokenService = require('../services/tokenServiсe')
-const Op = require('Sequelize').Op;
+import {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} from '../models';
+import uuid from 'uuid';
+import bcrypt from 'bcrypt';
+import mail from "../services/mailServiсe";
+import ApiError from '../exeptions/api-error';
+import tokenService from '../services/tokenServiсe';
+import {MasterCityModel} from "../models/masterCity.model";
+import {Op} from 'Sequelize';
 
 class MasterController {
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
@@ -32,7 +32,7 @@ class MasterController {
                 param: "citiesId",
                 location: "body"
             }))
-            const isEmailUniq: MasterModel = await Master.findOne({where: {email}})
+            const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
             if (isEmailUniq) return next(ApiError.ExpectationFailed({
                 value: email,
                 msg: `Master with this email is already registered`,
@@ -43,7 +43,8 @@ class MasterController {
             const password: string = randomString.slice(0, 6)
             const hashPassword: string = await bcrypt.hash(password, 5)
             const activationLink: string = uuid.v4();
-            const newMaster: MasterModel = await Master.create({
+            // @ts-ignore
+            const newMaster: MasterModel  = await Master.create({
                 name,
                 email,
                 password: hashPassword,
@@ -57,7 +58,7 @@ class MasterController {
                 newMaster.role,
                 password.slice(0, 6)
             )
-            const findOneCity = (cityId: number): Promise<CityModel> => {
+            const findOneCity = (cityId: number): Promise<CityModel | null> => {
                 return new Promise(function (resolve, reject) {
                     resolve(City.findOne({where: {id: cityId}}))
                     reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
@@ -68,21 +69,22 @@ class MasterController {
                 .then(results => {
                         results.map(city => {
                             count++
-                            MasterCity.create({masterId: newMaster.id, cityId: city.id})
+                            // @ts-ignore
+                            city && MasterCity.create({masterId: newMaster.id, cityId: city.id})
                                 .then(() => {
                                     if (count === citiesID.length) {
                                         Master.findOne({
                                             where: {email},
                                             attributes: {exclude: ['password', 'activationLink']},
                                             include: [{model: City}]
-                                        }).then((master: MasterModel) => res.status(201).json(master))
+                                        }).then((master: MasterModel | null) => res.status(201).json(master))
                                     }
                                 })
                         })
                     },
                     error => next(error)
                 )
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -92,16 +94,16 @@ class MasterController {
         try {
             const {limit, offset, sortBy, select, cities, filter} = req.query
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
-            const options: Omit<FindAndCountOptions<Attributes<typeof Master>>, "group"> = {}
+            const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
             options.where = {}
-            if ((filter !== '') && (filter != undefined) && filter) options.where[Op.or] = [
-                {name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            if ((filter !== '') && (filter != undefined) && filter) { // @ts-ignore
+                options.where[Op.or] = [{name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
+            }
             // @ts-ignore
             options.distinct = "Master.id"
             //options.where.isActivated = true
             //options.where.isApproved = true
             options.attributes = {exclude: ['password', 'activationLink']}
-            console.log(limit, offset, sortBy, select, cities, filter)
             if (limit && +limit > 50) options.limit = 50
             if (!offset) options.offset = 0
             if (sortBy && select) options.order = [[sortBy, select]]
@@ -115,10 +117,10 @@ class MasterController {
                     required: true
                 }]
             }
-            const masters: MasterModel[] = await Master.findAndCountAll(options)
+            const masters: { rows: MasterModel[]; count: number} = await Master.findAndCountAll(options)
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -127,7 +129,7 @@ class MasterController {
     async getOneMaster(req: CustomRequest<null, MasterId, null, null>, res: Response, next: NextFunction) {
         try {
             const masterId = req.params.masterId
-            const master: MasterModel = await Master.findOne({
+            const master: MasterModel | null = await Master.findOne({
                     include: {all: true},
                     where: {id: masterId},
                     attributes: {exclude: ['password', 'activationLink']},
@@ -135,7 +137,7 @@ class MasterController {
             )
             if (!master) return next(ApiError.BadRequest("Master not found"))
             res.status(200).json(master)
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -145,7 +147,7 @@ class MasterController {
         try {
             const {id, name, email, citiesId} = req.body
             console.log(id, name, email, citiesId)
-            const isEmailUniq: MasterModel = await Master.findOne({where: {email}})
+            const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
                 msg: `Master with this email is already registered`,
@@ -163,9 +165,10 @@ class MasterController {
                 location: "body"
             }))
             await MasterCity.destroy({where: {masterId: id}})
-            const createMasterCity = (cityId: number): Promise<CityModel> => {
+            const createMasterCity = (cityId: number): Promise<MasterCityModel> => {
                 return new Promise(function (resolve, reject) {
-                    resolve(MasterCity.create({masterId: id, cityId: Number(cityId)}))
+                    // @ts-ignore
+                    resolve(MasterCity.create({masterId: id, cityId: Number(cityId),createdAt: new Date(Date.now()), updatedAt: new Date(Date.now())}))
                     reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
                 })
             }
@@ -179,15 +182,15 @@ class MasterController {
                                     include: [{model: City}],
                                     attributes: {exclude: ['password', 'activationLink']}
                                 }
-                            ).then((master: MasterModel) => {
-                                master.update({name, email})
+                            ).then((master: MasterModel | null) => {
+                                master && master.update({name, email})
                                     .then((master: MasterModel) => res.status(200).json(master))
                             })
                         })
                     },
                     error => next(error)
                 )
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -197,13 +200,11 @@ class MasterController {
         try {
             const {masterId} = req.params
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: MasterModel = await Master.findOne({where: {id: masterId}, include: [{ all: true }]})
+            const candidate: MasterModel | null = await Master.findOne({where: {id: masterId}, include: [{ all: true }]})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-/*            const masterBusyDate: MasterBusyDateModel = await MasterBusyDate.destroy({where: {masterId}})
-            const masterCity: MasterCityModel =await MasterCity.destroy({where: {masterId}})*/
-            await candidate.destroy({ force: true })
+            if (candidate) await candidate.destroy({ force: true })
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
-        } catch (e) {
+        } catch (e:any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -213,13 +214,15 @@ class MasterController {
         try {
             const {masterId} = req.params
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const master: MasterModel = await Master.findOne({where: {id: masterId}})
+            const master: MasterModel | null = await Master.findOne({where: {id: masterId}})
             if (!master) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-            const isApprove: boolean = master.isApproved
-            await master.update({isApproved: !isApprove})
-            await mail.sendApproveMail(master.email, master.isApproved)
-            res.status(200).json({message: `master with id:${masterId} changed status approve`, master})
-        } catch (e) {
+            if (master) {
+                const isApprove: boolean = master.isApproved
+                await master.update({isApproved: !isApprove})
+                await mail.sendApproveMail(master.email, master.isApproved)
+                res.status(200).json({message: `master with id:${masterId} changed status approve`, master})
+            }
+        } catch (e:any) {
             next(ApiError.BadRequest(e))
         }
     }
@@ -265,8 +268,7 @@ class MasterController {
                             masterId: master.id,
                             dateTime: String(time.toISOString())
                         }
-                    }).then((busy: MasterBusyDateModel) => {
-                        console.log(!!busy)
+                    }).then((busy: MasterBusyDateModel | null) => {
                         if (busy) resolve(true)
                         resolve(false)
                     })
@@ -291,7 +293,7 @@ class MasterController {
             })
             if (freeMasters.length === 0) return next(ApiError.BadRequest("masters is not found"))
             res.status(200).json(freeMasters)
-        } catch (e) {
+        } catch (e:any) {
             next(ApiError.BadRequest(e))
         }
     }
@@ -304,7 +306,7 @@ class MasterController {
             param: "citiesId",
             location: "body"
         }))
-        const isEmailUniq: MasterModel = await Master.findOne({where: {email}})
+        const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
         if (isEmailUniq) return next(ApiError.ExpectationFailed({
             value: email,
             msg: "Master with this email is already registered",
@@ -317,18 +319,19 @@ class MasterController {
             let result: MasterModel = await dbConfig.transaction(async (t: Sequelize.Transaction) => {
                 const findCity = (cityId: number): Promise<CityModel> => {
                     return new Promise((resolve, reject) => {
-                        City.findOne({where: {id: cityId}, transaction: t}).then((city: CityModel) => {
+                        City.findOne({where: {id: cityId}, transaction: t}).then((city: CityModel | null) => {
                                 if (city === null) reject(`City with id: ${cityId} is not found`)
-                                return resolve(city)
+                                else return resolve(city)
                             }
                         ).catch((err: Error) => {
-                            console.log(99)
+
                             reject(err)
                         })
                     })
                 }
                 let count = 0
                 return new Promise((resolve, reject) => {
+                    // @ts-ignore
                     Master.create({
                         name,
                         email,
@@ -341,60 +344,55 @@ class MasterController {
                                 Promise.all(citiesId.map(cityId => findCity(cityId)))
                                     .then((cities: CityModel[]) => {
                                             cities.map((city: CityModel) => {
-                                                    MasterCity.create({
+                                                MasterCity.create({
                                                         masterId: newMaster.id,
                                                         cityId: city.id
                                                     }, {transaction: t})
                                                         .then(() => {
                                                                 count++
-                                                                console.log(count, citiesId.length)
                                                                 if (count === citiesId.length) {
                                                                     resolve(newMaster)
                                                                 }
                                                             }
                                                         ).catch((err: Error) => {
-                                                        console.log(88)
                                                         console.log(err)
                                                     })
                                                 }
                                             )
                                         }
                                     ).catch((err: Error) => {
-                                    console.log(77)
                                     console.log(err)
                                 })
                             }
                         ).catch((err: Error) => {
-                        console.log(66)
                         console.log(err)
                     })
                 })
             }).catch((e: Error) => {
-                console.log(55)
                 console.log(e)
             })
-            console.log(result)
             await mail.sendActivationMail(email,
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,
                 result.role
             )
 
             interface MasterModelWithCity extends MasterModel {
-                dataValues: CityModel
+                dataValues?: CityModel
             }
 
-            const master: MasterModelWithCity = await Master.findOne(
+            const master: MasterModelWithCity | null = await Master.findOne(
                 {
                     where: {email: result.email},
                     attributes: {exclude: ['password', 'activationLink']},
                     include: [{model: City}]
                 },
             )
-            console.log(master)
-            const token: string = tokenService.generateJwt(master.id, master.email, master.role)
-            return res.status(201).json({token})
-        } catch
-            (err) {
+
+            if (master) {
+                const token: string = tokenService.generateJwt(master.id, master.email, master.role)
+                return res.status(201).json({token})
+            }
+        } catch (err:any) {
             console.log(err)
             next(err)
         }
@@ -403,7 +401,7 @@ class MasterController {
     async changeEmail(req: CustomRequest<ChangeEmailBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {password, currentEmail, newEmail} = req.body
-            const master: MasterModel = await Master.findOne({where: {email: currentEmail}})
+            const master: MasterModel | null = await Master.findOne({where: {email: currentEmail}})
             if (!master) return next(ApiError.ExpectationFailed({
                 value: currentEmail,
                 msg: "Master is not found or password is wrong",
@@ -428,10 +426,10 @@ class MasterController {
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,
                 changedMaster.role)
             return res.status(200).json({token})
-        } catch (e) {
+        } catch (e:any) {
             next(ApiError.Internal(`server error`))
         }
     }
 }
-
-module.exports = new MasterController()
+export default new MasterController()
+//module.exports = new MasterController()

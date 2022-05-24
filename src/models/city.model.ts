@@ -5,7 +5,7 @@ export interface CityAttributes {
     cityName: string,
     price: number,
 }
-export interface CityModel extends Model<CityAttributes>, CityAttributes {}
+export interface CityModel extends /*Model<Partial<CityAttributes>>*/ Model<Partial<CityAttributes>>, CityAttributes {}
 export class City extends Model<CityModel, CityAttributes> {}
 
 export type CityStatic = typeof Model & {

@@ -1,16 +1,14 @@
-export {};
-const Router =require('express').Router;
-const router = new Router();
-const pictureController = require('../controller/picture.controller')
+import express from "express";
+const router = express.Router();
+import pictureController from '../controller/picture.controller';
+import checkRoles from "../middlwares/checkRolesMiddleware";
+import {ROLE} from "../models";
 
-const checkRoles = require("../middlwares/checkRolesMiddleware");
-const {ROLE} = require("../models")
-
-router.post('/:orderId', pictureController.createPictures);
-router.get('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), pictureController.getPictures)
-router.delete('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), pictureController.deletePictures);
+router.post('/:orderId', (res: any, req: any, next: any) => { pictureController.createPictures(res, req, next)});
+router.get('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), (res: any, req: any, next: any) => {pictureController.getPictures(res, req, next)})
+router.delete('/:orderId',checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), (res: any, req: any, next: any) => {pictureController.deletePictures(res, req, next)});
 
 
 
 
-module.exports=router
+export default router

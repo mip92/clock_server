@@ -4,14 +4,13 @@ import {OrderModel} from "../models/order.model";
 import ErrnoException = NodeJS.ErrnoException;
 import {PictureModel} from "../models/picture.model";
 import {OrderPictureModel} from "../models/orderPicture.model";
+import uuid from 'uuid';
+import path from "path";
+import fs from 'fs';
+import ApiError from '../exeptions/api-error';
+import {Picture, OrderPicture, Order} from '../models';
 
-const fs = require('fs');
-require("dotenv").config({path: `.env.${process.env.NODE_ENV}`})
-const ApiError = require('../exeptions/api-error')
 const cloudinary = require("cloudinary").v2
-const uuid = require('uuid')
-const path = require("path")
-const {Picture, OrderPicture, Order} = require('../models');
 
 interface MyFile extends File {
     data: Buffer,
@@ -53,11 +52,11 @@ interface OrderPictureModelWithPicture extends OrderPictureModel {
 
 class PictureController {
     static createOnePicture(file: MyFile, next: NextFunction) {
-        const MAX_FILE_SIZE=1048576 //1024*1024 1mb
+        const MAX_FILE_SIZE = 1048576 //1024*1024 1mb
         const name: string = file.name
         const fileExtension: string | undefined = name.split('.').pop()
         const allowedTypes: string[] = ['jpeg', 'JPEG', 'jpg', 'JPG', 'png', 'PNG'] //'BMP', 'bmp', 'GIF', 'gif', 'ico', 'ICO'
-        if (!allowedTypes.some(fileType => fileType === fileExtension)){
+        if (!allowedTypes.some(fileType => fileType === fileExtension)) {
             return next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
         }
         if (file.size > MAX_FILE_SIZE) return next(ApiError.BadRequest(`File with name: ${name} is larger than 1 MB`))
@@ -72,7 +71,7 @@ class PictureController {
     }
 
     static deleteOnePicture(path: string, next: NextFunction) {
-        fs.unlink(path, (err: ErrnoException) => {
+        fs.unlink(path, (err: ErrnoException | null) => {
             if (err) return next(err)
             console.log('File deleted successfully');
         });
@@ -81,12 +80,12 @@ class PictureController {
     async createPictures(req: CustomRequest<null, CreatePicturesParams, null, any | null>, res: Response, next: NextFunction) {
         try {
             const {orderId} = req.params
-            let picturesArr:MyFile[] = []
-            if (req.files === null) return res.status(201).json({message:'Order without pictures'})
-            Object.keys(req.files).forEach(function(key) {
+            let picturesArr: MyFile[] = []
+            if (req.files === null) return res.status(201).json({message: 'Order without pictures'})
+            Object.keys(req.files).forEach(function (key) {
                 if (key) picturesArr.push(req.files[key])
             }, req.files);
-            const order: OrderModel = await Order.findOne({where: {id: orderId}})
+            const order: OrderModel | null = await Order.findOne({where: {id: orderId}})
             if (!order) return next(ApiError.BadRequest(`Order is not found`))
 
             const createPicture = (p: MyFile): Promise<PictureModel> => {
@@ -108,12 +107,12 @@ class PictureController {
             Promise.all(picturesArr.map(p => createPicture(p)))
                 .then((results: PictureModel[]) => {
                         results.map((response: PictureModel) => {
-                                OrderPicture.create({pictureId: response.id, orderId})
+                                OrderPicture.create({pictureId: response.id, orderId: +orderId})
                                     .then(() => {
                                         count++
                                         if (count === picturesArr.length) OrderPicture.findAndCountAll(
                                             {where: {orderId}})
-                                            .then((op: OrderPictureModel) => {
+                                            .then((op: { rows: OrderPictureModel[]; count: number; }) => {
                                                 res.status(201).json(op)
                                             })
                                     })
@@ -132,6 +131,7 @@ class PictureController {
             const {orderId} = req.params
             const p: Promise<OrderPictureModelWithPicture[]> = new Promise((resolve, reject) => {
                     OrderPicture.findAll({where: {orderId}, include: [{model: Picture}]})
+                        // @ts-ignore
                         .then((orderPictures: OrderPictureModelWithPicture[]) => {
                                 if (orderPictures.length === 0) reject(`Pictures is not found`)
                                 resolve(orderPictures)
@@ -155,15 +155,15 @@ class PictureController {
         const {orderId} = req.params
         const arrayPicturesId = /*JSON.parse(*/req.body.picturesId
 
-        const deleteOnePicture = (pictureId: number):Promise<number> => {
+        const deleteOnePicture = (pictureId: number): Promise<number> => {
             return new Promise((resolve, reject) => {
-                OrderPicture.findOne({where: {orderId, pictureId}}).then((orderPicture: OrderPictureModel) => {
+                OrderPicture.findOne({where: {orderId, pictureId}}).then((orderPicture: OrderPictureModel | null) => {
                         if (orderPicture == null) reject(`Picture with this id: ${pictureId} does not belong to order with this id: ${orderId}`)
-                        Picture.findByPk(pictureId).then((picture:PictureModel)=>{
-                            cloudinary.uploader.destroy(picture.path).then((cd: { result: string })=>{
-                                if(cd.result !== 'ok') reject(`Cloudinary server error`)
-                                else picture.destroy().then(()=>{
-                                    orderPicture.destroy().then(()=>{
+                        Picture.findByPk(pictureId).then((picture: PictureModel | null) => {
+                            cloudinary.uploader.destroy(picture && picture.path).then((cd: { result: string }) => {
+                                if (cd.result !== 'ok') reject(`Cloudinary server error`)
+                                else picture && picture.destroy().then(() => {
+                                    orderPicture && orderPicture.destroy().then(() => {
                                         return resolve(picture.id)
                                     })
                                 })
@@ -175,23 +175,22 @@ class PictureController {
                 })
             })
         }
-        Promise.all(arrayPicturesId.map(deleteOnePicture)).then((picturesId:number[])=>{
-            console.log(picturesId)
-            res.status(200).json({message:`pictures with id: ${picturesId} was deleted`, picturesId})
+        Promise.all(arrayPicturesId.map(deleteOnePicture)).then((picturesId: number[]) => {
+            res.status(200).json({message: `pictures with id: ${picturesId} was deleted`, picturesId})
         })
-/*
-        for (let i = 0; i < arr.length; i++) {
-            const orderPicture: OrderPictureModel = await OrderPicture.findOne({where: {orderId, pictureId: arr[i]}})
-            if (!orderPicture) return next(ApiError.BadRequest(`Picture with this id: ${arr[i]} does not belong to order with this id: ${orderId}`))
-            const picture: PictureModel = await Picture.findByPk(arr[i])
-            const cd: { result: string } = await cloudinary.uploader.destroy(picture.path);
-            if (cd.result !== 'ok') next(ApiError.Internal(`Cloudinary server error`))
-            await picture.destroy()
-            await orderPicture.destroy()
-        }
-        await res.status(200).json(`pictures with id: ${req.body.picturesId} was deleted`)*/
+        /*
+                for (let i = 0; i < arr.length; i++) {
+                    const orderPicture: OrderPictureModel = await OrderPicture.findOne({where: {orderId, pictureId: arr[i]}})
+                    if (!orderPicture) return next(ApiError.BadRequest(`Picture with this id: ${arr[i]} does not belong to order with this id: ${orderId}`))
+                    const picture: PictureModel = await Picture.findByPk(arr[i])
+                    const cd: { result: string } = await cloudinary.uploader.destroy(picture.path);
+                    if (cd.result !== 'ok') next(ApiError.Internal(`Cloudinary server error`))
+                    await picture.destroy()
+                    await orderPicture.destroy()
+                }
+                await res.status(200).json(`pictures with id: ${req.body.picturesId} was deleted`)*/
     }
 
 }
-
-module.exports = new PictureController()
+export default new PictureController()
+//module.exports = new PictureController()

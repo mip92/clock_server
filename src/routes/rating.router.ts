@@ -1,9 +1,8 @@
-export {};
-const Router = require('express').Router;
-const router = new Router();
-const ratingController = require('../controller/rating.controller')
-const {body} = require("express-validator");
-const checkRules = require('../middlwares/checkRuleMiddleware')
+import express from "express";
+const router = express.Router();
+import ratingController from '../controller/rating.controller';
+import {body} from "express-validator";
+import checkRules from '../middlwares/checkRuleMiddleware';
 
 const validationCreateRatingBodyRules = [
     body('orderId', "orderId is required").not().isEmpty(),
@@ -11,8 +10,8 @@ const validationCreateRatingBodyRules = [
     body('rating', "orderId is required").not().isEmpty(),
 ];
 
-router.post('/',/* checkRoles([ROLE.User]),*/ validationCreateRatingBodyRules, checkRules, ratingController.createRating);
+router.post('/',/* checkRoles([ROLE.User]),*/ validationCreateRatingBodyRules, checkRules, (res: any, req: any, next: any) => {ratingController.createRating(res, req, next)});
 //router.get('/', ratingController.getAllRatings);
-router.get('/:masterId', ratingController.getRatingByMaster);
+router.get('/:masterId', (res: any, req: any, next: any) => {ratingController.getRatingByMaster(res, req, next)});
 
-module.exports = router
+export default router
