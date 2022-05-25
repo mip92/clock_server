@@ -4,7 +4,7 @@ import {OrderModel} from "../models/order.model";
 import ErrnoException = NodeJS.ErrnoException;
 import {PictureModel} from "../models/picture.model";
 import {OrderPictureModel} from "../models/orderPicture.model";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import path from "path";
 import fs from 'fs';
 import ApiError from '../exeptions/api-error';
@@ -153,18 +153,28 @@ class PictureController {
 
     async deletePictures(req: CustomRequest<DeletePicturesBody, CreatePicturesParams, null, null>, res: Response, next: NextFunction) {
         const {orderId} = req.params
-        const arrayPicturesId = /*JSON.parse(*/req.body.picturesId
-
+        const arrayPicturesId = req.body.picturesId
         const deleteOnePicture = (pictureId: number): Promise<number> => {
             return new Promise((resolve, reject) => {
                 OrderPicture.findOne({where: {orderId, pictureId}}).then((orderPicture: OrderPictureModel | null) => {
                         if (orderPicture == null) reject(`Picture with this id: ${pictureId} does not belong to order with this id: ${orderId}`)
                         Picture.findByPk(pictureId).then((picture: PictureModel | null) => {
                             cloudinary.uploader.destroy(picture && picture.path).then((cd: { result: string }) => {
-                                if (cd.result !== 'ok') reject(`Cloudinary server error`)
-                                else picture && picture.destroy().then(() => {
+
+                                if (cd.result == 'not found') {
                                     orderPicture && orderPicture.destroy().then(() => {
-                                        return resolve(picture.id)
+                                        picture && picture.destroy().then(() => {
+                                            return resolve(picture.id)
+                                        })
+                                    })
+                                } else if (cd.result !== 'ok') {
+                                    reject(`Cloudinary server error`)
+                                    console.log(cd)
+                                } else picture && picture.destroy().then(() => {
+                                    orderPicture && orderPicture.destroy().then(() => {
+                                        picture && picture.destroy().then(() => {
+                                            return resolve(picture.id)
+                                        })
                                     })
                                 })
                             })
@@ -192,5 +202,6 @@ class PictureController {
     }
 
 }
+
 export default new PictureController()
 //module.exports = new PictureController()
