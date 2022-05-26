@@ -21,6 +21,6 @@ router.get('/', checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), (res: any, req
 router.delete('/:orderId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {orderController.deleteOrder(res, req, next)});
 router.get('/minMax/:masterId', (res: any, req: any, next: any) => {orderController.findMaxAndMinPrice(res, req, next)});
 router.get('/getExcel', (res: any, req: any, next: any) => {orderController.getExcel(res, req, next)});
-
+router.get('/getZip/:orderId', (res: any, req: any, next: any) => {orderController.getZip(res, req, next)});
 
 export default router

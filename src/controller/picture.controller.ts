@@ -54,7 +54,8 @@ class PictureController {
     static createOnePicture(file: MyFile, next: NextFunction) {
         const MAX_FILE_SIZE = 1048576 //1024*1024 1mb
         const name: string = file.name
-        const fileExtension: string | undefined = name.split('.').pop()
+        // @ts-ignore
+        const fileExtension: string  = name.split('.').pop()
         const allowedTypes: string[] = ['jpeg', 'JPEG', 'jpg', 'JPG', 'png', 'PNG'] //'BMP', 'bmp', 'GIF', 'gif', 'ico', 'ICO'
         if (!allowedTypes.some(fileType => fileType === fileExtension)) {
             return next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
@@ -67,7 +68,7 @@ class PictureController {
         }
         const picturePath: string = path.resolve(filePath, fileName)
         fs.writeFileSync(picturePath, file.data)
-        return picturePath
+        return {picturePath, fileExtension}
     }
 
     static deleteOnePicture(path: string, next: NextFunction) {
@@ -90,11 +91,13 @@ class PictureController {
 
             const createPicture = (p: MyFile): Promise<PictureModel> => {
                 return new Promise((resolve, reject) => {
-                    const picturePath: void | string = PictureController.createOnePicture(p, next)
+                    // @ts-ignore
+                    const {picturePath, fileExtension} = PictureController.createOnePicture(p, next)
+                    console.log(picturePath, fileExtension)
                     picturePath && cloudinary.uploader.upload(picturePath, {resource_type: "image"})
                         .then((result: UploadCloudinaryResult) => {
                             picturePath && PictureController.deleteOnePicture(picturePath, next)
-                            Picture.create({path: result.public_id}).then((picture: PictureModel) => {
+                            Picture.create({path: result.public_id+"."+fileExtension}).then((picture: PictureModel) => {
                                 resolve(picture)
                             })
                         })

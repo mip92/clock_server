@@ -8,13 +8,24 @@ import {OrderModel} from "../models/order.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
 import {dbConfig} from "../models";
 import excel from "./excel.controller";
+import zipController from "./zip.controller"
 import {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} from '../models';
 import mail from "../services/mailServiсe";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import ApiError from '../exeptions/api-error';
 import {Op} from 'Sequelize';
+import {monitorEventLoopDelay} from "perf_hooks";
+import {OrderPictureModel} from "../models/orderPicture.model";
+import {PictureModel} from "../models/picture.model";
 
+export interface OrderPictureWithPicture extends OrderPictureModel {
+    picture: PictureModel
+}
+
+export interface OrderModelWithOrderPictureAndPicture extends OrderModel {
+    orderPictures: OrderPictureWithPicture[]
+}
 
 export interface OrderModelWithMasterBusyDateAndUsers extends OrderModelWithMasterBusyDate {
     user: UserModel
@@ -26,6 +37,10 @@ export interface OrderModelWithMasterBusyDate extends OrderModel {
 
 type maxMinParam = {
     masterId: string
+}
+
+type orderIdParam = {
+    orderId: string
 }
 
 class OrderController {
@@ -320,32 +335,31 @@ class OrderController {
             }
             if (sortBy && select) {
                 switch (sortBy) {
-                    case "dateTime":
+                    case "date time":
                         options.order = [[MasterBusyDate, 'dateTime', select]];
                         break;
-                    case "masterEmail":
+                    case "master email":
                         options.order = [[Master, 'email', select]];
                         break;
-                    case "masterName":
+                    case "master name":
                         options.order = [[Master, 'name', select]];
                         break;
-                    case "userEmail": {
-                        options.order = [[User,'email', select]]
-                    }
+                    case "user email":
+                        options.order = [[User, 'email', select]]
                         break;
-                    case "userName":
+                    case "user name":
                         options.order = [[User, 'name', select]];
                         break;
                     case "city":
                         options.order = [['originalCityName', select]];
                         break;
-                    case "clockSize":
+                    case "clock size":
                         options.order = [["clockSize", select]];
                         break;
-                    case "dealPrice":
+                    case "deal price":
                         options.order = [["dealPrice", select]];
                         break;
-                    case "totalPrice":
+                    case "total price":
                         options.order = [["totalPrice", select]];
                         break;
                     case "status":
@@ -501,6 +515,26 @@ class OrderController {
             console.log(e)
             next(ApiError.Internal(`server error`))
         }
+    }
+
+    async getZip(req: CustomRequest<null, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
+        try {
+            const {orderId} = req.params
+
+            // @ts-ignore
+            const order: OrderModelWithOrderPictureAndPicture = await Order.findOne({
+                where: {id: orderId},
+                include: [{model: OrderPicture, include: [{model: Picture}]}]
+            })
+            const {fileName, filePath, imgPaths} = await zipController.createZip(order.orderPictures)
+            res.status(200).json(`${process.env.API_URL}/zipFile/${fileName}`)
+            setTimeout(async () => {
+                await zipController.deleteZip(filePath, imgPaths)
+            }, 60000);
+        } catch (e) {
+            console.log(e)
+        }
+
     }
 
     async deleteOrder(req: CustomRequest<null, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
