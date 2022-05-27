@@ -39,27 +39,6 @@ class ZipController {
                     throw err
                 })
                 archive.pipe(output)
-
-                /*for (let i = 0; i < orderPictures.length; i++) {
-                    const newFileName: string = orderPictures[i].picture.path
-                    const directoryOfNewFilePath: string = path.resolve(__dirname, '..', 'static')
-                    if (!fs.existsSync(directoryPath)) {
-                        fs.mkdirSync(directoryPath, {recursive: true})
-                    }
-                    const newFilePath: string = path.resolve(directoryOfNewFilePath, newFileName)
-                    const finishedDownload = promisify(stream.finished);
-                    const writer = fs.createWriteStream(newFilePath)
-                    const response = await axios({
-                        url: `https://res.cloudinary.com/mip92/image/upload/v1650010431/${orderPictures[i].picture.path}`,
-                        method: "GET",
-                        responseType: "stream"
-                    })
-                    await response.data.pipe(writer)
-                    await finishedDownload(writer);
-                    archive.file(newFilePath, {name: newFilePath})
-                }
-                await archive.finalize()*/
-
                 const downloadPictures = (orderPicture: OrderPictureWithPicture): Promise<string> => {
                     return new Promise((resolve, reject) => {
                             const newFileName: string = orderPicture.picture.path
@@ -82,10 +61,9 @@ class ZipController {
                                                 resolve(finishedDownload(writer))
                                             }).then(() => {
                                                     return new Promise((resolve, reject) => {
-                                                            resolve(archive.file(newFilePath, {name: newFilePath}))
+                                                            resolve(archive.file(newFilePath, {name: newFileName}))
                                                         }
                                                     ).then(() => {
-                                                        // @ts-ignore
                                                         return resolve(newFilePath);
                                                     })
                                                 }

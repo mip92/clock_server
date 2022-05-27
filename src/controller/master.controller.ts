@@ -43,7 +43,6 @@ class MasterController {
             const password: string = randomString.slice(0, 6)
             const hashPassword: string = await bcrypt.hash(password, 5)
             const activationLink: string = uuidv4();
-            // @ts-ignore
             const newMaster: MasterModel  = await Master.create({
                 name,
                 email,
@@ -69,7 +68,6 @@ class MasterController {
                 .then(results => {
                         results.map(city => {
                             count++
-                            // @ts-ignore
                             city && MasterCity.create({masterId: newMaster.id, cityId: city.id})
                                 .then(() => {
                                     if (count === citiesID.length) {
@@ -146,7 +144,6 @@ class MasterController {
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, name, email, citiesId} = req.body
-            console.log(id, name, email, citiesId)
             const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
@@ -156,8 +153,7 @@ class MasterController {
             }))
 
             //const citiesID: number[] = JSON.parse(citiesId)
-            // @ts-ignore
-            const citiesID: number[] = citiesId.split(',');
+            const citiesID: string[] = citiesId.split(',');
             if (!citiesID) return next(ApiError.ExpectationFailed({
                 value: citiesId,
                 msg: `CitiesId field must have at least 1 items`,
@@ -165,9 +161,8 @@ class MasterController {
                 location: "body"
             }))
             await MasterCity.destroy({where: {masterId: id}})
-            const createMasterCity = (cityId: number): Promise<MasterCityModel> => {
+            const createMasterCity = (cityId: string): Promise<MasterCityModel> => {
                 return new Promise(function (resolve, reject) {
-                    // @ts-ignore
                     resolve(MasterCity.create({masterId: id, cityId: Number(cityId),createdAt: new Date(Date.now()), updatedAt: new Date(Date.now())}))
                     reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
                 })
@@ -226,19 +221,6 @@ class MasterController {
             next(ApiError.BadRequest(e))
         }
     }
-
-    /*async timeReservation(masterId, dateTime, cityId, next) {
-        try {
-            if (!masterId || !dateTime) next(ApiError.BadRequest("id is not defined"))
-            let masterDateTime = await MasterBusyDate.findOne({where: {masterId, dateTime}})
-            if (masterDateTime) next(ApiError.BadRequest("this master is already working at this time"))
-            masterDateTime = await MasterBusyDate.create({masterId, dateTime: String(dateTime)})
-            return masterDateTime
-        } catch (e) {
-            console.log(e)
-            next(ApiError.BadRequest(e.parent.detail))
-        }
-    }*/
 
     async getFreeMasters(req: CustomRequest<GetFreeMastersBody, null, null, null>, res: Response, next: NextFunction) {
         try {
@@ -331,7 +313,6 @@ class MasterController {
                 }
                 let count = 0
                 return new Promise((resolve, reject) => {
-                    // @ts-ignore
                     Master.create({
                         name,
                         email,
@@ -432,4 +413,3 @@ class MasterController {
     }
 }
 export default new MasterController()
-//module.exports = new MasterController()

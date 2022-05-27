@@ -51,16 +51,15 @@ interface OrderPictureModelWithPicture extends OrderPictureModel {
 }
 
 class PictureController {
-    static createOnePicture(file: MyFile, next: NextFunction) {
+    static createOnePicture(file: MyFile, next: NextFunction): { picturePath: string; fileExtension: string | undefined } {
         const MAX_FILE_SIZE = 1048576 //1024*1024 1mb
         const name: string = file.name
-        // @ts-ignore
-        const fileExtension: string  = name.split('.').pop()
+        const fileExtension  = name.split('.').pop()
         const allowedTypes: string[] = ['jpeg', 'JPEG', 'jpg', 'JPG', 'png', 'PNG'] //'BMP', 'bmp', 'GIF', 'gif', 'ico', 'ICO'
         if (!allowedTypes.some(fileType => fileType === fileExtension)) {
-            return next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
+            next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
         }
-        if (file.size > MAX_FILE_SIZE) return next(ApiError.BadRequest(`File with name: ${name} is larger than 1 MB`))
+        if (file.size > MAX_FILE_SIZE) next(ApiError.BadRequest(`File with name: ${name} is larger than 1 MB`))
         const fileName: string = uuidv4() + '.' + fileExtension
         const filePath: string = path.resolve(__dirname, '..', 'static', `imageFile`)
         if (!fs.existsSync(filePath)) {
@@ -91,9 +90,8 @@ class PictureController {
 
             const createPicture = (p: MyFile): Promise<PictureModel> => {
                 return new Promise((resolve, reject) => {
-                    // @ts-ignore
-                    const {picturePath, fileExtension} = PictureController.createOnePicture(p, next)
-                    console.log(picturePath, fileExtension)
+                    const {picturePath, fileExtension}  = PictureController.createOnePicture(p, next)
+                    if (!fileExtension || !picturePath) return  next(ApiError.BadRequest(`File with name: ${p.name} is not a picture`))
                     picturePath && cloudinary.uploader.upload(picturePath, {resource_type: "image"})
                         .then((result: UploadCloudinaryResult) => {
                             picturePath && PictureController.deleteOnePicture(picturePath, next)

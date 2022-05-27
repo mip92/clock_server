@@ -1,6 +1,4 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {STATUSES} from "./index";
-import {CityAttributes} from "./city.model";
 
 export interface OrderAttributes {
     id: number;
@@ -16,10 +14,10 @@ export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttrib
 export class Order extends Model<OrderModel, OrderAttributes> {}
 
 export type OrderStatic = typeof Model & {
-    new (values?: object, options?: BuildOptions): OrderModel;
+    new (values?: object, options?: BuildOptions): OrderModel ;
 };
 
-export function OrderFactory (sequelize: Sequelize): OrderStatic {
+export function OrderFactory (sequelize: Sequelize): OrderStatic  {
     return <OrderStatic>sequelize.define("order", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         clockSize: {type: DataTypes.INTEGER, allowNull: false},

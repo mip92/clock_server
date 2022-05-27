@@ -5,7 +5,7 @@ import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {OrderModel} from "../models/order.model";
-import {Attributes, FindAndCountOptions} from "sequelize";
+import {Attributes, FindAndCountOptions, where} from "sequelize";
 import {dbConfig} from "../models";
 import excel from "./excel.controller";
 import zipController from "./zip.controller"
@@ -15,7 +15,6 @@ import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import ApiError from '../exeptions/api-error';
 import {Op} from 'Sequelize';
-import {monitorEventLoopDelay} from "perf_hooks";
 import {OrderPictureModel} from "../models/orderPicture.model";
 import {PictureModel} from "../models/picture.model";
 
@@ -155,7 +154,6 @@ class OrderController {
                                             if (count === 0) {
                                                 new Promise(() => {
                                                         count++
-                                                        //const dt = new Date(dateTime).toISOString()
                                                         MasterBusyDate.findOne({where: {masterId, dateTime: dt}})
                                                             .then((mbd: MasterBusyDateModel | null) => {
                                                                     if (mbd) orderDateTime = mbd.dateTime
@@ -520,13 +518,15 @@ class OrderController {
     async getZip(req: CustomRequest<null, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
         try {
             const {orderId} = req.params
-            console.log(555555555)
+            const options: Omit<FindAndCountOptions<Partial<OrderModelWithOrderPictureAndPicture>>, "group"> = {};
+            options.where={id: orderId}
+            options.include=[{model: OrderPicture, include: [{model: Picture}]}]
             // @ts-ignore
-            const order: OrderModelWithOrderPictureAndPicture = await Order.findOne({
-                where: {id: orderId},
-                include: [{model: OrderPicture, include: [{model: Picture}]}]
-            })
+            const order: OrderModelWithOrderPictureAndPicture = await Order.findOne(options)
+            if (!order) return next(ApiError.BadRequest("Order not found"))
+
             const {fileName, filePath, imgPaths} = await zipController.createZip(order.orderPictures)
+
             res.status(200).json(`${process.env.API_URL}/zipFile/${fileName}`)
             setTimeout(async () => {
                 await zipController.deleteZip(filePath, imgPaths)
