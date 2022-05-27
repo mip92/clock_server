@@ -333,31 +333,31 @@ class OrderController {
             }
             if (sortBy && select) {
                 switch (sortBy) {
-                    case "date time":
+                    case "dateTime":
                         options.order = [[MasterBusyDate, 'dateTime', select]];
                         break;
-                    case "master email":
+                    case "masterEmail":
                         options.order = [[Master, 'email', select]];
                         break;
-                    case "master name":
+                    case "masterName":
                         options.order = [[Master, 'name', select]];
                         break;
-                    case "user email":
+                    case "userEmail":
                         options.order = [[User, 'email', select]]
                         break;
-                    case "user name":
+                    case "userName":
                         options.order = [[User, 'name', select]];
                         break;
                     case "city":
                         options.order = [['originalCityName', select]];
                         break;
-                    case "clock size":
+                    case "clockSize":
                         options.order = [["clockSize", select]];
                         break;
-                    case "deal price":
+                    case "dealPrice":
                         options.order = [["dealPrice", select]];
                         break;
-                    case "total price":
+                    case "totalPrice":
                         options.order = [["totalPrice", select]];
                         break;
                     case "status":
