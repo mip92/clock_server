@@ -73,7 +73,7 @@ class PictureController {
     static deleteOnePicture(path: string, next: NextFunction) {
         fs.unlink(path, (err: ErrnoException | null) => {
             if (err) return next(err)
-            console.log('File deleted successfully');
+            //console.log('File deleted successfully');
         });
     }
 
@@ -95,7 +95,6 @@ class PictureController {
                     picturePath && cloudinary.uploader.upload(picturePath, {resource_type: "image"})
                         .then((result: UploadCloudinaryResult) => {
                             picturePath && PictureController.deleteOnePicture(picturePath, next)
-                            console.log(result.public_id+"."+fileExtension)
                             Picture.create({path: result.public_id+"."+fileExtension}).then((picture: PictureModel) => {
                                 resolve(picture)
                             })
