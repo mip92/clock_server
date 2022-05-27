@@ -520,7 +520,7 @@ class OrderController {
     async getZip(req: CustomRequest<null, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
         try {
             const {orderId} = req.params
-
+            console.log(555555555)
             // @ts-ignore
             const order: OrderModelWithOrderPictureAndPicture = await Order.findOne({
                 where: {id: orderId},
