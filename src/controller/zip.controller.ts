@@ -22,15 +22,15 @@ class ZipController {
                     zlib: {level: 9} // установить уровень сжатия
                 })
                 output.on('close', function () {
-                    console.log(`Всего ${archive.pointer()} байт`)
-                    console.log('архиватор завершил архивирование файла, дескриптор потока вывода файла закрыт')
+                    //console.log(`Всего ${archive.pointer()} байт`)
+                    //console.log('архиватор завершил архивирование файла, дескриптор потока вывода файла закрыт')
                 })
                 output.on('end', function () {
-                    console.log('Источник данных исчерпан')
+                 //   console.log('Источник данных исчерпан')
                 })
                 archive.on('warning', function (err) {
                     if (err.code === 'ENOENT') {
-                        console.warn('Сбои статов и другие неблокирующие ошибки')
+                   //     console.warn('Сбои статов и другие неблокирующие ошибки')
                     } else {
                         throw err
                     }
