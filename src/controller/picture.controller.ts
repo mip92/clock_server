@@ -205,4 +205,3 @@ class PictureController {
 }
 
 export default new PictureController()
-//module.exports = new PictureController()

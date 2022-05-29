@@ -3,10 +3,10 @@ import path from "path";
 import fs from 'fs';
 import {v4 as uuidv4} from "uuid";
 import axios from "axios";
-import {OrderPictureWithPicture} from "./order.controller";
+
 import {promisify} from "util";
 import * as stream from "stream";
-import ErrnoException = NodeJS.ErrnoException;
+import {OrderPictureWithPicture} from "./order.controller";
 
 class ZipController {
     async createZip(orderPictures: OrderPictureWithPicture[]): Promise<{ fileName: string, filePath: string, imgPaths:string[] }> {
@@ -19,18 +19,18 @@ class ZipController {
                 const filePath: string = path.resolve(directoryPath, fileName)
                 let output = fs.createWriteStream(filePath)
                 let archive = archiver('zip', {
-                    zlib: {level: 9} // установить уровень сжатия
+                    zlib: {level: 9} // set compression level
                 })
                 output.on('close', function () {
-                    console.log(`Всего ${archive.pointer()} байт`)
-                    console.log('архиватор завершил архивирование файла, дескриптор потока вывода файла закрыт')
+                    console.log(`Total ${archive.pointer()} bytes`)
+                    console.log('the archiver has finished archiving the file, the file output stream descriptor is closed')
                 })
                 output.on('end', function () {
-                    console.log('Источник данных исчерпан')
+                    console.log('Data source exhausted')
                 })
                 archive.on('warning', function (err) {
                     if (err.code === 'ENOENT') {
-                        console.warn('Сбои статов и другие неблокирующие ошибки')
+                        console.warn('Stat crashes and other non-blocking errors')
                     } else {
                         throw err
                     }
@@ -50,7 +50,7 @@ class ZipController {
                             const finishedDownload = promisify(stream.finished);
                             const writer = fs.createWriteStream(newFilePath)
                             axios({
-                                url: `https://res.cloudinary.com/mip92/image/upload/v1650010431/${orderPicture.picture.path}`,
+                                url: `${process.env.CLOUDINARY_PUBLIC_URL}/${orderPicture.picture.path}`,
                                 method: "GET",
                                 responseType: "stream"
                             }).then((response) => {
@@ -92,15 +92,10 @@ class ZipController {
     }
 
     deleteZip(path: string, imgPaths:string[]) {
-        console.log(path, imgPaths)
         try {
-            fs.unlink(path, (err: ErrnoException | null) => {
-                console.log(err)
-            });
+            fs.unlinkSync(path);
             imgPaths.map((path)=>{
-                fs.unlink(path, (err: ErrnoException | null) => {
-                    console.log(err)
-                });
+                fs.unlinkSync(path);
             })
         } catch (e) {
             console.log(e)
