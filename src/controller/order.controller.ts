@@ -320,32 +320,32 @@ class OrderController {
             }
             if (sortBy && select) {
                 switch (sortBy) {
-                    case "dateTime":
+                    case "date time":
                         options.order = [[MasterBusyDate, 'dateTime', select]];
                         break;
-                    case "masterEmail":
+                    case "master email":
                         options.order = [[Master, 'email', select]];
                         break;
-                    case "masterName":
+                    case "master name":
                         options.order = [[Master, 'name', select]];
                         break;
-                    case "userEmail": {
+                    case "user email": {
                         options.order = [[User,'email', select]]
                     }
                         break;
-                    case "userName":
+                    case "user name":
                         options.order = [[User, 'name', select]];
                         break;
                     case "city":
                         options.order = [['originalCityName', select]];
                         break;
-                    case "clockSize":
+                    case "clock size":
                         options.order = [["clockSize", select]];
                         break;
-                    case "dealPrice":
+                    case "deal price":
                         options.order = [["dealPrice", select]];
                         break;
-                    case "totalPrice":
+                    case "total price":
                         options.order = [["totalPrice", select]];
                         break;
                     case "status":
@@ -457,31 +457,31 @@ class OrderController {
             }
             if (sortBy && select) {
                 switch (sortBy) {
-                    case "dateTime":
+                    case "date time":
                         options.order = [[MasterBusyDate, 'dateTime', select]];
                         break;
-                    case "masterEmail":
+                    case "master email":
                         options.order = [[Master, 'email', select]];
                         break;
-                    case "masterName":
+                    case "master name":
                         options.order = [[Master, 'name', select]];
                         break;
-                    case "userEmail":
+                    case "user email":
                         options.order = [[User, 'email', select]];
                         break;
-                    case "userName":
+                    case "user name":
                         options.order = [[User, 'name', select]];
                         break;
                     case "city":
                         options.order = [['originalCityName', select]];
                         break;
-                    case "clockSize":
+                    case "clock size":
                         options.order = [["clockSize", select]];
                         break;
-                    case "dealPrice":
+                    case "deal price":
                         options.order = [["dealPrice", select]];
                         break;
-                    case "totalPrice":
+                    case "total price":
                         options.order = [["totalPrice", select]];
                         break;
                     case "status":
