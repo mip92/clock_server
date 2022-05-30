@@ -32,12 +32,12 @@ export const Rating = RatingFactory(dbConfig);
 export const MasterCity = MasterCityFactory(dbConfig);
 export const Admin = AdminFactory(dbConfig);
 
-export enum STATUSES{
-    Approval= "Approval",
-    Canceled="Canceled",
-    Confirmed="Confirmed",
-    Completed="Completed",
-    NotCompleted="NotCompleted",
+export enum STATUSES {
+    Approval = "Approval",
+    Canceled = "Canceled",
+    Confirmed = "Confirmed",
+    Completed = "Completed",
+    NotCompleted = "NotCompleted",
     AwaitingPayment = "AwaitingPayment"
 }
 
@@ -46,7 +46,6 @@ export enum ROLE {
     Admin = "ADMIN",
     Master = "MASTER"
 }
-
 
 Master.belongsToMany(City, {through: MasterCity})
 City.belongsToMany(Master, {through: MasterCity})

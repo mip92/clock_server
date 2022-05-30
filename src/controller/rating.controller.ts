@@ -9,15 +9,16 @@ import {Rating} from '../models';
 import ApiError from '../exeptions/api-error';
 
 class RatingController {
-    async createRating (req: CustomRequest<CreateRatingBody, null, null, null>, res: Response, next: NextFunction) {
+    async createRating(req: CustomRequest<CreateRatingBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {orderId, masterId, rating} = req.body
-            const newRating:RatingModel = await Rating.create({masterId:masterId, orderId:orderId, rating:rating});
+            const newRating: RatingModel = await Rating.create({masterId: masterId, orderId: orderId, rating: rating});
             return res.status(201).json(newRating)
         } catch (e: any) {
             next(ApiError.BadRequest(e))
         }
     }
+
     /*async getAllRatings(req, res, next){
         try {
             let {limit, offset, masterId} = req.query
@@ -48,10 +49,10 @@ class RatingController {
                 }
             )
             if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
-            let arrayOfRatings:number[] = []
-            ratings.forEach((r)=>arrayOfRatings.push(r.rating))
+            let arrayOfRatings: number[] = []
+            ratings.forEach((r) => arrayOfRatings.push(r.rating))
             const sum = arrayOfRatings.reduce((a, b) => a + b, 0);
-            const average = (Math.ceil((sum / arrayOfRatings.length)*10)/10)
+            const average = (Math.ceil((sum / arrayOfRatings.length) * 10) / 10)
             //const average = Math.floor(sum / arr.length);
             res.status(200).json({averageRating: average, masterId: +masterId, ratings})
         } catch (e: any) {
@@ -60,5 +61,5 @@ class RatingController {
     }
 
 }
+
 export default new RatingController()
-//module.exports = new RatingController()

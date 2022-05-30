@@ -1,4 +1,5 @@
 import express from "express";
+
 const router = express.Router();
 import masterController from '../controller/master.controller';
 import checkRoles from "../middlwares/checkRolesMiddleware";
@@ -31,15 +32,31 @@ const validationChangeEmailBodyRules = [
     body('role', 'role must be not null').not()
 ];
 
-router.post('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, (res: any, req: any, next: any) => {masterController.createMaster(res, req, next)});
-router.get('/',(res: any, req: any, next: any) => { masterController.getAllMasters(res, req, next)});
-router.get('/:masterId', (res: any, req: any, next: any) => {masterController.getOneMaster(res, req, next)});
-router.put('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, (res: any, req: any, next: any) => {masterController.updateMaster(res, req, next)});
-router.delete('/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {masterController.deleteMaster(res, req, next)});
-router.get('/approve/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {masterController.approveMaster(res, req, next)});
+router.post('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, (res: any, req: any, next: any) => {
+    masterController.createMaster(res, req, next)
+});
+router.get('/', (res: any, req: any, next: any) => {
+    masterController.getAllMasters(res, req, next)
+});
+router.get('/:masterId', (res: any, req: any, next: any) => {
+    masterController.getOneMaster(res, req, next)
+});
+router.put('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, (res: any, req: any, next: any) => {
+    masterController.updateMaster(res, req, next)
+});
+router.delete('/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
+    masterController.deleteMaster(res, req, next)
+});
+router.get('/approve/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
+    masterController.approveMaster(res, req, next)
+});
 /*router.post('/timeReservation'/!*,checkRole("ADMIN")*!/,masterController.timeReservation);*/
-router.post('/getFreeMasters', validationGetFreeMastersBodyRules, checkRules, (res: any, req: any, next: any) => {masterController.getFreeMasters(res, req, next)});
-router.put('/changeEmail', checkRoles([ROLE.Master]), validationChangeEmailBodyRules, checkRules2, (res: any, req: any, next: any) => {masterController.changeEmail(res, req, next)})
+router.post('/getFreeMasters', validationGetFreeMastersBodyRules, checkRules, (res: any, req: any, next: any) => {
+    masterController.getFreeMasters(res, req, next)
+});
+router.put('/changeEmail', checkRoles([ROLE.Master]), validationChangeEmailBodyRules, checkRules2, (res: any, req: any, next: any) => {
+    masterController.changeEmail(res, req, next)
+})
 
 
 export default router

@@ -9,7 +9,7 @@ import {
 import {NextFunction, Response} from "express";
 import {UserModel} from "../models/user.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import mail from "../services/mailServiсe";
 import {User, ROLE, Order} from '../models/index';
@@ -33,7 +33,7 @@ class UserController {
                 const password: string = randomString.slice(0, 6);
                 const hashPassword: string = await bcrypt.hash(password, 5)
                 const activationLink: string = uuidv4();
-                const newUser:UserModel = await User.create({
+                const newUser: UserModel = await User.create({
                     password: hashPassword,
                     email,
                     role: ROLE.User,
@@ -68,7 +68,7 @@ class UserController {
                 options.where[Op.or] = [{name: {[Op.iLike]: `%${filter}%`}}, {email: {[Op.iLike]: `%${filter}%`}}]
             }
             if (limit && +limit > 50) options.limit = 50
-            else if(limit) options.limit = +limit
+            else if (limit) options.limit = +limit
             if (!offset) options.offset = 0
             else options.offset = +offset
             if (sortBy && select) options.order = [[sortBy, select]]
@@ -107,7 +107,7 @@ class UserController {
             }))
             const isUserUnique = await User.findOne({where: {email: newEmail}})
             if (isUserUnique && isUserUnique.id !== id) {
-                return  res.status(417).json({message: `User with this email is already registered`})
+                return res.status(417).json({message: `User with this email is already registered`})
             } else await user.update({email: newEmail, name: newName})
             const newUser = {id, email: newEmail, name: newName}
             res.status(200).json(newUser)
@@ -121,7 +121,7 @@ class UserController {
         try {
             const {userId} = req.params
             if (!userId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: UserModel | null = await User.findOne({where: {id: userId}, include:{all:true}})
+            const candidate: UserModel | null = await User.findOne({where: {id: userId}, include: {all: true}})
             if (!candidate) next(ApiError.BadRequest(`user with id:${userId} is not defined`))
             const order = await Order.destroy({where: {userId}})
             candidate && await candidate.destroy({force: true})
@@ -167,7 +167,7 @@ class UserController {
     async changeEmail(req: CustomRequest<ChangeEmailBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {password, currentEmail, newEmail} = req.body
-            const user: UserModel | null  = await User.findOne({where: {email: currentEmail}})
+            const user: UserModel | null = await User.findOne({where: {email: currentEmail}})
             if (!user) return next(ApiError.ExpectationFailed({
                 value: currentEmail,
                 msg: "User is not found or password is wrong",
@@ -181,9 +181,9 @@ class UserController {
                 param: "currentEmail",
                 location: "body"
             }))
-            const activationLink:string = uuidv4();
+            const activationLink: string = uuidv4();
             const changedUser: UserModel = await user.update({email: newEmail, isActivated: false, activationLink})
-            const token:string = tokenService.generateJwt(changedUser.id, changedUser.email, changedUser.role)
+            const token: string = tokenService.generateJwt(changedUser.id, changedUser.email, changedUser.role)
             await mail.sendActivationMail(newEmail,
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,
                 changedUser.role)
@@ -193,5 +193,6 @@ class UserController {
         }
     }
 }
+
 export default new UserController()
 //module.exports = new UserController()

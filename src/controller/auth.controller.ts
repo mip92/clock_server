@@ -65,12 +65,12 @@ class AuthController {
         try {
             const activationLink: string = req.params.link;
             const user: UserModel | null = await User.findOne({where: {activationLink}})
-            if (user){
+            if (user) {
                 await user.update({isActivated: true})
                 return res.redirect(`${process.env.CLIENT_URL}`);
             }
             const master: MasterModel | null = await Master.findOne({where: {activationLink}})
-            if (master){
+            if (master) {
                 await master.update({isActivated: true})
                 return res.redirect(`${process.env.CLIENT_URL}`);
             }
@@ -84,12 +84,12 @@ class AuthController {
         try {
             const activationLink: string = req.params.link;
             const user: UserModel | null = await User.findOne({where: {activationLink}})
-            if (user){
+            if (user) {
                 await user.update({isActivated: true})
                 return res.redirect(process.env.CLIENT_URL + '/login');
             }
             const master: MasterModel | null = await Master.findOne({where: {activationLink}})
-            if (master){
+            if (master) {
                 await master.update({isActivated: true})
                 return res.redirect(process.env.CLIENT_URL + '/login');
             }
@@ -99,4 +99,5 @@ class AuthController {
         }
     }
 }
+
 export default new AuthController()

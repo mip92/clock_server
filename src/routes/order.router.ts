@@ -1,4 +1,5 @@
 import express from "express";
+
 const router = express.Router();
 import orderController from '../controller/order.controller';
 import {body} from "express-validator";
@@ -15,12 +16,24 @@ const validationCreateOrderBodyRules = [
     body('dateTime', 'dateTime is required').not().escape(),
 ];
 
-router.post('/', validationCreateOrderBodyRules, checkRules, (res: any, req: any, next: any) => {orderController.createOrder(res, req, next)});
-router.get('/', checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), (res: any, req: any, next: any) => {orderController.getAllOrders(res, req, next)});
+router.post('/', validationCreateOrderBodyRules, checkRules, (res: any, req: any, next: any) => {
+    orderController.createOrder(res, req, next)
+});
+router.get('/', checkRoles([ROLE.Admin, ROLE.Master, ROLE.User]), (res: any, req: any, next: any) => {
+    orderController.getAllOrders(res, req, next)
+});
 /*router.get('/:orderId', checkRoles([ROLE.Admin]), orderController.getOneOrder);*/
-router.delete('/:orderId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {orderController.deleteOrder(res, req, next)});
-router.get('/minMax/:masterId', (res: any, req: any, next: any) => {orderController.findMaxAndMinPrice(res, req, next)});
-router.get('/getExcel', (res: any, req: any, next: any) => {orderController.getExcel(res, req, next)});
-router.get('/getZip/:orderId', (res: any, req: any, next: any) => {orderController.getZip(res, req, next)});
+router.delete('/:orderId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
+    orderController.deleteOrder(res, req, next)
+});
+router.get('/minMax/:masterId', (res: any, req: any, next: any) => {
+    orderController.findMaxAndMinPrice(res, req, next)
+});
+router.get('/getExcel', (res: any, req: any, next: any) => {
+    orderController.getExcel(res, req, next)
+});
+router.get('/getZip/:orderId', (res: any, req: any, next: any) => {
+    orderController.getZip(res, req, next)
+});
 
 export default router

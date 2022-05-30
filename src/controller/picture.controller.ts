@@ -54,7 +54,7 @@ class PictureController {
     static createOnePicture(file: MyFile, next: NextFunction): { picturePath: string; fileExtension: string | undefined } {
         const MAX_FILE_SIZE = 1048576 //1024*1024 1mb
         const name: string = file.name
-        const fileExtension  = name.split('.').pop()
+        const fileExtension = name.split('.').pop()
         const allowedTypes: string[] = ['jpeg', 'JPEG', 'jpg', 'JPG', 'png', 'PNG'] //'BMP', 'bmp', 'GIF', 'gif', 'ico', 'ICO'
         if (!allowedTypes.some(fileType => fileType === fileExtension)) {
             next(ApiError.BadRequest(`File with name: ${name} is not a picture`))
@@ -90,12 +90,12 @@ class PictureController {
 
             const createPicture = (p: MyFile): Promise<PictureModel> => {
                 return new Promise((resolve, reject) => {
-                    const {picturePath, fileExtension}  = PictureController.createOnePicture(p, next)
-                    if (!fileExtension || !picturePath) return  next(ApiError.BadRequest(`File with name: ${p.name} is not a picture`))
+                    const {picturePath, fileExtension} = PictureController.createOnePicture(p, next)
+                    if (!fileExtension || !picturePath) return next(ApiError.BadRequest(`File with name: ${p.name} is not a picture`))
                     picturePath && cloudinary.uploader.upload(picturePath, {resource_type: "image"})
                         .then((result: UploadCloudinaryResult) => {
                             picturePath && PictureController.deleteOnePicture(picturePath, next)
-                            Picture.create({path: result.public_id+"."+fileExtension}).then((picture: PictureModel) => {
+                            Picture.create({path: result.public_id + "." + fileExtension}).then((picture: PictureModel) => {
                                 resolve(picture)
                             })
                         })

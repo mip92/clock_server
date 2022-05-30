@@ -1,5 +1,4 @@
-import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {CityAttributes} from "./city.model";
+import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 
 export interface UserAttributes {
     id: number;
@@ -12,14 +11,18 @@ export interface UserAttributes {
     createdAt?: Date;
     updatedAt?: Date;
 }
-export interface UserModel extends Model<Partial<UserAttributes>>, UserAttributes {}
-export class User extends Model<UserModel, UserAttributes> {}
+
+export interface UserModel extends Model<Partial<UserAttributes>>, UserAttributes {
+}
+
+export class User extends Model<UserModel, UserAttributes> {
+}
 
 export type UserStatic = typeof Model & {
-    new (values?: object, options?: BuildOptions): UserModel;
+    new(values?: object, options?: BuildOptions): UserModel;
 };
 
-export function UserFactory (sequelize: Sequelize): UserStatic {
+export function UserFactory(sequelize: Sequelize): UserStatic {
     return <UserStatic>sequelize.define("user", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         email: {type: DataTypes.STRING, unique: true},

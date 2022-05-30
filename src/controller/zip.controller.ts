@@ -9,7 +9,7 @@ import * as stream from "stream";
 import ErrnoException = NodeJS.ErrnoException;
 
 class ZipController {
-    async createZip(orderPictures: OrderPictureWithPicture[]): Promise<{ fileName: string, filePath: string, imgPaths:string[] }> {
+    async createZip(orderPictures: OrderPictureWithPicture[]): Promise<{ fileName: string, filePath: string, imgPaths: string[] }> {
         return new Promise((resolve, reject) => {
                 const fileName: string = uuidv4() + '.zip'
                 const directoryPath: string = path.resolve(__dirname, '..', 'static', `zipFile`)
@@ -26,11 +26,11 @@ class ZipController {
                     //console.log('архиватор завершил архивирование файла, дескриптор потока вывода файла закрыт')
                 })
                 output.on('end', function () {
-                 //   console.log('Источник данных исчерпан')
+                    //   console.log('Источник данных исчерпан')
                 })
                 archive.on('warning', function (err) {
                     if (err.code === 'ENOENT') {
-                   //     console.warn('Сбои статов и другие неблокирующие ошибки')
+                        //     console.warn('Сбои статов и другие неблокирующие ошибки')
                     } else {
                         throw err
                     }
@@ -91,13 +91,13 @@ class ZipController {
         )
     }
 
-    deleteZip(path: string, imgPaths:string[]) {
+    deleteZip(path: string, imgPaths: string[]) {
         console.log(path, imgPaths)
         try {
             fs.unlink(path, (err: ErrnoException | null) => {
                 console.log(err)
             });
-            imgPaths.map((path)=>{
+            imgPaths.map((path) => {
                 fs.unlink(path, (err: ErrnoException | null) => {
                     console.log(err)
                 });

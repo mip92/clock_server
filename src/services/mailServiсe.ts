@@ -68,7 +68,7 @@ class MailService {
             })
     }
 
-    async sendActivationMail(to: string, link: string, role: string, password:string|null = null) {
+    async sendActivationMail(to: string, link: string, role: string, password: string | null = null) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,

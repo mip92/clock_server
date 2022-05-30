@@ -31,5 +31,6 @@ class StatusController {
         }
     }
 }
+
 export default new StatusController()
 //module.exports = new StatusController()

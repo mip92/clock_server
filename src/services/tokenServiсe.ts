@@ -10,5 +10,5 @@ class TokenService {
         return token
     }
 }
-//module.exports = new TokenService()
+
 export default new TokenService()

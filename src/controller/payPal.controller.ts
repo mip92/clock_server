@@ -9,9 +9,9 @@ class PayPalController {
         try {
             const {payPalOrderId} = req.body
             const {orderId} = req.params
-            const order:OrderModel | null = await Order.findOne({where: {id: orderId},})
-            if(!order) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
-            order && await order.update({payPalOrderId:payPalOrderId, status:STATUSES.AwaitingPayment})
+            const order: OrderModel | null = await Order.findOne({where: {id: orderId},})
+            if (!order) next(ApiError.BadRequest(`order with id:${orderId} is not defined`))
+            order && await order.update({payPalOrderId: payPalOrderId, status: STATUSES.AwaitingPayment})
             res.status(200).json({message: `payPal order was created`})
         } catch (e) {
             next(ApiError.Internal(`server error`))
@@ -22,11 +22,12 @@ class PayPalController {
         try {
             const payPalOrderId = req.body.resource.supplementary_data.related_ids.order_id
             const order: OrderModel | null = await Order.findOne({where: {payPalOrderId}})
-            order && await order.update({status:STATUSES.Confirmed})
+            order && await order.update({status: STATUSES.Confirmed})
         } catch (e) {
             console.log(e)
         }
     }
 }
+
 export default new PayPalController()
 //module.exports = new PayPalController()

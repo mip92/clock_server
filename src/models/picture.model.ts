@@ -1,5 +1,4 @@
-import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {CityAttributes} from "./city.model";
+import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 
 export interface PictureAttributes {
     id: number;
@@ -7,14 +6,18 @@ export interface PictureAttributes {
     createdAt?: Date;
     updatedAt?: Date;
 }
-export interface PictureModel extends Model<Partial<PictureAttributes>>, PictureAttributes {}
-export class Picture extends Model<PictureModel, PictureAttributes> {}
+
+export interface PictureModel extends Model<Partial<PictureAttributes>>, PictureAttributes {
+}
+
+export class Picture extends Model<PictureModel, PictureAttributes> {
+}
 
 export type PictureStatic = typeof Model & {
-    new (values?: object, options?: BuildOptions): PictureModel;
+    new(values?: object, options?: BuildOptions): PictureModel;
 };
 
-export function PictureFactory (sequelize: Sequelize): PictureStatic {
+export function PictureFactory(sequelize: Sequelize): PictureStatic {
     return <PictureStatic>sequelize.define("picture", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         path: {type: DataTypes.STRING, unique: true, allowNull: true},

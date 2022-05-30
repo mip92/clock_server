@@ -1,4 +1,4 @@
-import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
+import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 import {CityAttributes} from "./city.model";
 
 export interface OrderPictureAttributes {
@@ -8,14 +8,18 @@ export interface OrderPictureAttributes {
     createdAt?: Date;
     updatedAt?: Date;
 }
-export interface OrderPictureModel extends Model<Partial<OrderPictureAttributes>>, OrderPictureAttributes {}
-export class OrderPicture extends Model<OrderPictureModel, OrderPictureAttributes> {}
+
+export interface OrderPictureModel extends Model<Partial<OrderPictureAttributes>>, OrderPictureAttributes {
+}
+
+export class OrderPicture extends Model<OrderPictureModel, OrderPictureAttributes> {
+}
 
 export type OrderPictureStatic = typeof Model & {
-    new (values?: object, options?: BuildOptions): OrderPictureModel;
+    new(values?: object, options?: BuildOptions): OrderPictureModel;
 };
 
-export function OrderPictureFactory (sequelize: Sequelize): OrderPictureStatic {
+export function OrderPictureFactory(sequelize: Sequelize): OrderPictureStatic {
     return <OrderPictureStatic>sequelize.define("orderPicture", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         /*orderId: {

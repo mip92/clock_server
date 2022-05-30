@@ -1,4 +1,4 @@
-import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
+import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 
 export interface OrderAttributes {
     id: number;
@@ -8,16 +8,20 @@ export interface OrderAttributes {
     userId: number,
     status: string,
     payPalOrderId: string,
-    totalPrice:number | null
+    totalPrice: number | null
 }
-export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttributes {}
-export class Order extends Model<OrderModel, OrderAttributes> {}
+
+export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttributes {
+}
+
+export class Order extends Model<OrderModel, OrderAttributes> {
+}
 
 export type OrderStatic = typeof Model & {
-    new (values?: object, options?: BuildOptions): OrderModel ;
+    new(values?: object, options?: BuildOptions): OrderModel;
 };
 
-export function OrderFactory (sequelize: Sequelize): OrderStatic  {
+export function OrderFactory(sequelize: Sequelize): OrderStatic {
     return <OrderStatic>sequelize.define("order", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         clockSize: {type: DataTypes.INTEGER, allowNull: false},
@@ -32,6 +36,6 @@ export function OrderFactory (sequelize: Sequelize): OrderStatic  {
         },*/
         status: {type: DataTypes.STRING, allowNull: false},
         payPalOrderId: {type: DataTypes.STRING, allowNull: true},
-        totalPrice:{type: DataTypes.FLOAT, allowNull: true}
+        totalPrice: {type: DataTypes.FLOAT, allowNull: true}
     });
 }

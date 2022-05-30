@@ -17,14 +17,14 @@ class ExcelService {
 
     }
 
-    exportOrdersToExcel(orders: OrderModel[],workSheetColumnNames: string[], workSheetName: string, filePath: string) {
+    exportOrdersToExcel(orders: OrderModel[], workSheetColumnNames: string[], workSheetName: string, filePath: string) {
         try {
             const data = orders.map(order => {
                 // @ts-ignore
                 return [order.id, order.master_busyDate.dateTime, order.user.email, order.user.name, order.originalCityName, order.clockSize, order.dealPrice, order.totalPrice, order.status]
             })
             this.exportExcel(data, workSheetColumnNames, workSheetName, filePath)
-        }catch (e) {
+        } catch (e) {
             console.log(e)
         }
     }

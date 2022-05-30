@@ -1,4 +1,5 @@
 import express from "express";
+
 const router = express.Router();
 import ratingController from '../controller/rating.controller';
 import {body} from "express-validator";
@@ -10,8 +11,12 @@ const validationCreateRatingBodyRules = [
     body('rating', "orderId is required").not().isEmpty(),
 ];
 
-router.post('/',/* checkRoles([ROLE.User]),*/ validationCreateRatingBodyRules, checkRules, (res: any, req: any, next: any) => {ratingController.createRating(res, req, next)});
+router.post('/',/* checkRoles([ROLE.User]),*/ validationCreateRatingBodyRules, checkRules, (res: any, req: any, next: any) => {
+    ratingController.createRating(res, req, next)
+});
 //router.get('/', ratingController.getAllRatings);
-router.get('/:masterId', (res: any, req: any, next: any) => {ratingController.getRatingByMaster(res, req, next)});
+router.get('/:masterId', (res: any, req: any, next: any) => {
+    ratingController.getRatingByMaster(res, req, next)
+});
 
 export default router

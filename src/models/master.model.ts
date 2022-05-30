@@ -1,10 +1,9 @@
-import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {CityAttributes} from "./city.model";
+import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 
 export interface MasterAttributes {
     id: number;
     email: string;
-    name:string;
+    name: string;
     role: string;
     password: string;
     activationLink: string;
@@ -15,14 +14,17 @@ export interface MasterAttributes {
     updatedAt?: Date;
 }
 
-export interface MasterModel extends Model<Partial<MasterAttributes>>, MasterAttributes {}
-export class Master extends Model<MasterModel, MasterAttributes> {}
+export interface MasterModel extends Model<Partial<MasterAttributes>>, MasterAttributes {
+}
+
+export class Master extends Model<MasterModel, MasterAttributes> {
+}
 
 export type MasterStatic = typeof Model & {
-    new (values?: object, options?: BuildOptions): MasterModel;
+    new(values?: object, options?: BuildOptions): MasterModel;
 };
 
-export function MasterFactory (sequelize: Sequelize): MasterStatic {
+export function MasterFactory(sequelize: Sequelize): MasterStatic {
     return <MasterStatic>sequelize.define("master", {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         name: {type: DataTypes.STRING, allowNull: false},

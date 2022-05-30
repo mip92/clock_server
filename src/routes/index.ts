@@ -1,4 +1,5 @@
 import express from "express";
+
 const router = express.Router();
 import cityRouter from './city.router'
 import masterRouter from './master.router'
@@ -11,13 +12,13 @@ import ratingRouter from './rating.router'
 import payPalRouter from './payPal.router'
 
 router.use('/cities', cityRouter)
-router.use('/masters',masterRouter)
-router.use('/order',orderRouter)
-router.use('/users',userRouter)
-router.use('/auth',authRouter)
-router.use('/status',statusRouter)
-router.use('/picture',pictureRouter)
-router.use('/rating',ratingRouter)
+router.use('/masters', masterRouter)
+router.use('/order', orderRouter)
+router.use('/users', userRouter)
+router.use('/auth', authRouter)
+router.use('/status', statusRouter)
+router.use('/picture', pictureRouter)
+router.use('/rating', ratingRouter)
 router.use('/payPal', payPalRouter)
 
 

@@ -343,7 +343,7 @@ class OrderController {
                         options.order = [[Master, 'name', select]];
                         break;
                     case "user email":
-                        options.order = [[User,'email', select]]
+                        options.order = [[User, 'email', select]]
                         break;
                     case "user name":
                         options.order = [[User, 'name', select]];
@@ -519,8 +519,8 @@ class OrderController {
         try {
             const {orderId} = req.params
             const options: Omit<FindAndCountOptions<Partial<OrderModelWithOrderPictureAndPicture>>, "group"> = {};
-            options.where={id: orderId}
-            options.include=[{model: OrderPicture, include: [{model: Picture}]}]
+            options.where = {id: orderId}
+            options.include = [{model: OrderPicture, include: [{model: Picture}]}]
             // @ts-ignore
             const order: OrderModelWithOrderPictureAndPicture = await Order.findOne(options)
             if (!order) return next(ApiError.BadRequest("Order not found"))
