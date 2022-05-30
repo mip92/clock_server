@@ -142,7 +142,7 @@ class RatingController {
             }))
 
             const uniqueKey: string = uuidv4();
-            const link = `${process.env.API_URL}/api/auth/activate/${ uniqueKey}`
+            const link = `${process.env.API_URL}/api/auth/activate/${uniqueKey}`
             const newRating: RatingModel = await Rating.create({masterId: order.masterId, orderId: +orderId, link});
             await mail.sendRatingMail(order.user.email, newRating.link)
         } catch (e) {
