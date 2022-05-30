@@ -1,5 +1,4 @@
 import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
-import {CityAttributes} from "./city.model";
 
 export interface RatingAttributes {
     id: number;
@@ -7,7 +6,8 @@ export interface RatingAttributes {
     masterId: number,
     orderId: number,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
+    comment: string
 }
 
 export interface RatingModel extends Model<Partial<RatingAttributes>>, RatingAttributes {}
@@ -26,7 +26,8 @@ export function RatingFactory(sequelize: Sequelize): RatingStatic {
             type: DataTypes.INTEGER,
             references: {model: Master, key: 'id'}
         },*/
-        orderId: {type: DataTypes.INTEGER, unique: true}
+        orderId: {type: DataTypes.INTEGER, unique: true},
+        comment: {type: DataTypes.STRING, allowNull: true}
         /*orderId: {
             type: DataTypes.INTEGER, /!*unique: true,*!/
             references: {model: Order, key: 'id'}

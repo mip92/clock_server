@@ -107,8 +107,8 @@ export type DeleteUserParams={
 }
 export interface CreateRatingBody {
     orderId: number,
-    masterId: number,
-    rating: number
+    rating: number,
+    comment: string
 }
 export type GetRatingByMasterParams ={ masterId:string }
 

@@ -5,16 +5,30 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {RatingModel} from "../models/rating.model";
-import {Rating} from '../models';
+import {Rating, Order} from '../models';
 import ApiError from '../exeptions/api-error';
+import {OrderModel} from "../models/order.model";
 
 class RatingController {
     async createRating (req: CustomRequest<CreateRatingBody, null, null, null>, res: Response, next: NextFunction) {
         try {
-            const {orderId, masterId, rating} = req.body
-            const newRating:RatingModel = await Rating.create({masterId:masterId, orderId:orderId, rating:rating});
+            const {orderId, rating, comment} = req.body
+            console.log(orderId, rating, comment)
+            if (rating<0 || rating>5) return next(ApiError.BadRequest("1111rating and comment not created"))
+            console.log(44444)
+            const order: OrderModel | null = await Order.findOne({where:{id:orderId}})
+            console.log(order)
+            if (!order) return next(ApiError.ExpectationFailed({
+                value: orderId,
+                msg: "order is not found",
+                param: "orderId",
+                location: "body"
+            }))
+            const newRating:RatingModel = await Rating.create({masterId:order.masterId, orderId, rating, comment});
+            !newRating && next(ApiError.BadRequest("rating and comment not created"))
             return res.status(201).json(newRating)
         } catch (e: any) {
+            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -52,7 +66,6 @@ class RatingController {
             ratings.forEach((r)=>arrayOfRatings.push(r.rating))
             const sum = arrayOfRatings.reduce((a, b) => a + b, 0);
             const average = (Math.ceil((sum / arrayOfRatings.length)*10)/10)
-            //const average = Math.floor(sum / arr.length);
             res.status(200).json({averageRating: average, masterId: +masterId, ratings})
         } catch (e: any) {
             next(ApiError.Internal(`server error`))

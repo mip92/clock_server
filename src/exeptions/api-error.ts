@@ -1,5 +1,5 @@
 interface jsonError {
-    value: string
+    value: string | number
     msg: string,
     param: string,
     location: string
