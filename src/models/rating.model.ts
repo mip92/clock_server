@@ -7,7 +7,8 @@ export interface RatingAttributes {
     orderId: number,
     createdAt?: Date,
     updatedAt?: Date,
-    comment: string
+    comment: string,
+    link: string,
 }
 
 export interface RatingModel extends Model<Partial<RatingAttributes>>, RatingAttributes {}
@@ -27,7 +28,8 @@ export function RatingFactory(sequelize: Sequelize): RatingStatic {
             references: {model: Master, key: 'id'}
         },*/
         orderId: {type: DataTypes.INTEGER, unique: true},
-        comment: {type: DataTypes.STRING, allowNull: true}
+        comment: {type: DataTypes.STRING, allowNull: true},
+        link: {type: DataTypes.STRING, allowNull: true}
         /*orderId: {
             type: DataTypes.INTEGER, /!*unique: true,*!/
             references: {model: Order, key: 'id'}

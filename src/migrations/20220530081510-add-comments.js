@@ -8,6 +8,10 @@ module.exports = {
                         type: Sequelize.DataTypes.STRING,
                         allowNull: true
                     }, { transaction: t }),
+                    queryInterface.addColumn('ratings', 'link', {
+                        type: Sequelize.DataTypes.STRING,
+                        allowNull: true
+                    }, { transaction: t }),
                     ]
                 )
             }
@@ -17,6 +21,7 @@ module.exports = {
         return queryInterface.sequelize.transaction(t => {
                 return Promise.all([
                     queryInterface.removeColumn('ratings', 'comment', { transaction: t }),
+                    queryInterface.removeColumn('ratings', 'link', { transaction: t }),
                     ]
                 )
             }
