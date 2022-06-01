@@ -92,7 +92,6 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
-            const {limit, offset, sortBy, select, cities, filter} = req.query
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
             options.where = {}
@@ -145,8 +144,7 @@ class MasterController {
 
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
-            const {id, name, email, citiesId} = req.body
-            console.log(id, name, email, citiesId)
+            const {id, name, email, citiesId} = req.body 
             const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
