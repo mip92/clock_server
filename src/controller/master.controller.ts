@@ -241,7 +241,6 @@ class MasterController {
     async getFreeMasters(req: CustomRequest<null, null, GetFreeMastersQuerry, null>, res: Response, next: NextFunction) {
         try {
             const {cityId, dateTime, clockSize, limit, offset} = req.query;
-            console.log(cityId, dateTime, clockSize, limit, offset)
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("The date may be later than the date now"))
             if (+clockSize > 3 || +clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
             if(!cityId) next(ApiError.BadRequest("cityId is required"))
