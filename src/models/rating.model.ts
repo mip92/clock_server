@@ -2,12 +2,12 @@ import {BuildOptions, DataTypes, Model, Sequelize} from "sequelize";
 
 export interface RatingAttributes {
     id: number;
-    rating: number,
+    rating: number | null,
     masterId: number,
     orderId: number,
     createdAt?: Date,
     updatedAt?: Date,
-    comment: string,
+    comment: string | null,
     link: string,
 }
 

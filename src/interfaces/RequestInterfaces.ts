@@ -33,10 +33,12 @@ export interface UpdateMasterBody {
     email: string,
     citiesId: string,
 }
-export interface GetFreeMastersBody{
-    cityId: number,
-    dateTime: Date,
-    clockSize: number
+export type GetFreeMastersQuerry ={
+    cityId: string,
+    dateTime: string,
+    clockSize: string,
+    limit:string,
+    offset: string
 }
 export interface ChangeEmailBody {
     password: string,
@@ -106,7 +108,7 @@ export type DeleteUserParams={
     userId: string
 }
 export interface CreateRatingBody {
-    orderId: number,
+    key: string,
     rating: number,
     comment: string
 }

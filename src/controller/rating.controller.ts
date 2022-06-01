@@ -5,43 +5,36 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {RatingModel} from "../models/rating.model";
-import {Rating, Order, User, ROLE} from '../models';
+import {Rating, Order, User, ROLE, Master} from '../models';
 import ApiError from '../exeptions/api-error';
 import {OrderModel} from "../models/order.model";
 import {v4 as uuidv4} from "uuid";
 import {UserModel} from "../models/user.model";
 import mail from "../services/mailServiсe";
+import ratingService from "../services/ratingService";
+import {Op} from "sequelize";
 
-type ParamsOrderId = {
-    orderId: string
-}
 
-interface OrderWithUser extends OrderModel{
-    user:UserModel
+interface OrderWithUser extends OrderModel {
+    user: UserModel
 }
 
 class RatingController {
     async createRating(req: CustomRequest<CreateRatingBody, null, null, null>, res: Response, next: NextFunction) {
         try {
-            const {orderId, rating, comment} = req.body
-            console.log(orderId, rating, comment)
+            const {key, rating, comment} = req.body
             if (rating < 0 || rating > 5) return next(ApiError.ExpectationFailed({
                 value: rating,
                 msg: "the rating must be positive and the maximum rating is 5",
                 param: "rating",
                 location: "body"
             }))
-            const order: OrderModel | null = await Order.findOne({where: {id: orderId}})
-            if (!order) return next(ApiError.ExpectationFailed({
-                value: orderId,
-                msg: "order is not found",
-                param: "orderId",
-                location: "body"
-            }))
-            const isRatingExhibited: RatingModel | null = await Rating.findOne({where: {orderId}});
-            if (isRatingExhibited) return next(ApiError.BadRequest("rating already posted"))
-            const newRating: RatingModel = await Rating.create({masterId: order.masterId, orderId, rating, comment});
+            const candidate: RatingModel | null = await Rating.findOne({where: {link: key}})
+            if (!candidate) return next(ApiError.BadRequest("Ratings not found"))
+            if (candidate.comment || candidate.rating) return next(ApiError.BadRequest("rating already posted"))
+            const newRating = await candidate.update({comment, rating})
             !newRating && next(ApiError.BadRequest("rating and comment not created"))
+            await ratingService.changeRating(newRating.masterId, next)
             return res.status(201).json(newRating)
         } catch (e: any) {
             console.log(e)
@@ -74,15 +67,7 @@ class RatingController {
     async getRatingByMaster(req: CustomRequest<null, GetRatingByMasterParams, null, null>, res: Response, next: NextFunction) {
         try {
             const masterId = req.params.masterId
-            const ratings: RatingModel[] = await Rating.findAll({
-                    where: {masterId: +masterId},
-                }
-            )
-            if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
-            let arrayOfRatings: number[] = []
-            ratings.forEach((r) => arrayOfRatings.push(r.rating))
-            const sum = arrayOfRatings.reduce((a, b) => a + b, 0);
-            const average = (Math.ceil((sum / arrayOfRatings.length) * 10) / 10)
+            const average: number = await ratingService.changeRating(+masterId, next)
             res.status(200).json({averageRating: average, masterId: +masterId})
         } catch (e: any) {
             next(ApiError.Internal(`server error`))
@@ -93,7 +78,10 @@ class RatingController {
         try {
             const masterId = req.params.masterId
             const lastComments: RatingModel[] = await Rating.findAll({
-                    where: {masterId: +masterId},
+                    where: {
+                        comment: {[Op.not]: null},
+                        masterId: +masterId,
+                    },
                     limit: 5,
                     order: [['createdAt', "DESC"]],
                     include: [{
@@ -111,6 +99,7 @@ class RatingController {
                     }]
                 }
             )
+
             res.status(200).json(lastComments)
         } catch (e: any) {
             console.log(e)
@@ -119,13 +108,12 @@ class RatingController {
     }
 
 
-    async getLinkToCreateRating(req: CustomRequest<null, ParamsOrderId, null, null>, res: Response, next: NextFunction) {
+    async getLinkToCreateRating(orderId: string, next: NextFunction) {
         try {
-            const orderId = req.params.orderId
             const rating: RatingModel | null = await Rating.findOne({where: {id: orderId}})
             if (rating) return next(ApiError.BadRequest("rating already posted"))
             // @ts-ignore
-            const order: OrderWithUser  | null = await Order.findOne({
+            const order: OrderWithUser | null = await Order.findOne({
                 where: {id: orderId},
                 include: [{
                     model: User, attributes: {
@@ -140,11 +128,14 @@ class RatingController {
                 param: "orderId",
                 location: "body"
             }))
-
             const uniqueKey: string = uuidv4();
-            const link = `${process.env.API_URL}/api/auth/activate/${uniqueKey}`
-            const newRating: RatingModel = await Rating.create({masterId: order.masterId, orderId: +orderId, link});
-            await mail.sendRatingMail(order.user.email, newRating.link)
+            const newRating: RatingModel | null = await Rating.create({
+                masterId: order.masterId,
+                orderId: +orderId,
+                link: uniqueKey
+            });
+            const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
+            await mail.sendRatingMail(order.user.email, link)
         } catch (e) {
             console.log(e)
             next(ApiError.Internal(`server error`))

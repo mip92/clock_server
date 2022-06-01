@@ -4,7 +4,7 @@ import {
     CreateMasterBody,
     CustomRequest,
     GetAllMastersQuery,
-    GetFreeMastersBody,
+    GetFreeMastersQuerry,
     MasterId, UpdateMasterBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
@@ -240,11 +240,15 @@ class MasterController {
         }
     }*/
 
-    async getFreeMasters(req: CustomRequest<GetFreeMastersBody, null, null, null>, res: Response, next: NextFunction) {
+    async getFreeMasters(req: CustomRequest<null, null, GetFreeMastersQuerry, null>, res: Response, next: NextFunction) {
         try {
-            const {cityId, dateTime, clockSize} = req.body
+            const {cityId, dateTime, clockSize, limit, offset} = req.query;
+            console.log(cityId, dateTime, clockSize, limit, offset)
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("The date may be later than the date now"))
-            if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
+            if (+clockSize > 3 || +clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
+            if(!cityId) next(ApiError.BadRequest("cityId is required"))
+            if(!dateTime) next(ApiError.BadRequest("dateTime is required"))
+            if(!clockSize) next(ApiError.BadRequest("clockSize is required"))
             const masters: MasterModel[] = await Master.findAll({
                 where: {
                     isActivated: true,
@@ -255,13 +259,13 @@ class MasterController {
                     model: City,
                     required: true
                 }],
+                order:[['rating', "DESC"]]
             })
             if (masters.length === 0) return next(ApiError.BadRequest("masters is not found"))
 
             const isThisTimeBusy = (cs: number, master: MasterModel): Promise<boolean> => {
                 return new Promise((resolve, reject) => {
                     const time = new Date(dateTime)
-                    let count = 0
                     time.setHours(time.getHours() + cs)
                     MasterBusyDate.findOne({
                         where: {
@@ -277,7 +281,7 @@ class MasterController {
 
             const isMasterFree = (master: MasterModel): Promise<MasterModel> => {
                 return new Promise((resolve, reject) => {
-                    const arrayOfClockSize: number[] = Array.from({length: clockSize}, (_, i) => i + 1)
+                    const arrayOfClockSize: number[] = Array.from({length: +clockSize}, (_, i) => i + 1)
                     Promise.all(arrayOfClockSize.map(cs => isThisTimeBusy(cs, master))).then((timeStatusArr) => {
                         timeStatusArr.map((timeStatus) => {
                             if (timeStatus) reject(master)
@@ -292,7 +296,8 @@ class MasterController {
                 if (master.status == 'fulfilled') freeMasters.push(master.value)
             })
             if (freeMasters.length === 0) return next(ApiError.BadRequest("masters is not found"))
-            res.status(200).json(freeMasters)
+            const mastersWithPagination = freeMasters.slice(+limit*+offset, (+limit*+offset)+(+limit))
+            res.status(200).json(mastersWithPagination)
         } catch (e:any) {
             next(ApiError.BadRequest(e))
         }

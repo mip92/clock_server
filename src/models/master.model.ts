@@ -1,5 +1,4 @@
 import { BuildOptions, DataTypes, Model, Sequelize } from "sequelize";
-import {CityAttributes} from "./city.model";
 
 export interface MasterAttributes {
     id: number;
@@ -27,7 +26,7 @@ export function MasterFactory (sequelize: Sequelize): MasterStatic {
         id: {type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true},
         name: {type: DataTypes.STRING, allowNull: false},
         email: {type: DataTypes.STRING, unique: true, allowNull: false},
-        rating: {type: DataTypes.INTEGER, allowNull: false, defaultValue: 5},
+        rating: {type: DataTypes.FLOAT, allowNull: false, defaultValue: 5},
         role: {type: DataTypes.STRING, defaultValue: "MASTER"},
         password: {type: DataTypes.STRING, unique: false, allowNull: false},
         activationLink: {type: DataTypes.STRING, allowNull: true},

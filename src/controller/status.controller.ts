@@ -3,6 +3,8 @@ import {CreatePicturesParams, CustomRequest} from "../interfaces/RequestInterfac
 import {OrderModel} from "../models/order.model";
 import {STATUSES, Order} from '../models';
 import ApiError from '../exeptions/api-error';
+import tokenService from "../services/tokenServiсe";
+import ratingController from "./rating.controller";
 
 export interface ChangeStatusBody {
     status: string
@@ -25,6 +27,9 @@ class StatusController {
             const order: OrderModel | null = await Order.findByPk(orderId)
             if (!order) return next(ApiError.BadRequest("Order is not found"))
             const update: OrderModel = await order.update({status: status})
+            if (status===STATUSES.Completed) {
+                await ratingController.getLinkToCreateRating(orderId, next)
+            }
             res.status(200).json(status)
         } catch (e) {
             next(ApiError.Internal(`server error`))
