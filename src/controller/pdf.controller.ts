@@ -1,37 +1,51 @@
 import {CustomRequest, GetOneOrderParams} from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {OrderModel} from "../models/order.model";
-import {Order} from "../models";
+import {Master, MasterBusyDate, Order, User} from "../models";
 import PDFDocument from 'pdfkit';
 import * as fs from "fs";
 import ApiError from "../exeptions/api-error";
-import QRCode from 'qrcode'
+import qrService from "../services/qrService";
+import {MasterBusyDateModel} from "../models/masterBusyDate.model";
+import {UserModel} from "../models/user.model";
+import {MasterModel} from "../models/master.model";
 
+
+interface OrderWithMasterBusyDateUserAndMaster extends OrderModel {
+    master_busyDate: MasterBusyDateModel
+    user: UserModel
+    master: MasterModel
+}
 
 class PdfController {
     async createPdf(req: CustomRequest<any, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
         const {orderId} = req.params
-        const order: OrderModel | null = await Order.findOne({where: {id: orderId}})
 
+        // @ts-ignore
+        const order: OrderWithMasterBusyDateUserAndMaster | null = await Order.findOne({
+            where: {id: orderId},
+            include: [{model: MasterBusyDate}, {model: User}, {model:Master}]
+        })
         if (!order) return next(ApiError.BadRequest(`Order is not found`))
+        const code = await qrService.createQrCode(order.id,
+            order.master_busyDate.dateTime,
+            order.clockSize,
+            order.originalCityName,
+            order.user.email,
+            order.master.email,
+            order.totalPrice,
+            next)
+        console.log(code)
 
-        QRCode.toDataURL('I am a pony!')
-            .then(url => {
-                console.log(url)
+                        /*let base64Data = data.replace(/^data:image\/png;base64,/, "");
+                        base64Data += base64Data.replace('+', ' ');
+                        const  binaryData = new Buffer(base64Data, 'base64').toString('binary');
 
-                const data = url
+                        fs.writeFile("out.png", binaryData, "binary", function (err) {
+                            console.log(err); // writes out file without error, but it's not a valid image
+                        });
+                    })*/
 
-                let base64Data = data.replace(/^data:image\/png;base64,/, "");
-                base64Data += base64Data.replace('+', ' ');
-                const  binaryData = new Buffer(base64Data, 'base64').toString('binary');
-
-                fs.writeFile("out.png", binaryData, "binary", function (err) {
-                    console.log(err); // writes out file without error, but it's not a valid image
-                });
-            })
-            .catch(err => {
-                console.error(err)
-            })
         /*QRCode.toDataURL('I am a pony!', function (err, qrCode) {
             console.log(qrCode)
             require("fs").writeFile("out.png", qrCode, 'base64', function(err:any) {
