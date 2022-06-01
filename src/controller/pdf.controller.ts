@@ -9,6 +9,7 @@ import qrService from "../services/qrService";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {UserModel} from "../models/user.model";
 import {MasterModel} from "../models/master.model";
+import {Base64Encode} from 'base64-stream';
 
 
 interface OrderWithMasterBusyDateUserAndMaster extends OrderModel {
@@ -37,14 +38,16 @@ class PdfController {
             next)
         console.log(code)
 
-                        /*let base64Data = data.replace(/^data:image\/png;base64,/, "");
-                        base64Data += base64Data.replace('+', ' ');
-                        const  binaryData = new Buffer(base64Data, 'base64').toString('binary');
+        if (typeof code === "string") {
+            let base64Data = code.replace(/^data:image\/png;base64,/, "");
+            base64Data += base64Data.replace('+', ' ');
+            const  binaryData = new Buffer(base64Data, 'base64').toString('binary');
+            fs.writeFile("\static\out.png", binaryData, "binary", function (err) {
+                console.log(err); // writes out file without error, but it's not a valid image
+            });
+        }
 
-                        fs.writeFile("out.png", binaryData, "binary", function (err) {
-                            console.log(err); // writes out file without error, but it's not a valid image
-                        });
-                    })*/
+
 
         /*QRCode.toDataURL('I am a pony!', function (err, qrCode) {
             console.log(qrCode)
