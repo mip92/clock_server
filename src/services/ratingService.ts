@@ -15,9 +15,11 @@ class RatingService {
             }
         )
         if (!ratings) next(ApiError.BadRequest("Ratings not found"))
-        let arrayOfRatings: number[] = []
-        ratings.forEach((rating) => rating.rating && arrayOfRatings.push(rating.rating))
-        const sum: number = arrayOfRatings.reduce((a, b) => a + b, 0);
+        // @ts-ignore
+        const arrayOfRatings : number[] = ratings.map((rating)=> {
+            if (typeof rating.rating === 'number') return rating.rating
+        })
+        const sum: number = arrayOfRatings.reduce((a, b) => a +  b, 0);
         const average: number  = (Math.ceil((sum / arrayOfRatings.length) * 10) / 10)
         const master: MasterModel | null = await Master.findOne({where: {id: masterId}})
         await master?.update({rating: average})

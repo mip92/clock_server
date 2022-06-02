@@ -13,7 +13,7 @@ import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
 import {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} from '../models';
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import mail from "../services/mailServiсe";
 import ApiError from '../exeptions/api-error';
@@ -43,8 +43,7 @@ class MasterController {
             const password: string = randomString.slice(0, 6)
             const hashPassword: string = await bcrypt.hash(password, 5)
             const activationLink: string = uuidv4();
-            // @ts-ignore
-            const newMaster: MasterModel  = await Master.create({
+            const newMaster: MasterModel = await Master.create({
                 name,
                 email,
                 password: hashPassword,
@@ -69,7 +68,6 @@ class MasterController {
                 .then(results => {
                         results.map(city => {
                             count++
-                            // @ts-ignore
                             city && MasterCity.create({masterId: newMaster.id, cityId: city.id})
                                 .then(() => {
                                     if (count === citiesID.length) {
@@ -84,7 +82,7 @@ class MasterController {
                     },
                     error => next(error)
                 )
-        } catch (e:any) {
+        } catch (e: any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -92,6 +90,7 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
+            const {limit, offset, cities, sortBy, select, filter} = req.query
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
             options.where = {}
@@ -116,10 +115,10 @@ class MasterController {
                     required: true
                 }]
             }
-            const masters: { rows: MasterModel[]; count: number} = await Master.findAndCountAll(options)
+            const masters: { rows: MasterModel[]; count: number } = await Master.findAndCountAll(options)
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
-        } catch (e:any) {
+        } catch (e: any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -136,7 +135,7 @@ class MasterController {
             )
             if (!master) return next(ApiError.BadRequest("Master not found"))
             res.status(200).json(master)
-        } catch (e:any) {
+        } catch (e: any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -144,7 +143,7 @@ class MasterController {
 
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
-            const {id, name, email, citiesId} = req.body 
+            const {id, name, email, citiesId} = req.body
             const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
@@ -153,9 +152,7 @@ class MasterController {
                 location: "body"
             }))
 
-            //const citiesID: number[] = JSON.parse(citiesId)
-            // @ts-ignore
-            const citiesID: number[] = citiesId.split(',');
+            const citiesID: string[] = citiesId.split(',');
             if (!citiesID) return next(ApiError.ExpectationFailed({
                 value: citiesId,
                 msg: `CitiesId field must have at least 1 items`,
@@ -163,10 +160,14 @@ class MasterController {
                 location: "body"
             }))
             await MasterCity.destroy({where: {masterId: id}})
-            const createMasterCity = (cityId: number): Promise<MasterCityModel> => {
+            const createMasterCity = (cityId: string): Promise<MasterCityModel> => {
                 return new Promise(function (resolve, reject) {
-                    // @ts-ignore
-                    resolve(MasterCity.create({masterId: id, cityId: Number(cityId),createdAt: new Date(Date.now()), updatedAt: new Date(Date.now())}))
+                    resolve(MasterCity.create({
+                        masterId: id,
+                        cityId: +cityId,
+                        createdAt: new Date(Date.now()),
+                        updatedAt: new Date(Date.now())
+                    }))
                     reject(ApiError.BadRequest(`city with this id: ${cityId} is not found`))
                 })
             }
@@ -188,7 +189,7 @@ class MasterController {
                     },
                     error => next(error)
                 )
-        } catch (e:any) {
+        } catch (e: any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -198,11 +199,11 @@ class MasterController {
         try {
             const {masterId} = req.params
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: MasterModel | null = await Master.findOne({where: {id: masterId}, include: [{ all: true }]})
+            const candidate: MasterModel | null = await Master.findOne({where: {id: masterId}, include: [{all: true}]})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-            if (candidate) await candidate.destroy({ force: true })
+            if (candidate) await candidate.destroy({force: true})
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
-        } catch (e:any) {
+        } catch (e: any) {
             console.log(e)
             next(ApiError.BadRequest(e))
         }
@@ -220,32 +221,16 @@ class MasterController {
                 await mail.sendApproveMail(master.email, master.isApproved)
                 res.status(200).json({message: `master with id:${masterId} changed status approve`, master})
             }
-        } catch (e:any) {
+        } catch (e: any) {
             next(ApiError.BadRequest(e))
         }
     }
-
-    /*async timeReservation(masterId, dateTime, cityId, next) {
-        try {
-            if (!masterId || !dateTime) next(ApiError.BadRequest("id is not defined"))
-            let masterDateTime = await MasterBusyDate.findOne({where: {masterId, dateTime}})
-            if (masterDateTime) next(ApiError.BadRequest("this master is already working at this time"))
-            masterDateTime = await MasterBusyDate.create({masterId, dateTime: String(dateTime)})
-            return masterDateTime
-        } catch (e) {
-            console.log(e)
-            next(ApiError.BadRequest(e.parent.detail))
-        }
-    }*/
 
     async getFreeMasters(req: CustomRequest<null, null, GetFreeMastersQuerry, null>, res: Response, next: NextFunction) {
         try {
             const {cityId, dateTime, clockSize, limit, offset} = req.query;
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("The date may be later than the date now"))
             if (+clockSize > 3 || +clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
-            if(!cityId) next(ApiError.BadRequest("cityId is required"))
-            if(!dateTime) next(ApiError.BadRequest("dateTime is required"))
-            if(!clockSize) next(ApiError.BadRequest("clockSize is required"))
             const masters: MasterModel[] = await Master.findAll({
                 where: {
                     isActivated: true,
@@ -256,7 +241,7 @@ class MasterController {
                     model: City,
                     required: true
                 }],
-                order:[['rating', "DESC"]]
+                order: [['rating', "DESC"]]
             })
             if (masters.length === 0) return next(ApiError.BadRequest("masters is not found"))
 
@@ -293,9 +278,9 @@ class MasterController {
                 if (master.status == 'fulfilled') freeMasters.push(master.value)
             })
             if (freeMasters.length === 0) return next(ApiError.BadRequest("masters is not found"))
-            const mastersWithPagination = freeMasters.slice(+limit*+offset, (+limit*+offset)+(+limit))
+            const mastersWithPagination = freeMasters.slice(+limit * +offset, (+limit * +offset) + (+limit))
             res.status(200).json(mastersWithPagination)
-        } catch (e:any) {
+        } catch (e: any) {
             next(ApiError.BadRequest(e))
         }
     }
@@ -322,7 +307,7 @@ class MasterController {
                 const findCity = (cityId: number): Promise<CityModel> => {
                     return new Promise((resolve, reject) => {
                         City.findOne({where: {id: cityId}, transaction: t}).then((city: CityModel | null) => {
-                                if (city === null) reject(`City with id: ${cityId} is not found`)
+                                if (!city) reject(`City with id: ${cityId} is not found`)
                                 else return resolve(city)
                             }
                         ).catch((err: Error) => {
@@ -333,7 +318,6 @@ class MasterController {
                 }
                 let count = 0
                 return new Promise((resolve, reject) => {
-                    // @ts-ignore
                     Master.create({
                         name,
                         email,
@@ -346,7 +330,7 @@ class MasterController {
                                 Promise.all(citiesId.map(cityId => findCity(cityId)))
                                     .then((cities: CityModel[]) => {
                                             cities.map((city: CityModel) => {
-                                                MasterCity.create({
+                                                    MasterCity.create({
                                                         masterId: newMaster.id,
                                                         cityId: city.id
                                                     }, {transaction: t})
@@ -357,17 +341,17 @@ class MasterController {
                                                                 }
                                                             }
                                                         ).catch((err: Error) => {
-                                                        console.log(err)
+                                                        reject(err)
                                                     })
                                                 }
                                             )
                                         }
                                     ).catch((err: Error) => {
-                                    console.log(err)
+                                    reject(err)
                                 })
                             }
                         ).catch((err: Error) => {
-                        console.log(err)
+                        reject(err)
                     })
                 })
             }).catch((e: Error) => {
@@ -394,7 +378,7 @@ class MasterController {
                 const token: string = tokenService.generateJwt(master.id, master.email, master.role)
                 return res.status(201).json({token})
             }
-        } catch (err:any) {
+        } catch (err: any) {
             console.log(err)
             next(err)
         }
@@ -428,10 +412,10 @@ class MasterController {
                 `${process.env.API_URL}/api/auth/activate/${activationLink}`,
                 changedMaster.role)
             return res.status(200).json({token})
-        } catch (e:any) {
+        } catch (e: any) {
             next(ApiError.Internal(`server error`))
         }
     }
 }
+
 export default new MasterController()
-//module.exports = new MasterController()

@@ -27,7 +27,7 @@ class StatusController {
             const order: OrderModel | null = await Order.findByPk(orderId)
             if (!order) return next(ApiError.BadRequest("Order is not found"))
             const update: OrderModel = await order.update({status: status})
-            if (status===STATUSES.Completed) {
+            if (status === STATUSES.Completed) {
                 await ratingController.getLinkToCreateRating(orderId, next)
             }
             res.status(200).json(status)
@@ -36,5 +36,5 @@ class StatusController {
         }
     }
 }
+
 export default new StatusController()
-//module.exports = new StatusController()

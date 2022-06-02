@@ -29,4 +29,3 @@ class PayPalController {
     }
 }
 export default new PayPalController()
-//module.exports = new PayPalController()

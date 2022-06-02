@@ -188,20 +188,8 @@ class PictureController {
         Promise.all(arrayPicturesId.map(deleteOnePicture)).then((picturesId: number[]) => {
             res.status(200).json({message: `pictures with id: ${picturesId} was deleted`, picturesId})
         })
-        /*
-                for (let i = 0; i < arr.length; i++) {
-                    const orderPicture: OrderPictureModel = await OrderPicture.findOne({where: {orderId, pictureId: arr[i]}})
-                    if (!orderPicture) return next(ApiError.BadRequest(`Picture with this id: ${arr[i]} does not belong to order with this id: ${orderId}`))
-                    const picture: PictureModel = await Picture.findByPk(arr[i])
-                    const cd: { result: string } = await cloudinary.uploader.destroy(picture.path);
-                    if (cd.result !== 'ok') next(ApiError.Internal(`Cloudinary server error`))
-                    await picture.destroy()
-                    await orderPicture.destroy()
-                }
-                await res.status(200).json(`pictures with id: ${req.body.picturesId} was deleted`)*/
     }
 
 }
 
 export default new PictureController()
-//module.exports = new PictureController()

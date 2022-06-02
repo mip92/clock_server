@@ -23,12 +23,6 @@ class RatingController {
     async createRating(req: CustomRequest<CreateRatingBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {key, rating, comment} = req.body
-            if (rating < 0 || rating > 5) return next(ApiError.ExpectationFailed({
-                value: rating,
-                msg: "the rating must be positive and the maximum rating is 5",
-                param: "rating",
-                location: "body"
-            }))
             const candidate: RatingModel | null = await Rating.findOne({where: {link: key}})
             if (!candidate) return next(ApiError.BadRequest("Ratings not found"))
             if (candidate.comment || candidate.rating) return next(ApiError.BadRequest("rating already posted"))
