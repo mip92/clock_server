@@ -94,23 +94,17 @@ class MailService {
                 `
         })
     }
-    async sendRatingMail(to: string, link: string, pdfBase64: Base64Encode) {
+    async sendRatingMail(to: string, link: string, pdfBase64: string) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
             attachments: [
                 {
-                    filename: 'notes.txt',
-                    content: 'Some notes about this e-mail',
-                    contentType: 'text/plain' // optional, would be detected from the filename
-                },
-                {
                     filename: 'image.pdf',
                     content: Buffer.from(
-                        String(pdfBase64)
+                        pdfBase64
                         ,'base64'
                     ),
-                    cid: 'note@example.com'
                 },
             ],
 

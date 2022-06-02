@@ -437,4 +437,3 @@ class MasterController {
     }
 }
 export default new MasterController()
-//module.exports = new MasterController()

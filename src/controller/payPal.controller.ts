@@ -24,9 +24,8 @@ class PayPalController {
             const order: OrderModel | null = await Order.findOne({where: {payPalOrderId}})
             order && await order.update({status:STATUSES.Confirmed})
         } catch (e) {
-            console.log(e)
+            next(ApiError.Internal(`server error`))
         }
     }
 }
 export default new PayPalController()
-//module.exports = new PayPalController()

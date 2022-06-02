@@ -38,32 +38,9 @@ class RatingController {
             await ratingService.changeRating(newRating.masterId, next)
             return res.status(201).json(newRating)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
-
-    /*async getAllRatings(req, res, next){
-        try {
-            let {limit, offset, masterId} = req.query
-            if (limit > 50) limit = 50
-            if (!offset) offset = 0
-            let ratings
-            if (!masterId) ratings = await Rating.findAndCountAll({
-                limit,
-                offset,
-            })
-            if (masterId) ratings = await Rating.findAndCountAll({
-                where:{masterId},
-                limit,
-                offset
-            })
-            if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
-            res.status(200).json(ratings)
-        }catch (e) {
-            next(ApiError.BadRequest(e.parent.detail))
-        }
-    }*/
 
     async getRatingByMaster(req: CustomRequest<null, GetRatingByMasterParams, null, null>, res: Response, next: NextFunction) {
         try {
@@ -103,7 +80,6 @@ class RatingController {
 
             res.status(200).json(lastComments)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -136,11 +112,10 @@ class RatingController {
                 link: uniqueKey
             });
             const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
-            const pdfBase64 = await pdfService.createPdf(+orderId,next)
-            if (!pdfBase64) return next(ApiError.BadRequest(`Problem with creating base64`))
+            const pdfBase64 = await pdfService.createPdf(+orderId, next)
+            if (!pdfBase64) return next(ApiError.BadRequest(`Problem with creating pdf`))
             await mail.sendRatingMail(order.user.email, link, pdfBase64)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
