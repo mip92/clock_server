@@ -9,7 +9,6 @@ import statusRouter from './status.router'
 import pictureRouter from './picture.router'
 import ratingRouter from './rating.router'
 import payPalRouter from './payPal.router'
-import pdfRouter from './pdf.router'
 
 router.use('/cities', cityRouter)
 router.use('/masters',masterRouter)
@@ -20,6 +19,5 @@ router.use('/status',statusRouter)
 router.use('/picture',pictureRouter)
 router.use('/rating',ratingRouter)
 router.use('/payPal', payPalRouter)
-router.use('/pdf', pdfRouter)
 
 export default router

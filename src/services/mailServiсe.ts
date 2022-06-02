@@ -3,6 +3,7 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import {ROLE} from "../models";
 
 import nodemailer from 'nodemailer';
+import {Base64Encode} from "base64-stream";
 
 class MailService {
     private transporter: Transporter<SMTPTransport.SentMessageInfo>;
@@ -93,10 +94,26 @@ class MailService {
                 `
         })
     }
-    async sendRatingMail(to: string, link: string) {
+    async sendRatingMail(to: string, link: string, pdfBase64: Base64Encode) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
+            attachments: [
+                {
+                    filename: 'notes.txt',
+                    content: 'Some notes about this e-mail',
+                    contentType: 'text/plain' // optional, would be detected from the filename
+                },
+                {
+                    filename: 'image.pdf',
+                    content: Buffer.from(
+                        String(pdfBase64)
+                        ,'base64'
+                    ),
+                    cid: 'note@example.com'
+                },
+            ],
+
             subject: "Please comment our service",
             text: "",
             html:

@@ -13,6 +13,7 @@ import {UserModel} from "../models/user.model";
 import mail from "../services/mailServiсe";
 import ratingService from "../services/ratingService";
 import {Op} from "sequelize";
+import pdfService from "../services/pdfService";
 
 
 interface OrderWithUser extends OrderModel {
@@ -135,7 +136,9 @@ class RatingController {
                 link: uniqueKey
             });
             const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
-            await mail.sendRatingMail(order.user.email, link)
+            const pdfBase64 = await pdfService.createPdf(+orderId,next)
+            if (!pdfBase64) return next(ApiError.BadRequest(`Problem with creating base64`))
+            await mail.sendRatingMail(order.user.email, link, pdfBase64)
         } catch (e) {
             console.log(e)
             next(ApiError.Internal(`server error`))
