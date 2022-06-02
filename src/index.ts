@@ -1,6 +1,7 @@
 import path from "path";
 import express from 'express';
 import dotenv from 'dotenv'
+
 dotenv.config({
     path: `.env.${process.env.NODE_ENV}`,
 })
@@ -10,6 +11,7 @@ import errorMiddleware from './middlwares/error-middleware';
 import router from './routes';
 import fileupload from "express-fileupload";
 import {dbConfig} from "./models";
+import cron from 'node-cron';
 
 const app = express()
 app.use(express.json())
@@ -23,6 +25,18 @@ app.use('/api', router)
 app.use(express.static(path.join(__dirname, 'static')))
 
 app.use(errorMiddleware)
+
+cron.schedule('1 * * * * *', () => {
+    const now = new Date(Date.now())
+    now.setMinutes(0)
+    now.setSeconds(0)
+    now.setMilliseconds(0)
+    const hour = now.getHours()
+    const feature
+    now.getHours(hour)
+    console.log(hour)
+    console.log(now.toISOString())
+});
 
 const start = async () => {
     try {
