@@ -100,7 +100,7 @@ class MailService {
             to,
             attachments: [
                 {
-                    filename: 'image.pdf',
+                    filename: 'score.pdf',
                     content: Buffer.from(
                         pdfBase64
                         ,'base64'
