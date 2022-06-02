@@ -83,7 +83,6 @@ class MasterController {
                     error => next(error)
                 )
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -119,7 +118,6 @@ class MasterController {
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -136,7 +134,6 @@ class MasterController {
             if (!master) return next(ApiError.BadRequest("Master not found"))
             res.status(200).json(master)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -204,7 +201,6 @@ class MasterController {
             if (candidate) await candidate.destroy({force: true})
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -379,7 +375,6 @@ class MasterController {
                 return res.status(201).json({token})
             }
         } catch (err: any) {
-            console.log(err)
             next(err)
         }
     }
