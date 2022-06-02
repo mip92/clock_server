@@ -31,7 +31,6 @@ class RatingController {
             await ratingService.changeRating(newRating.masterId, next)
             return res.status(201).json(newRating)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
