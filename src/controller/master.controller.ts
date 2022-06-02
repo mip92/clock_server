@@ -187,7 +187,6 @@ class MasterController {
                     error => next(error)
                 )
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
