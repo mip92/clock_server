@@ -129,7 +129,6 @@ class RatingController {
             const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
             await mail.sendRatingMail(order.user.email, link)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
