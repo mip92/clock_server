@@ -95,7 +95,6 @@ class RatingController {
 
             res.status(200).json(lastComments)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
