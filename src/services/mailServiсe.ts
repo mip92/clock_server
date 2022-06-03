@@ -3,7 +3,6 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import {ROLE} from "../models";
 
 import nodemailer from 'nodemailer';
-import {Base64Encode} from "base64-stream";
 
 class MailService {
     private transporter: Transporter<SMTPTransport.SentMessageInfo>;

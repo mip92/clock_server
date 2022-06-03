@@ -55,7 +55,7 @@ class PdfService {
                                     doc.fontSize(14)
                                         .text(`Date: ${new Date(order.master_busyDate.dateTime).toLocaleString()}`, 100, 200);
                                     doc.fontSize(14)
-                                        .text(`Clock size: ${order.clockSize}`, 100, 230);
+                                        .text(`Clock size: ${order.clockSize === 1 ? 'small' : order.clockSize === 2 ? 'middle' : 'big'}`, 100, 230);
                                     doc.fontSize(14)
                                         .text(`City name: ${order.originalCityName}`, 100, 260);
                                     doc.fontSize(14)
