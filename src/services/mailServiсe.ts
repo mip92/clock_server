@@ -3,6 +3,8 @@ import SMTPTransport from "nodemailer/lib/smtp-transport";
 import {ROLE} from "../models";
 
 import nodemailer from 'nodemailer';
+import {UserModel} from "../models/user.model";
+import {OrderModel} from "../models/order.model";
 
 class MailService {
     private transporter: Transporter<SMTPTransport.SentMessageInfo>;
@@ -97,6 +99,27 @@ class MailService {
                     <div>
                         <div>Ваш статус мастера был изменен на значение</div>
                         <div>${status ? "подтвержден" : "не подтвержден"}</div>
+                    </div>
+                `
+        })
+    }
+    async sendScheduleMail(to: string, city: string, dealPrice: number, totalPrice: number |null,
+                           clockSize: number, userName:string, userEmail:string, date: Date){
+        await this.transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to,
+            subject: "Reminder",
+            text: "",
+            html:
+                `
+                    <div>
+                        <div>Watch repair scheduled in an hour at ${date.toLocaleString()}</div>
+                        <div>city: ${city}</div>
+                        <div>deal price: ${dealPrice}</div>
+                        <div>clock size: ${clockSize}</div>
+                        <div>total price: ${totalPrice}</div>
+                        <div>user name: ${userName}</div>
+                        <div>user email: ${userEmail}</div>
                     </div>
                 `
         })

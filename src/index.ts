@@ -11,7 +11,7 @@ import errorMiddleware from './middlwares/error-middleware';
 import router from './routes';
 import fileupload from "express-fileupload";
 import {dbConfig} from "./models";
-import cron from 'node-cron';
+import {everyFiveMinutes, everyHour} from './crons'
 
 const app = express()
 app.use(express.json())
@@ -23,19 +23,9 @@ app.use(cors({
 app.use(fileupload())
 app.use('/api', router)
 app.use(express.static(path.join(__dirname, 'static')))
-
 app.use(errorMiddleware)
-
-cron.schedule('0 * * * *', () => {
-    const now = new Date(Date.now())
-    console.log(now)
-    now.setMinutes(0)
-    now.setSeconds(0)
-    now.setMilliseconds(0)
-    const hour = now.getHours()
-    now.setHours(hour+1)
-    console.log(now.toISOString())
-});
+app.use(()=>everyFiveMinutes)
+app.use(()=>everyHour)
 
 const start = async () => {
     try {
