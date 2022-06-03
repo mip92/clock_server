@@ -5,6 +5,7 @@ import {ROLE} from "../models";
 import nodemailer from 'nodemailer';
 import {UserModel} from "../models/user.model";
 import {OrderModel} from "../models/order.model";
+import {OrderModelWithMasterBusyDateMasterAndUser} from "./cronService";
 
 class MailService {
     private transporter: Transporter<SMTPTransport.SentMessageInfo>;
@@ -103,8 +104,7 @@ class MailService {
                 `
         })
     }
-    async sendScheduleMail(to: string, city: string, dealPrice: number, totalPrice: number |null,
-                           clockSize: number, userName:string, userEmail:string, date: Date){
+    async sendScheduleMail(to: string,order: OrderModelWithMasterBusyDateMasterAndUser, date: Date){
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
@@ -114,12 +114,12 @@ class MailService {
                 `
                     <div>
                         <div>Watch repair scheduled in an hour at ${date.toLocaleString()}</div>
-                        <div>city: ${city}</div>
-                        <div>deal price: ${dealPrice}</div>
-                        <div>clock size: ${clockSize}</div>
-                        <div>total price: ${totalPrice}</div>
-                        <div>user name: ${userName}</div>
-                        <div>user email: ${userEmail}</div>
+                        <div>city: ${order.originalCityName}</div>
+                        <div>deal price: ${order.dealPrice}</div>
+                        <div>clock size: ${order.clockSize === 1 ? 'small' : order.clockSize === 2 ? 'middle' : 'big'}</div>
+                        <div>total price: ${order.totalPrice}</div>
+                        <div>user name: ${order.user.name}</div>
+                        <div>user email: ${order.user.email}</div>
                     </div>
                 `
         })

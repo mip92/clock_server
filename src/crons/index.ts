@@ -16,8 +16,7 @@ export const everyHour = cron.schedule('0 * * * *', async () => { //0 * * * *
     const orders: OrderModelWithMasterBusyDateMasterAndUser[] = await cronService.findMasters(now.toISOString())
     const sendMail = (order: OrderModelWithMasterBusyDateMasterAndUser): Promise<string> => {
         return new Promise((resolve, reject) => {
-            mail.sendScheduleMail(order.master.email, order.originalCityName, order.dealPrice, order.totalPrice,
-                order.clockSize, order.user.name, order.user.email, now).then((l) => {
+            mail.sendScheduleMail(order.user.email, order, now).then((l) => {
                     resolve('letter sent')
                 }
             ).catch(() => reject('letter not sent'))
