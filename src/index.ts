@@ -26,15 +26,14 @@ app.use(express.static(path.join(__dirname, 'static')))
 
 app.use(errorMiddleware)
 
-cron.schedule('1 * * * * *', () => {
+cron.schedule('0 * * * *', () => {
     const now = new Date(Date.now())
+    console.log(now)
     now.setMinutes(0)
     now.setSeconds(0)
     now.setMilliseconds(0)
     const hour = now.getHours()
-    const feature
-    now.getHours(hour)
-    console.log(hour)
+    now.setHours(hour+1)
     console.log(now.toISOString())
 });
 
