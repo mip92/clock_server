@@ -113,10 +113,11 @@ export interface CreateRatingBody {
     comment: string
 }
 export type GetRatingByMasterParams ={ masterId:string }
-
+export type LinkParams ={ link:string }
 export interface CreatePayPalOrderBody {
     payPalOrderId: string
 }
+
 
 
 // @ts-ignore

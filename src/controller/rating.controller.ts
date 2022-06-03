@@ -1,7 +1,7 @@
 import {
     CreateRatingBody,
     CustomRequest,
-    GetRatingByMasterParams
+    GetRatingByMasterParams, LinkParams
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {RatingModel} from "../models/rating.model";
@@ -128,6 +128,19 @@ class RatingController {
             });
             const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
             await mail.sendRatingMail(order.user.email, link)
+        } catch (e) {
+            next(ApiError.Internal(`server error`))
+        }
+    }
+
+    async isRatingComplete(req: CustomRequest<null, LinkParams, null, null>, res: Response, next: NextFunction) {
+        try {
+            const link = req.params.link
+
+            const rating: RatingModel | null = await Rating.findOne({where: {link}})
+            if (!rating || rating.rating || rating.comment) return next(ApiError.BadRequest("rating not available"))
+            console.log(rating)
+            res.status(200).json("checked")
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }

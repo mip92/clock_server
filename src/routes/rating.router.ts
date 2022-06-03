@@ -14,6 +14,7 @@ const validationCreateRatingBodyRules = [
 
 
 router.post('/', checkRoles([ROLE.User]), validationCreateRatingBodyRules, checkRules2, (res: any, req: any, next: any) => {ratingController.createRating(res, req, next)});
+router.get('/isRatingComplete/:link', checkRoles([ROLE.User]), (res: any, req: any, next: any) => {ratingController.isRatingComplete(res, req, next)});
 router.get('/:masterId', (res: any, req: any, next: any) => {ratingController.getRatingByMaster(res, req, next)});
 router.get('/getLastComments/:masterId', (res: any, req: any, next: any) => {ratingController.getLastComments(res, req, next)});
 export default router
