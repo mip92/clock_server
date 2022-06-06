@@ -11,9 +11,11 @@ export interface OrderAttributes {
     status: string,
     payPalOrderId: string,
     totalPrice:number | null
+    masterId: number
 }
 export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttributes {}
-export class Order extends Model<OrderModel, OrderAttributes> {}
+export class Order extends Model<OrderModel, OrderAttributes> {
+}
 
 export type OrderStatic = typeof Model & {
     new (values?: object, options?: BuildOptions): OrderModel;

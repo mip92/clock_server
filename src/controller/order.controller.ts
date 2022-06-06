@@ -1,20 +1,69 @@
-import {CreateOrderBody, CustomRequest, GetAllOrders, GetOneOrderParams} from "../interfaces/RequestInterfaces";
+import {
+    CreateOrderBody,
+    CustomRequest,
+    GetAllOrders,
+    GetOneOrderParams,
+    GetOrderByDate
+} from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {UserModel} from "../models/user.model";
 import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {OrderModel} from "../models/order.model";
-import {Attributes, FindAndCountOptions} from "sequelize";
+import Sequelize, {Attributes, FindAndCountOptions, where} from "sequelize";
 import {dbConfig} from "../models";
 import excel from "./excel.controller";
 import {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} from '../models';
 import mail from "../services/mailServiсe";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import ApiError from '../exeptions/api-error';
 import {Op} from 'Sequelize';
 
+interface DataType {
+    labels: Date[],
+    datasets: MyDataSet[] | undefined
+}
+
+interface DataSetInterface {
+    label: string,
+    data: number[],
+    backgroundColor: string
+}
+
+class MyDate implements DataType {
+    labels: Date[] = [];
+    datasets: MyDataSet[] = [];
+
+    constructor(lables: Date[]) {
+        this.labels = lables
+    }
+
+    setDatasets(datasets: MyDataSet) {
+        this.datasets = [...this.datasets, datasets]
+    }
+
+    setLable(lable: Date) {
+        this.labels = [...this.labels, lable]
+    }
+}
+
+class MyDataSet implements DataSetInterface {
+    backgroundColor: string;
+    data: number[];
+    label: string;
+
+    constructor(label: string) {
+        this.label = label
+        this.backgroundColor = (Math.random().toString(16) + '000000').substring(2, 8).toUpperCase()
+        this.data = []
+    }
+
+    setData(orders: number) {
+        this.data = [...this.data, orders]
+    }
+}
 
 export interface OrderModelWithMasterBusyDateAndUsers extends OrderModelWithMasterBusyDate {
     user: UserModel
@@ -295,7 +344,7 @@ class OrderController {
             } else if (masterId) {
                 const masterID: "" | string[] | undefined = masterId && masterId.split(',');
                 options.include = [...options.include,
-                    {model: Master, where:{id: masterID}, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: Master, where: {id: masterID}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, attributes: {exclude: ['password', 'activationLink']}},
                 ];
             } else {
@@ -331,7 +380,7 @@ class OrderController {
                         options.order = [[Master, 'name', select]];
                         break;
                     case "user email": {
-                        options.order = [[User,'email', select]]
+                        options.order = [[User, 'email', select]]
                     }
                         break;
                     case "user name":
@@ -516,6 +565,98 @@ class OrderController {
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }
+    }
+
+    async getOrdersByDate(req: CustomRequest<null, null, GetOrderByDate, null>, res: Response, next: NextFunction) {
+        try {
+            const {masterId, cities, filterMaster, dateStart, dateFinish} = req.query;
+            let olderDate: Date
+            let newestDate: Date
+            if (dateStart === 'null' || dateFinish === 'null' || !dateStart || !dateFinish) {
+                const options: Omit<FindAndCountOptions<Attributes<MasterBusyDateModel>>, "group"> = {};
+                options.where = {}
+                options.attributes = [
+                    [dbConfig.fn('min', dbConfig.col('dateTime')), 'minDateTime'],
+                    [dbConfig.fn('max', dbConfig.col('dateTime')), 'maxDateTime'],
+                ]
+
+                const olderDateTime = await MasterBusyDate.findAll(options);
+                if (!olderDateTime) return next(ApiError.BadRequest(`there are no orders in the database`))
+                // @ts-ignore
+                olderDate = new Date(olderDateTime[0].dataValues.minDateTime)
+                // @ts-ignore
+                newestDate = new Date(olderDateTime[0].dataValues.maxDateTime)
+                olderDate.setHours(0)
+                const newestDay = newestDate.getDay()
+                newestDate.setHours(newestDay + 1)
+            } else {
+                olderDate = new Date(dateStart)
+                newestDate = new Date(dateFinish)
+                olderDate.setHours(0)
+                olderDate.setMinutes(0)
+                olderDate.setSeconds(0)
+                newestDate.setHours(24)
+                newestDate.setMinutes(0)
+                newestDate.setSeconds(0)
+            }
+            const masterIds = masterId.split(',')
+            let dates: Date[] = []
+            //i don't know how to create array if i have date range
+            for (let i = olderDate, count = 0; i < newestDate; count++, olderDate.setHours(24)) {
+                dates.push(new Date(olderDate))
+            }
+            const date = new MyDate(dates)
+            Promise.all(masterIds.map(masterId => this.getCountByRange(masterId, dates)))
+                .then((results) => {
+                        results.map((myDataSet, key) => {
+                            date.setDatasets(myDataSet)
+                            if (key+1===masterIds.length){
+                                res.status(200).json(date)
+                            }
+                        })
+                    }
+                )
+
+        } catch (e) {
+            next(ApiError.Internal(`server error`))
+        }
+    }
+
+    getCountByRange(masterId: string, dates: Date[]): Promise<MyDataSet> {
+        return new Promise((resolve, reject) => {
+                const myDataSet = new MyDataSet(masterId)
+                return Promise.all(dates.map(date => this.getCountByDay(+masterId, date)))
+                    .then(results => {
+                            results.map((masterDay, key) => {
+                                myDataSet.setData(masterDay.orders)
+                                if (dates.length - 1 === key) {
+                                    resolve(myDataSet)
+                                }
+                            })
+                        }
+                    )
+
+            }
+        )
+    }
+
+    getCountByDay(masterId: number, day: Date): Promise<{ orders: number, masterId: number, day: Date }> {
+        return new Promise((resolve, reject) => {
+                const dayEnd = new Date(day)
+                dayEnd.setHours(24)
+                const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
+                options.include = []
+                options.include = {
+                    model: MasterBusyDate,
+                    where: {dateTime: {[Op.between]: [day.toISOString(), dayEnd.toISOString()]}, masterId}
+                }
+                Order.count(options).then((orders) => {
+                        resolve({orders, masterId, day})
+                    }
+                )
+
+            }
+        )
     }
 }
 

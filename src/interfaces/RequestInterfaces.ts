@@ -88,6 +88,13 @@ export type GetAllOrders={
     clockSize? :string,
     status? :string
 }
+export type GetOrderByDate ={
+    masterId: string
+    cities: string,
+    filterMaster? :string,
+    dateStart? :string,
+    dateFinish? :string,
+}
 export type GetOneOrderParams={orderId:string}
 export type CreatePicturesParams={orderId:string}
 export interface DeletePicturesBody{picturesId: number[]}
