@@ -28,14 +28,14 @@ class PdfService {
                     .then((order: OrderWithMasterBusyDateUserAndMaster) => {
                             if (!order) reject(ApiError.BadRequest(`Order is not found`))
                             if (order) {
-                                qrService.createQrCode(order.id,
-                                    order.master_busyDate.dateTime,
-                                    order.clockSize,
-                                    order.originalCityName,
-                                    order.user.email,
-                                    order.master.email,
-                                    order.totalPrice,
-                                    next).then((qrCodeBase64) => {
+                                qrService.createQrCode({id: order.id,
+                                    dateTime: order.master_busyDate.dateTime,
+                                    clockSize: order.clockSize,
+                                    city: order.originalCityName,
+                                    userEmail: order.user.email,
+                                    masterEmail: order.master.email,
+                                    totalPrice: order.totalPrice,
+                                    next: next}).then((qrCodeBase64) => {
                                     if (!qrCodeBase64) reject(ApiError.BadRequest(`Problem with generating qr code`))
                                     const fontDirectory: string = path.resolve(__dirname, '..', 'fonts', 'Oswald-SemiBold.ttf')
 
