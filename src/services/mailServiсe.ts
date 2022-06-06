@@ -25,25 +25,21 @@ class MailService {
     async sendMailToNewUser(to: string, masterName: string, date: string, clockSize: number,
                             password: string, activationLink: string) {
         const dateTime = new Date(date)
-        const year = dateTime.getFullYear()
-        const month = dateTime.getMonth() + 1
-        const day = dateTime.getDate()
-        const hours = dateTime.getHours()
         const url = `${process.env.API_URL}/api/auth/login/activate/${activationLink}`
         await this.transporter.sendMail(
             {
                 from: process.env.SMTP_USER,
                 to,
-                subject: "Заказ на вызов мастера на сайте " + process.env.CLIENT_URL + " оформлен",
+                subject: "Order on site " + process.env.CLIENT_URL + " was created",
                 text: "",
                 html:
                     `
             <div>
-                <h1>Заказ оформлен</h1>
-                <div>Мастер ${masterName} прибудет к Вам ${day}.${month}.${year} в ${hours}:00 для ремонта часов, примерное время ремонта составляет ${clockSize} часа</div>
-                <div>Это временный пароль, измените его на более надежный в личном кабинете ${password}</div>
-                <div>Для активации почты перейдите по ссылке и авторизуйтесь</div>
-                <a href=${url}>Авторизация<a/>
+                <h1>Order is processed</h1>
+                <div>Master ${masterName} will come to you ${dateTime.toLocaleString()} to repair the clock, estimated repair time is ${clockSize} hours</div>
+                <div>This is a temporary password, change it to a more secure one in your account ${password}</div>
+                <div>To activate mail, follow the link and login</div>
+                <a href=${url}>Authorization<a/>
             <div/>
             `
             })
@@ -51,21 +47,17 @@ class MailService {
 
     async sendMail(to: string, masterName: string, date: string, clockSize: number) {
         const dateTime = new Date(date)
-        const year = dateTime.getFullYear()
-        const month = dateTime.getMonth() + 1
-        const day = dateTime.getDate()
-        const hours = dateTime.getHours()
         await this.transporter.sendMail(
             {
                 from: process.env.SMTP_USER,
                 to,
-                subject: "Заказ на вызов мастера на сайте " + process.env.CLIENT_URL + " оформлен",
+                subject: "Order on site " + process.env.CLIENT_URL + " was created",
                 text: "",
                 html:
                     `
             <div>
-                <h1>Заказ оформлен</h1>
-                <div>Мастер ${masterName} прибудет к Вам ${day}.${month}.${year} в ${hours}:00 для ремонта часов, примерное время ремонта составляет ${clockSize} часа</div>
+                <h1>Order is processed</h1>
+                <div>Master ${masterName} will come to you ${dateTime.toLocaleString()} to repair the clock, estimated repair time is ${clockSize} hours</div>
             <div/>
             `
             })
@@ -80,10 +72,10 @@ class MailService {
             html:
                 `
             <div>
-                <h1>Для активации почты перейдите по ссылке</h1>
+                <h1>To activate mail, follow the link</h1>
                 <a href=${link}>${link}<a/>
-                <div>${role == ROLE.Master ? 'Ваша заявка будет рассмотрена администратором в течении двух рабочих дней, ждите ответа' : ""}</div>
-                <div>${password ? `Это временный пароль, измените его на более надежный в личном кабинете ${password}` : ""}</div>
+                <div>${role == ROLE.Master ? 'Your application will be reviewed by the administrator within two business days, wait for a response' : ""}</div>
+                <div>${password ? `This is a temporary password, change it to a more secure one in your account ${password}` : ""}</div>
             </div>
             `
         })
@@ -98,8 +90,33 @@ class MailService {
             html:
                 `
                     <div>
-                        <div>Ваш статус мастера был изменен на значение</div>
-                        <div>${status ? "подтвержден" : "не подтвержден"}</div>
+                        <div>Your master status has been changed to</div>
+                        <div>${status ? "confirmed" : "not confirmed"}</div>
+                    </div>
+                `
+        })
+    }
+    async sendRatingMail(to: string, link: string, pdfBase64: string) {
+        await this.transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to,
+            attachments: [
+                {
+                    filename: 'score.pdf',
+                    content: Buffer.from(
+                        pdfBase64
+                        ,'base64'
+                    ),
+                },
+            ],
+
+            subject: "Please comment our service",
+            text: "",
+            html:
+                `
+                    <div>
+                        <div>Please comment our service</div>
+                        <a href=${link}>link<a/>
                     </div>
                 `
         })

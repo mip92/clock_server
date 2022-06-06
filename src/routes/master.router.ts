@@ -3,9 +3,8 @@ import express from "express";
 const router = express.Router();
 import masterController from '../controller/master.controller';
 import checkRoles from "../middlwares/checkRolesMiddleware";
-import checkRules from '../middlwares/checkRuleMiddleware';
 import checkRules2 from "../middlwares/checkRulesMiddleware";
-import {body} from 'express-validator';
+import {body, query} from 'express-validator';
 import {ROLE} from "../models";
 
 const validationCreateMasterBodyRules = [
@@ -13,18 +12,7 @@ const validationCreateMasterBodyRules = [
     body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
     body('citiesId', 'cityId is required').not().isEmpty().escape()
 ];
-const validationGetFreeMastersBodyRules = [
-    body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
-    body('cityId', 'city_id is required').not().isEmpty().escape(),
-    body('dateTime', 'dateTime is required').not().isEmpty(),
-    body('clockSize', 'clockSize is required').not().isEmpty(),
-    body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
-];
-const validationUpdateMasterBodyRules = [
-    body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
-    body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
-    body('city_id', 'city_id is required').not().isEmpty().escape()
-];
+
 const validationChangeEmailBodyRules = [
     body('password', "password must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
     body('currentEmail', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
@@ -39,6 +27,30 @@ router.get('/', (res: any, req: any, next: any) => {
     masterController.getAllMasters(res, req, next)
 });
 router.get('/:masterId', (res: any, req: any, next: any) => {
+
+const validationGetFreeMastersQueryRules = [
+    query('cityId', 'cityId is required').not().isEmpty().escape(),
+    query('dateTime', 'dateTime is required').not().isEmpty().escape(),
+    query('clockSize', 'clockSize is required').not().escape(),
+    query('limit', 'limit is required').not().escape(),
+    query('offset', 'offset is required').not().escape()
+];
+
+router.post('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, (res: any, req: any, next: any) => {
+    masterController.createMaster(res, req, next)
+});
+
+
+
+router.get('/getFreeMasters', validationGetFreeMastersQueryRules, checkRules2, (res: any, req: any, next: any) => {
+    masterController.getFreeMasters(res, req, next)
+});
+
+router.get('/', (res: any, req: any, next: any) => {
+    masterController.getAllMasters(res, req, next)
+});
+
+router.get('/getOneMaster/:masterId', (res: any, req: any, next: any) => {
     masterController.getOneMaster(res, req, next)
 });
 router.put('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, (res: any, req: any, next: any) => {
@@ -50,10 +62,7 @@ router.delete('/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next:
 router.get('/approve/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
     masterController.approveMaster(res, req, next)
 });
-/*router.post('/timeReservation'/!*,checkRole("ADMIN")*!/,masterController.timeReservation);*/
-router.post('/getFreeMasters', validationGetFreeMastersBodyRules, checkRules, (res: any, req: any, next: any) => {
-    masterController.getFreeMasters(res, req, next)
-});
+
 router.put('/changeEmail', checkRoles([ROLE.Master]), validationChangeEmailBodyRules, checkRules2, (res: any, req: any, next: any) => {
     masterController.changeEmail(res, req, next)
 })

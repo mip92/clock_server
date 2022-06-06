@@ -4,7 +4,7 @@ import {
     CreateMasterBody,
     CustomRequest,
     GetAllMastersQuery,
-    GetFreeMastersBody,
+    GetFreeMastersQuerry,
     MasterId, UpdateMasterBody
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
@@ -83,14 +83,13 @@ class MasterController {
                     error => next(error)
                 )
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
-            const {limit, offset, sortBy, select, cities, filter} = req.query
+            const {limit, offset, cities, sortBy, select, filter} = req.query
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
             options.where = {}
@@ -119,7 +118,6 @@ class MasterController {
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -136,7 +134,6 @@ class MasterController {
             if (!master) return next(ApiError.BadRequest("Master not found"))
             res.status(200).json(master)
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -151,8 +148,6 @@ class MasterController {
                 param: "email",
                 location: "body"
             }))
-
-            //const citiesID: number[] = JSON.parse(citiesId)
             const citiesID: string[] = citiesId.split(',');
             if (!citiesID) return next(ApiError.ExpectationFailed({
                 value: citiesId,
@@ -165,7 +160,7 @@ class MasterController {
                 return new Promise(function (resolve, reject) {
                     resolve(MasterCity.create({
                         masterId: id,
-                        cityId: Number(cityId),
+                        cityId: +cityId,
                         createdAt: new Date(Date.now()),
                         updatedAt: new Date(Date.now())
                     }))
@@ -191,7 +186,6 @@ class MasterController {
                     error => next(error)
                 )
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -205,7 +199,6 @@ class MasterController {
             if (candidate) await candidate.destroy({force: true})
             res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
         } catch (e: any) {
-            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -227,11 +220,11 @@ class MasterController {
         }
     }
 
-    async getFreeMasters(req: CustomRequest<GetFreeMastersBody, null, null, null>, res: Response, next: NextFunction) {
+    async getFreeMasters(req: CustomRequest<null, null, GetFreeMastersQuerry, null>, res: Response, next: NextFunction) {
         try {
-            const {cityId, dateTime, clockSize} = req.body
+            const {cityId, dateTime, clockSize, limit, offset} = req.query;
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("The date may be later than the date now"))
-            if (clockSize > 3 || clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
+            if (+clockSize > 3 || +clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
             const masters: MasterModel[] = await Master.findAll({
                 where: {
                     isActivated: true,
@@ -242,13 +235,13 @@ class MasterController {
                     model: City,
                     required: true
                 }],
+                order: [['rating', "DESC"]]
             })
             if (masters.length === 0) return next(ApiError.BadRequest("masters is not found"))
 
             const isThisTimeBusy = (cs: number, master: MasterModel): Promise<boolean> => {
                 return new Promise((resolve, reject) => {
                     const time = new Date(dateTime)
-                    let count = 0
                     time.setHours(time.getHours() + cs)
                     MasterBusyDate.findOne({
                         where: {
@@ -264,7 +257,7 @@ class MasterController {
 
             const isMasterFree = (master: MasterModel): Promise<MasterModel> => {
                 return new Promise((resolve, reject) => {
-                    const arrayOfClockSize: number[] = Array.from({length: clockSize}, (_, i) => i + 1)
+                    const arrayOfClockSize: number[] = Array.from({length: +clockSize}, (_, i) => i + 1)
                     Promise.all(arrayOfClockSize.map(cs => isThisTimeBusy(cs, master))).then((timeStatusArr) => {
                         timeStatusArr.map((timeStatus) => {
                             if (timeStatus) reject(master)
@@ -280,6 +273,8 @@ class MasterController {
             })
             if (freeMasters.length === 0) return next(ApiError.BadRequest("masters is not found"))
             res.status(200).json(freeMasters)
+            const mastersWithPagination = freeMasters.slice(+limit * +offset, (+limit * +offset) + (+limit))
+            res.status(200).json(mastersWithPagination)
         } catch (e: any) {
             next(ApiError.BadRequest(e))
         }
@@ -307,7 +302,7 @@ class MasterController {
                 const findCity = (cityId: number): Promise<CityModel> => {
                     return new Promise((resolve, reject) => {
                         City.findOne({where: {id: cityId}, transaction: t}).then((city: CityModel | null) => {
-                                if (city === null) reject(`City with id: ${cityId} is not found`)
+                                if (!city) reject(`City with id: ${cityId} is not found`)
                                 else return resolve(city)
                             }
                         ).catch((err: Error) => {
@@ -341,17 +336,17 @@ class MasterController {
                                                                 }
                                                             }
                                                         ).catch((err: Error) => {
-                                                        console.log(err)
+                                                        reject(err)
                                                     })
                                                 }
                                             )
                                         }
                                     ).catch((err: Error) => {
-                                    console.log(err)
+                                    reject(err)
                                 })
                             }
                         ).catch((err: Error) => {
-                        console.log(err)
+                        reject(err)
                     })
                 })
             }).catch((e: Error) => {
@@ -379,7 +374,6 @@ class MasterController {
                 return res.status(201).json({token})
             }
         } catch (err: any) {
-            console.log(err)
             next(err)
         }
     }

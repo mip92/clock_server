@@ -369,7 +369,6 @@ class OrderController {
             const orders: { rows: OrderModel[]; count: number; } = await Order.findAndCountAll(options)
             res.status(200).json(orders)
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -510,7 +509,6 @@ class OrderController {
                 await excel.deleteExcel(filePath)
             }, 60000);
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }

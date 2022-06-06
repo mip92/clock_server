@@ -39,10 +39,13 @@ export interface UpdateMasterBody {
     citiesId: string,
 }
 
-export interface GetFreeMastersBody {
-    cityId: number,
-    dateTime: Date,
-    clockSize: number
+export type GetFreeMastersQuerry ={
+    cityId: string,
+    dateTime: string,
+    clockSize: string,
+    limit:string,
+    offset: string
+
 }
 
 export interface ChangeEmailBody {
@@ -124,16 +127,17 @@ export type DeleteUserParams = {
 }
 
 export interface CreateRatingBody {
-    orderId: number,
-    masterId: number,
-    rating: number
+    key: string,
+    rating: number,
+    comment: string
 }
 
-export type GetRatingByMasterParams = { masterId: string }
-
+export type GetRatingByMasterParams ={ masterId:string }
+export type LinkParams ={ link:string }
 export interface CreatePayPalOrderBody {
     payPalOrderId: string
 }
+
 
 
 // @ts-ignore

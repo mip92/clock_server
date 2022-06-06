@@ -15,6 +15,10 @@ export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttrib
 }
 
 export class Order extends Model<OrderModel, OrderAttributes> {
+/*=======
+    totalPrice:number | null,
+    masterId: number
+>>>>>>> feature_comments*/
 }
 
 export type OrderStatic = typeof Model & {

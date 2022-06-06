@@ -10,5 +10,4 @@ class TokenService {
         return token
     }
 }
-
 export default new TokenService()
