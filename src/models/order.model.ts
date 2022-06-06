@@ -8,17 +8,14 @@ export interface OrderAttributes {
     userId: number,
     status: string,
     payPalOrderId: string,
-    totalPrice: number | null
+    totalPrice: number | null,
+    masterId: number
 }
 
 export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttributes {
 }
 
 export class Order extends Model<OrderModel, OrderAttributes> {
-/*=======
-    totalPrice:number | null,
-    masterId: number
->>>>>>> feature_comments*/
 }
 
 export type OrderStatic = typeof Model & {

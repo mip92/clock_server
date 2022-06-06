@@ -28,10 +28,5 @@ class PayPalController {
         }
     }
 }
-<<<<<<< HEAD
 
 export default new PayPalController()
-//module.exports = new PayPalController()
-=======
-export default new PayPalController()
->>>>>>> feature_comments

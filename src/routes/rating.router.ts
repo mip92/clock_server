@@ -13,17 +13,6 @@ const validationCreateRatingBodyRules = [
     body('comment', "min length is 6").isLength({min: 6}),
 ];
 
-<<<<<<< HEAD
-router.post('/',/* checkRoles([ROLE.User]),*/ validationCreateRatingBodyRules, checkRules, (res: any, req: any, next: any) => {
-    ratingController.createRating(res, req, next)
-});
-//router.get('/', ratingController.getAllRatings);
-router.get('/:masterId', (res: any, req: any, next: any) => {
-    ratingController.getRatingByMaster(res, req, next)
-});
-=======
->>>>>>> feature_comments
-
 router.post('/', checkRoles([ROLE.User]), validationCreateRatingBodyRules, checkRules2, (res: any, req: any, next: any) => {ratingController.createRating(res, req, next)});
 router.get('/isRatingComplete/:link', checkRoles([ROLE.User]), (res: any, req: any, next: any) => {ratingController.isRatingComplete(res, req, next)});
 router.get('/:masterId', (res: any, req: any, next: any) => {ratingController.getRatingByMaster(res, req, next)});

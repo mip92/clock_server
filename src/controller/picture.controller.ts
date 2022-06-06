@@ -193,9 +193,5 @@ class PictureController {
 
 }
 
-<<<<<<< HEAD
 export default new PictureController()
-//module.exports = new PictureController()
-=======
-export default new PictureController()
->>>>>>> feature_comments
+

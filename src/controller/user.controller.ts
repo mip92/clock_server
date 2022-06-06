@@ -193,10 +193,6 @@ class UserController {
         }
     }
 }
-<<<<<<< HEAD
 
 export default new UserController()
-//module.exports = new UserController()
-=======
-export default new UserController()
->>>>>>> feature_comments
+
