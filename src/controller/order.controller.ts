@@ -293,8 +293,9 @@ class OrderController {
                     {model: Master, attributes: {exclude: ['password', 'activationLink']}},
                 ];
             } else if (masterId) {
+                const masterID: "" | string[] | undefined = masterId && masterId.split(',');
                 options.include = [...options.include,
-                    {model: Master, attributes: {exclude: ['password', 'activationLink']}},
+                    {model: Master, where:{id: masterID}, attributes: {exclude: ['password', 'activationLink']}},
                     {model: User, attributes: {exclude: ['password', 'activationLink']}},
                 ];
             } else {
@@ -354,6 +355,7 @@ class OrderController {
                 }
             }
             options.include = [...options.include, {model: OrderPicture, separate: true, include: [{model: Picture}]}]
+            console.log(options)
             const orders: { rows: OrderModel[]; count: number; } = await Order.findAndCountAll(options)
             res.status(200).json(orders)
         } catch (e) {
