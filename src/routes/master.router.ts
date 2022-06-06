@@ -28,11 +28,15 @@ const validationGetFreeMastersQueryRules = [
     query('offset', 'offset is required').not().escape()
 ];
 
+
+
 router.post('/', checkRoles([ROLE.Admin]), validationCreateMasterBodyRules, checkRules2, (res: any, req: any, next: any) => {
     masterController.createMaster(res, req, next)
 });
 
-router.get('/getFreeMasters', validationGetFreeMastersQueryRules, checkRules2,  (res: any, req: any, next: any) => {
+
+
+router.get('/getFreeMasters', validationGetFreeMastersQueryRules, checkRules2, (res: any, req: any, next: any) => {
     masterController.getFreeMasters(res, req, next)
 });
 
@@ -52,7 +56,6 @@ router.delete('/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next:
 router.get('/approve/:masterId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
     masterController.approveMaster(res, req, next)
 });
-/*router.post('/timeReservation'/!*,checkRole("ADMIN")*!/,masterController.timeReservation);*/
 
 router.put('/changeEmail', checkRoles([ROLE.Master]), validationChangeEmailBodyRules, checkRules2, (res: any, req: any, next: any) => {
     masterController.changeEmail(res, req, next)

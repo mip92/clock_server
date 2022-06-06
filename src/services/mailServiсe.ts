@@ -93,10 +93,20 @@ class MailService {
                 `
         })
     }
-    async sendRatingMail(to: string, link: string) {
+    async sendRatingMail(to: string, link: string, pdfBase64: string) {
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
+            attachments: [
+                {
+                    filename: 'score.pdf',
+                    content: Buffer.from(
+                        pdfBase64
+                        ,'base64'
+                    ),
+                },
+            ],
+
             subject: "Please comment our service",
             text: "",
             html:

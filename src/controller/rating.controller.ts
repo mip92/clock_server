@@ -13,6 +13,7 @@ import {UserModel} from "../models/user.model";
 import mail from "../services/mailServiсe";
 import ratingService from "../services/ratingService";
 import {Op} from "sequelize";
+import pdfService from "../services/pdfService";
 
 
 interface OrderWithUser extends OrderModel {
@@ -34,28 +35,6 @@ class RatingController {
             next(ApiError.BadRequest(e))
         }
     }
-
-    /*async getAllRatings(req, res, next){
-        try {
-            let {limit, offset, masterId} = req.query
-            if (limit > 50) limit = 50
-            if (!offset) offset = 0
-            let ratings
-            if (!masterId) ratings = await Rating.findAndCountAll({
-                limit,
-                offset,
-            })
-            if (masterId) ratings = await Rating.findAndCountAll({
-                where:{masterId},
-                limit,
-                offset
-            })
-            if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
-            res.status(200).json(ratings)
-        }catch (e) {
-            next(ApiError.BadRequest(e.parent.detail))
-        }
-    }*/
 
     async getRatingByMaster(req: CustomRequest<null, GetRatingByMasterParams, null, null>, res: Response, next: NextFunction) {
         try {
@@ -127,7 +106,9 @@ class RatingController {
                 link: uniqueKey
             });
             const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
-            await mail.sendRatingMail(order.user.email, link)
+            const pdfBase64 = await pdfService.createPdf(+orderId, next)
+            if (!pdfBase64) return next(ApiError.BadRequest(`Problem with creating pdf`))
+            await mail.sendRatingMail(order.user.email, link, pdfBase64)
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }

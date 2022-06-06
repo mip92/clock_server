@@ -1,7 +1,7 @@
 import {NextFunction, Response, Request} from "express";
 import {CreatePicturesParams, CustomRequest} from "../interfaces/RequestInterfaces";
 import {OrderModel} from "../models/order.model";
-import {STATUSES, Order} from '../models';
+import {STATUSES, Order, Rating} from '../models';
 import ApiError from '../exeptions/api-error';
 import tokenService from "../services/tokenServiсe";
 import ratingController from "./rating.controller";
@@ -27,7 +27,11 @@ class StatusController {
             const order: OrderModel | null = await Order.findByPk(orderId)
             if (!order) return next(ApiError.BadRequest("Order is not found"))
             const update: OrderModel = await order.update({status: status})
-            if (status === STATUSES.Completed) {
+            if (order.status===STATUSES.Completed){
+                await Rating.destroy({where:{orderId:order.id}})
+            }
+            await order.update({status: status})
+            if (status===STATUSES.Completed) {
                 await ratingController.getLinkToCreateRating(orderId, next)
             }
             res.status(200).json(status)

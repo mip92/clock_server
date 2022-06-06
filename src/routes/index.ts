@@ -20,5 +20,4 @@ router.use('/picture',pictureRouter)
 router.use('/rating',ratingRouter)
 router.use('/payPal', payPalRouter)
 
-
 export default router
