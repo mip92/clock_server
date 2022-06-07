@@ -20,50 +20,10 @@ import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import ApiError from '../exeptions/api-error';
 import {Op} from 'Sequelize';
+import {MyDataSet} from "../classes/MyDataSet";
+import {MyDate} from "../classes/MyDate";
+import {log} from "util";
 
-interface DataType {
-    labels: Date[],
-    datasets: MyDataSet[] | undefined
-}
-
-interface DataSetInterface {
-    label: string,
-    data: number[],
-    backgroundColor: string
-}
-
-class MyDate implements DataType {
-    labels: Date[] = [];
-    datasets: MyDataSet[] = [];
-
-    constructor(lables: Date[]) {
-        this.labels = lables
-    }
-
-    setDatasets(datasets: MyDataSet) {
-        this.datasets = [...this.datasets, datasets]
-    }
-
-    setLable(lable: Date) {
-        this.labels = [...this.labels, lable]
-    }
-}
-
-class MyDataSet implements DataSetInterface {
-    backgroundColor: string;
-    data: number[];
-    label: string;
-
-    constructor(label: string) {
-        this.label = label
-        this.backgroundColor = (Math.random().toString(16) + '000000').substring(2, 8).toUpperCase()
-        this.data = []
-    }
-
-    setData(orders: number) {
-        this.data = [...this.data, orders]
-    }
-}
 
 export interface OrderModelWithMasterBusyDateAndUsers extends OrderModelWithMasterBusyDate {
     user: UserModel
@@ -570,47 +530,55 @@ class OrderController {
     async getOrdersByDate(req: CustomRequest<null, null, GetOrderByDate, null>, res: Response, next: NextFunction) {
         try {
             const {masterId, cities, filterMaster, dateStart, dateFinish} = req.query;
-            let olderDate: Date
+            console.log(masterId, cities, filterMaster, dateStart, dateFinish)
+            let oldestDate: Date
             let newestDate: Date
-            if (dateStart === 'null' || dateFinish === 'null' || !dateStart || !dateFinish) {
+            if (dateStart === 'null' || dateFinish === 'null' || dateStart === 'undefined' || dateFinish === 'undefined' || !dateStart || !dateFinish ) {
                 const options: Omit<FindAndCountOptions<Attributes<MasterBusyDateModel>>, "group"> = {};
                 options.where = {}
                 options.attributes = [
                     [dbConfig.fn('min', dbConfig.col('dateTime')), 'minDateTime'],
                     [dbConfig.fn('max', dbConfig.col('dateTime')), 'maxDateTime'],
                 ]
-
-                const olderDateTime = await MasterBusyDate.findAll(options);
-                if (!olderDateTime) return next(ApiError.BadRequest(`there are no orders in the database`))
+                const oldestNewest = await MasterBusyDate.findAll(options);
+                if (!oldestNewest) return next(ApiError.BadRequest(`there are no orders in the database`))
                 // @ts-ignore
-                olderDate = new Date(olderDateTime[0].dataValues.minDateTime)
+                oldestDate = new Date(oldestNewest[0].dataValues.minDateTime)
                 // @ts-ignore
-                newestDate = new Date(olderDateTime[0].dataValues.maxDateTime)
-                olderDate.setHours(0)
+                newestDate = new Date(oldestNewest[0].dataValues.maxDateTime)
+                oldestDate.setHours(0)
                 const newestDay = newestDate.getDay()
                 newestDate.setHours(newestDay + 1)
             } else {
-                olderDate = new Date(dateStart)
+                oldestDate = new Date(dateStart)
                 newestDate = new Date(dateFinish)
-                olderDate.setHours(0)
-                olderDate.setMinutes(0)
-                olderDate.setSeconds(0)
+                oldestDate.setHours(0)
+                oldestDate.setMinutes(0)
+                oldestDate.setSeconds(0)
                 newestDate.setHours(24)
                 newestDate.setMinutes(0)
                 newestDate.setSeconds(0)
             }
+
+            const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {};
+            options.where={}
             const masterIds = masterId.split(',')
+            if (masterId) options.where={id: masterIds}
+            const masters= await Master.findAll(options)
             let dates: Date[] = []
             //i don't know how to create array if i have date range
-            for (let i = olderDate, count = 0; i < newestDate; count++, olderDate.setHours(24)) {
-                dates.push(new Date(olderDate))
+            for (let i = oldestDate, count = 0; i < newestDate; count++, oldestDate.setHours(24)) {
+                dates.push(new Date(oldestDate))
             }
             const date = new MyDate(dates)
-            Promise.all(masterIds.map(masterId => this.getCountByRange(masterId, dates)))
+            Promise.all(masters.map(master => this.getCountByRange(master, dates)))
                 .then((results) => {
                         results.map((myDataSet, key) => {
                             date.setDatasets(myDataSet)
-                            if (key+1===masterIds.length){
+                            console.log(masters)
+                            if (key+1===masters.length){
+                                console.log(date)
+                                console.log(key+1===masters.length)
                                 res.status(200).json(date)
                             }
                         })
@@ -622,10 +590,10 @@ class OrderController {
         }
     }
 
-    getCountByRange(masterId: string, dates: Date[]): Promise<MyDataSet> {
+    getCountByRange(master: MasterModel, dates: Date[]): Promise<MyDataSet> {
         return new Promise((resolve, reject) => {
-                const myDataSet = new MyDataSet(masterId)
-                return Promise.all(dates.map(date => this.getCountByDay(+masterId, date)))
+                const myDataSet = new MyDataSet(master.email)
+                return Promise.all(dates.map(date => this.getCountByDay(master.id, date)))
                     .then(results => {
                             results.map((masterDay, key) => {
                                 myDataSet.setData(masterDay.orders)
