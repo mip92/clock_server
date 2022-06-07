@@ -12,6 +12,7 @@ export interface OrderAttributes {
     payPalOrderId: string,
     totalPrice:number | null
     masterId: number
+    cityId: number
 }
 export interface OrderModel extends Model<Partial<OrderAttributes>>, OrderAttributes {}
 export class Order extends Model<OrderModel, OrderAttributes> {

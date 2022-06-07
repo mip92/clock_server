@@ -49,7 +49,7 @@ class RatingController {
             )
             if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
             let arrayOfRatings:number[] = []
-            ratings.forEach((r)=>arrayOfRatings.push(r.rating))
+            //ratings.forEach((r)=>arrayOfRatings.push(r.rating)) //вернуть после того как замерджить эту ветку в девелоп
             const sum = arrayOfRatings.reduce((a, b) => a + b, 0);
             const average = (Math.ceil((sum / arrayOfRatings.length)*10)/10)
             //const average = Math.floor(sum / arr.length);
@@ -61,4 +61,3 @@ class RatingController {
 
 }
 export default new RatingController()
-//module.exports = new RatingController()

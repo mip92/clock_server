@@ -2,7 +2,7 @@ import {
     CreateOrderBody,
     CustomRequest,
     GetAllOrders,
-    GetOneOrderParams,
+    GetOneOrderParams, GetOrderByCity,
     GetOrderByDate
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
@@ -12,7 +12,7 @@ import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {OrderModel} from "../models/order.model";
 import Sequelize, {Attributes, FindAndCountOptions, where} from "sequelize";
-import {dbConfig} from "../models";
+import {dbConfig, Rating} from "../models";
 import excel from "./excel.controller";
 import {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} from '../models';
 import mail from "../services/mailServiсe";
@@ -22,6 +22,9 @@ import ApiError from '../exeptions/api-error';
 import {Op} from 'Sequelize';
 import {MyDataSet} from "../classes/MyDataSet";
 import {MyDate} from "../classes/MyDate";
+import {CircleDataSet} from "../classes/CircleDaraSets";
+import {CircleDate} from "../classes/CircleDate";
+import {RatingModel} from "../models/rating.model";
 import {log} from "util";
 
 
@@ -529,11 +532,10 @@ class OrderController {
 
     async getOrdersByDate(req: CustomRequest<null, null, GetOrderByDate, null>, res: Response, next: NextFunction) {
         try {
-            const {masterId, cities, filterMaster, dateStart, dateFinish} = req.query;
-            console.log(masterId, cities, filterMaster, dateStart, dateFinish)
+            const {masterId, cities, dateStart, dateFinish} = req.query;
             let oldestDate: Date
             let newestDate: Date
-            if (dateStart === 'null' || dateFinish === 'null' || dateStart === 'undefined' || dateFinish === 'undefined' || !dateStart || !dateFinish ) {
+            if (dateStart === 'null' || dateFinish === 'null' || dateStart === 'undefined' || dateFinish === 'undefined' || !dateStart || !dateFinish) {
                 const options: Omit<FindAndCountOptions<Attributes<MasterBusyDateModel>>, "group"> = {};
                 options.where = {}
                 options.attributes = [
@@ -547,7 +549,7 @@ class OrderController {
                 // @ts-ignore
                 newestDate = new Date(oldestNewest[0].dataValues.maxDateTime)
                 oldestDate.setHours(0)
-                const newestDay = newestDate.getDay()
+                const newestDay = newestDate.getDate()
                 newestDate.setHours(newestDay + 1)
             } else {
                 oldestDate = new Date(dateStart)
@@ -559,26 +561,34 @@ class OrderController {
                 newestDate.setMinutes(0)
                 newestDate.setSeconds(0)
             }
-
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {};
-            options.where={}
+            options.where = {}
             const masterIds = masterId.split(',')
-            if (masterId) options.where={id: masterIds}
-            const masters= await Master.findAll(options)
-            let dates: Date[] = []
+            const cityIds = cities.split(',')
+            if (masterId && masterId !== '') options.where.id = masterIds
+            if (cities && cities !== '') options.include = [{
+                model: Order,
+                include: [{model: City, where: {id: cityIds}}]
+            }]
+            let masters = await Master.findAll(options)
+            if (cities && cities !== '') {
+                // @ts-ignore
+                masters = masters.filter(master => master.orders.length !== 0)
+                console.log(masters.length === 0)
+                if (masters.length === 0) return next(ApiError.BadRequest(`Masters is not found`))
+            }
+            let dates: string[] = []
             //i don't know how to create array if i have date range
             for (let i = oldestDate, count = 0; i < newestDate; count++, oldestDate.setHours(24)) {
-                dates.push(new Date(oldestDate))
+                dates.push(new Date(oldestDate).toISOString())
             }
-            const date = new MyDate(dates)
+            const date = new MyDate<MyDataSet>(dates)
+
             Promise.all(masters.map(master => this.getCountByRange(master, dates)))
                 .then((results) => {
                         results.map((myDataSet, key) => {
                             date.setDatasets(myDataSet)
-                            console.log(masters)
-                            if (key+1===masters.length){
-                                console.log(date)
-                                console.log(key+1===masters.length)
+                            if (key + 1 === masters.length) {
                                 res.status(200).json(date)
                             }
                         })
@@ -586,14 +596,15 @@ class OrderController {
                 )
 
         } catch (e) {
+            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
 
-    getCountByRange(master: MasterModel, dates: Date[]): Promise<MyDataSet> {
+    getCountByRange(master: MasterModel, dates: string[]): Promise<MyDataSet> {
         return new Promise((resolve, reject) => {
                 const myDataSet = new MyDataSet(master.email)
-                return Promise.all(dates.map(date => this.getCountByDay(master.id, date)))
+                return Promise.all(dates.map(date => this.getCountByDay(master.id, new Date(date))))
                     .then(results => {
                             results.map((masterDay, key) => {
                                 myDataSet.setData(masterDay.orders)
@@ -625,6 +636,182 @@ class OrderController {
 
             }
         )
+    }
+
+    async getOrdersByCities(req: CustomRequest<null, null, GetOrderByCity, null>, res: Response, next: NextFunction) {
+        try {
+            const {dateFinish, dateStart} = req.query
+            let oldestDate: Date
+            let newestDate: Date
+            if (dateStart === 'null' || dateFinish === 'null' || dateStart === 'undefined' || dateFinish === 'undefined' || !dateStart || !dateFinish) {
+                const options: Omit<FindAndCountOptions<Attributes<MasterBusyDateModel>>, "group"> = {};
+                options.where = {}
+                options.attributes = [
+                    [dbConfig.fn('min', dbConfig.col('dateTime')), 'minDateTime'],
+                    [dbConfig.fn('max', dbConfig.col('dateTime')), 'maxDateTime'],
+                ]
+                const oldestNewest = await MasterBusyDate.findAll(options);
+                if (!oldestNewest) return next(ApiError.BadRequest(`there are no orders in the database`))
+                // @ts-ignore
+                oldestDate = new Date(oldestNewest[0].dataValues.minDateTime)
+                // @ts-ignore
+                newestDate = new Date(oldestNewest[0].dataValues.maxDateTime)
+                oldestDate.setHours(0)
+                const newestDay = newestDate.getDate()
+                newestDate.setHours(newestDay + 1)
+            } else {
+                oldestDate = new Date(dateStart)
+                newestDate = new Date(dateFinish)
+                oldestDate.setHours(0)
+                oldestDate.setMinutes(0)
+                oldestDate.setSeconds(0)
+                newestDate.setHours(24)
+                newestDate.setMinutes(0)
+                newestDate.setSeconds(0)
+            }
+            console.log(oldestDate, newestDate)
+            const getOrdersByCity = (city: CityModel): Promise<number> => {
+                return new Promise((resolve, reject) => {
+                    Order.findAll({
+                        where: {cityId: city.id},
+                        include: [{model: MasterBusyDate, where: {dateTime: {[Op.between]: [oldestDate, newestDate]}}}]
+                    }).then((count: OrderModel[]) => {
+                        console.log(count.length)
+                        resolve(count.length)
+                    })
+                })
+            }
+            City.findAll().then((cities) => {
+                const cityNames = cities.map((city) => city.cityName)
+                const circleDate = new CircleDate<CircleDataSet>(cityNames)
+                const dataSet = new CircleDataSet('# of Votes', cities.length)
+                Promise.all(cities.map(city => getOrdersByCity(city)))
+                    .then((results) => {
+                            results.map((count, key) => {
+                                dataSet.setData(count)
+                                if (key + 1 === cities.length) {
+                                    circleDate.setDatasets(dataSet)
+                                    res.status(200).send(circleDate)
+                                }
+                            })
+                        }
+                    )
+            })
+        } catch (e) {
+            console.log(e)
+            next(ApiError.Internal(`server error`))
+        }
+    }
+
+    async getRatingByMaster(req: CustomRequest<null, null, GetOrderByCity, null>, res: Response, next: NextFunction) {
+        try {
+            const {dateFinish, dateStart} = req.query
+            let oldestDate: Date
+            let newestDate: Date
+            if (dateStart === 'null' || dateFinish === 'null' || dateStart === 'undefined' || dateFinish === 'undefined' || !dateStart || !dateFinish) {
+                const options: Omit<FindAndCountOptions<Attributes<MasterBusyDateModel>>, "group"> = {};
+                options.where = {}
+                options.attributes = [
+                    [dbConfig.fn('min', dbConfig.col('dateTime')), 'minDateTime'],
+                    [dbConfig.fn('max', dbConfig.col('dateTime')), 'maxDateTime'],
+                ]
+                const oldestNewest = await MasterBusyDate.findAll(options);
+                if (!oldestNewest) return next(ApiError.BadRequest(`there are no orders in the database`))
+                // @ts-ignore
+                oldestDate = new Date(oldestNewest[0].dataValues.minDateTime)
+                // @ts-ignore
+                newestDate = new Date(oldestNewest[0].dataValues.maxDateTime)
+                oldestDate.setHours(0)
+                const newestDay = newestDate.getDate()
+                newestDate.setHours(newestDay + 1)
+            } else {
+                oldestDate = new Date(dateStart)
+                newestDate = new Date(dateFinish)
+                oldestDate.setHours(0)
+                oldestDate.setMinutes(0)
+                oldestDate.setSeconds(0)
+                newestDate.setHours(24)
+                newestDate.setMinutes(0)
+                newestDate.setSeconds(0)
+            }
+            const getRating = (master: MasterModel): Promise<RatingModel[]>   => {
+                return new Promise((resolve, reject) => {
+                    Rating.findAll({
+                        where: {masterId: master.id, rating: {[Op.not]: null},
+                             updatedAt: {[Op.between]: [oldestDate, newestDate]}}
+                    }).then((rating: RatingModel[]) => {
+                        if (rating.length === 0) reject("master dont have rating")
+                        else {
+                            resolve(rating)
+                        }
+                    })
+                })
+            }
+            class EmailRating{
+                email:string
+                rating:number
+                constructor(email:string, rating:number) {
+                    this.email=email
+                    this.rating=rating
+                }
+            }
+
+            let arrayOfMasters:EmailRating[]=[]
+            Master.findAll().then((masters) => {
+                Promise.allSettled(masters.map(master => getRating(master)))
+                    .then((results) => {
+                            results.map((masterRating, key) => {
+
+                                if (masterRating.status==='fulfilled'){
+                                    let arrayRating:number[]=[]
+                                    masterRating.value.map((oneValue)=> oneValue.rating && arrayRating.push(oneValue.rating))
+                                    const sum = arrayRating.reduce((a, b) => a + b, 0);
+                                    const average = (Math.ceil((sum / arrayRating.length)*10)/10)
+                                    const masterClass =new EmailRating(masters[key].email, average)
+                                    arrayOfMasters.push(masterClass)
+                                }
+                                if (key + 1 === masters.length) {
+
+
+                                    if (arrayOfMasters.length>2) {
+                                        arrayOfMasters.sort((a, b) => b.rating - a.rating);
+                                        const dataSet = new CircleDataSet('# of Votes', 3)
+                                        const masterNames = arrayOfMasters.map((master) => master.email)
+                                        const currentMasterNames=masterNames.slice(0, 2)
+                                        currentMasterNames.push('one')
+                                        const circleDate = new CircleDate<CircleDataSet>(currentMasterNames)
+                                        let sumOne:number=0
+                                        arrayOfMasters.map((master,key) => {
+                                            if(key<2) dataSet.setData(master.rating)
+                                            else sumOne+=master.rating
+                                        })
+                                        if (sumOne!==0) dataSet.setData(sumOne)
+                                        circleDate.setDatasets(dataSet)
+                                        res.status(200).send(circleDate)
+                                    }
+                                    else {
+                                        const dataSet = new CircleDataSet('# of Votes', arrayOfMasters.length)
+                                        const masterNames = arrayOfMasters.map((master) => master.email)
+                                        const circleDate = new CircleDate<CircleDataSet>(masterNames)
+                                    }
+
+                                   /* arrayOfMasters.map((master,key)=>{
+                                        if(key<3)
+                                    })*/
+
+
+
+
+                                    //res.status(200).send(circleDate)
+                                }
+                            })
+                        }
+                    )
+            })
+        } catch (e) {
+            console.log(e)
+            next(ApiError.Internal(`server error`))
+        }
     }
 }
 

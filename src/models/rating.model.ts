@@ -3,7 +3,7 @@ import {CityAttributes} from "./city.model";
 
 export interface RatingAttributes {
     id: number;
-    rating: number,
+    rating: number | null,
     masterId: number,
     orderId: number,
     createdAt?: Date,

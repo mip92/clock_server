@@ -91,7 +91,11 @@ export type GetAllOrders={
 export type GetOrderByDate ={
     masterId: string
     cities: string,
-    filterMaster? :string,
+    dateStart? :string,
+    dateFinish? :string,
+}
+
+export type GetOrderByCity ={
     dateStart? :string,
     dateFinish? :string,
 }

@@ -1,23 +1,21 @@
-import {MyDataSet} from "./MyDataSet";
-
-export interface DataType {
-    labels: Date[],
-    datasets: MyDataSet[] | undefined
+export interface DataType<T> {
+    labels: string[],
+    datasets: T[]
 }
 
-export class MyDate implements DataType {
-    labels: Date[] = [];
-    datasets: MyDataSet[] = [];
+export class MyDate<T> implements DataType<T> {
+    labels: string[] = [];
+    datasets: T[] = [];
 
-    constructor(lables: Date[]) {
+    constructor(lables: string[]) {
         this.labels = lables
     }
 
-    setDatasets(datasets: MyDataSet) {
+    setDatasets(datasets: T) {
         this.datasets = [...this.datasets, datasets]
     }
 
-    setLable(lable: Date) {
+    setLable(lable: string) {
         this.labels = [...this.labels, lable]
     }
 }
