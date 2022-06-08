@@ -565,17 +565,7 @@ class OrderController {
             const masterIds = masterId.split(',')
             const cityIds = cities.split(',')
             if (masterId && masterId !== '') options.where.id = masterIds
-            if (cities && cities !== '') options.include = [{
-                model: Order,
-                /*include: [{model: City, */where: {cityId: cityIds}
-            }]
             let masters = await Master.findAll(options)
-            if (cities && cities !== '') {
-                // @ts-ignore
-                masters = masters.filter(master => master.orders.length !== 0)
-                console.log(masters.length === 0)
-                if (masters.length === 0) return next(ApiError.BadRequest(`Masters is not found`))
-            }
             let dates: string[] = []
             //i don't know how to create array if i have date range
             for (let i = oldestDate, count = 0; i < newestDate; count++, oldestDate.setHours(24)) {
@@ -583,7 +573,7 @@ class OrderController {
             }
             const date = new MyDate<MyDataSet>(dates)
 
-            Promise.all(masters.map(master => this.getCountByRange(master, dates)))
+            Promise.all(masters.map(master => this.getCountByRange(master, dates, cityIds)))
                 .then((results) => {
                         results.map((myDataSet, key) => {
                             date.setDatasets(myDataSet)
@@ -600,10 +590,10 @@ class OrderController {
         }
     }
 
-    getCountByRange(master: MasterModel, dates: string[]): Promise<MyDataSet> {
+    getCountByRange(master: MasterModel, dates: string[], cityIds: string[]): Promise<MyDataSet> {
         return new Promise((resolve, reject) => {
                 const myDataSet = new MyDataSet(master.email)
-                return Promise.all(dates.map(date => this.getCountByDay(master.id, new Date(date))))
+                return Promise.all(dates.map(date => this.getCountByDay(master.id, new Date(date), cityIds)))
                     .then(results => {
                             results.map((masterDay, key) => {
                                 myDataSet.setData(masterDay.orders)
@@ -618,12 +608,13 @@ class OrderController {
         )
     }
 
-    getCountByDay(masterId: number, day: Date): Promise<{ orders: number, masterId: number, day: Date }> {
+    getCountByDay(masterId: number, day: Date, cityIds: string[]): Promise<{ orders: number, masterId: number, day: Date }> {
         return new Promise((resolve, reject) => {
                 const dayEnd = new Date(day)
                 dayEnd.setHours(24)
                 const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
                 options.include = []
+                if (cityIds && cityIds[0]) {options.where = {cityId: cityIds}}
                 options.include = {
                     model: MasterBusyDate,
                     where: {dateTime: {[Op.between]: [day.toISOString(), dayEnd.toISOString()]}, masterId}
@@ -733,11 +724,13 @@ class OrderController {
                 newestDate.setMinutes(0)
                 newestDate.setSeconds(0)
             }
-            const getRating = (master: MasterModel): Promise<RatingModel[]>   => {
+            const getRating = (master: MasterModel): Promise<RatingModel[]> => {
                 return new Promise((resolve, reject) => {
                     Rating.findAll({
-                        where: {masterId: master.id, rating: {[Op.not]: null},
-                             updatedAt: {[Op.between]: [oldestDate, newestDate]}}
+                        where: {
+                            masterId: master.id, rating: {[Op.not]: null},
+                            updatedAt: {[Op.between]: [oldestDate, newestDate]}
+                        }
                     }).then((rating: RatingModel[]) => {
                         if (rating.length === 0) reject("master dont have rating")
                         else {
@@ -746,52 +739,53 @@ class OrderController {
                     })
                 })
             }
-            class EmailRating{
-                email:string
-                rating:number
-                constructor(email:string, rating:number) {
-                    this.email=email
-                    this.rating=rating
+
+            class EmailRating {
+                email: string
+                rating: number
+
+                constructor(email: string, rating: number) {
+                    this.email = email
+                    this.rating = rating
                 }
             }
 
-            let arrayOfMasters:EmailRating[]=[]
+            let arrayOfMasters: EmailRating[] = []
             Master.findAll().then((masters) => {
                 Promise.allSettled(masters.map(master => getRating(master)))
                     .then((results) => {
                             results.map((masterRating, key) => {
 
-                                if (masterRating.status==='fulfilled'){
-                                    let arrayRating:number[]=[]
-                                    masterRating.value.map((oneValue)=> oneValue.rating && arrayRating.push(oneValue.rating))
+                                if (masterRating.status === 'fulfilled') {
+                                    let arrayRating: number[] = []
+                                    masterRating.value.map((oneValue) => oneValue.rating && arrayRating.push(oneValue.rating))
                                     const sum = arrayRating.reduce((a, b) => a + b, 0);
-                                    const average = (Math.ceil((sum / arrayRating.length)*10)/10)
-                                    const masterClass =new EmailRating(masters[key].email, average)
+                                    const average = (Math.ceil((sum / arrayRating.length) * 10) / 10)
+                                    const masterClass = new EmailRating(masters[key].email, average)
                                     arrayOfMasters.push(masterClass)
                                 }
                                 if (key + 1 === masters.length) {
-                                    if (arrayOfMasters.length>3) {
+                                    if (arrayOfMasters.length > 3) {
                                         arrayOfMasters.sort((a, b) => b.rating - a.rating);
                                         const dataSet = new CircleDataSet('# of Votes', 4)
                                         const masterNames = arrayOfMasters.map((master) => master.email)
-                                        const currentMasterNames=masterNames.slice(0, 3)
+                                        const currentMasterNames = masterNames.slice(0, 3)
                                         currentMasterNames.push('Other')
                                         const circleDate = new CircleDate<CircleDataSet>(currentMasterNames)
-                                        let sumOther:number=0
-                                        arrayOfMasters.map((master,key) => {
-                                            if(key<3) dataSet.setData(master.rating)
-                                            else sumOther=master.rating+sumOther
+                                        let sumOther: number = 0
+                                        arrayOfMasters.map((master, key) => {
+                                            if (key < 3) dataSet.setData(master.rating)
+                                            else sumOther = master.rating + sumOther
                                         })
-                                        if (sumOther!==0) dataSet.setData(Math.ceil((sumOther/(arrayOfMasters.length-3)*10)/10))
+                                        if (sumOther !== 0) dataSet.setData(Math.ceil((sumOther / (arrayOfMasters.length - 3) * 10) / 10))
                                         circleDate.setDatasets(dataSet)
                                         res.status(200).send(circleDate)
-                                    }
-                                    else {
+                                    } else {
                                         arrayOfMasters.sort((a, b) => b.rating - a.rating);
                                         const dataSet = new CircleDataSet('# of Votes', arrayOfMasters.length)
                                         const masterNames = arrayOfMasters.map((master) => master.email)
                                         const circleDate = new CircleDate<CircleDataSet>(masterNames)
-                                        arrayOfMasters.map((master,key) => {
+                                        arrayOfMasters.map((master, key) => {
                                             dataSet.setData(master.rating)
                                         })
                                         circleDate.setDatasets(dataSet)
