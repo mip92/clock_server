@@ -585,7 +585,6 @@ class OrderController {
                 )
 
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -661,14 +660,12 @@ class OrderController {
                 newestDate.setMinutes(0)
                 newestDate.setSeconds(0)
             }
-            console.log(oldestDate, newestDate)
             const getOrdersByCity = (city: CityModel): Promise<number> => {
                 return new Promise((resolve, reject) => {
                     Order.findAll({
                         where: {cityId: city.id},
                         include: [{model: MasterBusyDate, where: {dateTime: {[Op.between]: [oldestDate, newestDate]}}}]
                     }).then((count: OrderModel[]) => {
-                        console.log(count.length)
                         resolve(count.length)
                     })
                 })
@@ -799,7 +796,6 @@ class OrderController {
                     )
             })
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
@@ -849,7 +845,6 @@ class OrderController {
                             totalSum,
                             id: Math.random()
                         }
-                        console.log(object)
                         resolve(object)
                     })
                 })
