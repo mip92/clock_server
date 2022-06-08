@@ -2,7 +2,8 @@ import {
     CreateOrderBody,
     CustomRequest,
     GetAllOrders,
-    GetOneOrderParams, GetOrderByCity,
+    GetOneOrderParams,
+    GetOrderByCity,
     GetOrderByDate
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
@@ -11,10 +12,9 @@ import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import {OrderModel} from "../models/order.model";
-import Sequelize, {Attributes, FindAndCountOptions, where} from "sequelize";
-import {dbConfig, Rating} from "../models";
+import {Attributes, FindAndCountOptions} from "sequelize";
+import {City, dbConfig, Master, MasterBusyDate, Order, OrderPicture, Picture, Rating, STATUSES, User} from "../models";
 import excel from "./excel.controller";
-import {Order, Master, User, City, MasterBusyDate, OrderPicture, STATUSES, Picture} from '../models';
 import mail from "../services/mailServiсe";
 import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
@@ -25,7 +25,6 @@ import {MyDate} from "../classes/MyDate";
 import {CircleDataSet} from "../classes/CircleDaraSets";
 import {CircleDate} from "../classes/CircleDate";
 import {RatingModel} from "../models/rating.model";
-import {log} from "util";
 
 
 export interface OrderModelWithMasterBusyDateAndUsers extends OrderModelWithMasterBusyDate {
@@ -568,7 +567,7 @@ class OrderController {
             if (masterId && masterId !== '') options.where.id = masterIds
             if (cities && cities !== '') options.include = [{
                 model: Order,
-                include: [{model: City, where: {id: cityIds}}]
+                /*include: [{model: City, */where: {cityId: cityIds}
             }]
             let masters = await Master.findAll(options)
             if (cities && cities !== '') {
@@ -771,38 +770,33 @@ class OrderController {
                                     arrayOfMasters.push(masterClass)
                                 }
                                 if (key + 1 === masters.length) {
-
-
-                                    if (arrayOfMasters.length>2) {
+                                    if (arrayOfMasters.length>3) {
                                         arrayOfMasters.sort((a, b) => b.rating - a.rating);
-                                        const dataSet = new CircleDataSet('# of Votes', 3)
+                                        const dataSet = new CircleDataSet('# of Votes', 4)
                                         const masterNames = arrayOfMasters.map((master) => master.email)
-                                        const currentMasterNames=masterNames.slice(0, 2)
-                                        currentMasterNames.push('one')
+                                        const currentMasterNames=masterNames.slice(0, 3)
+                                        currentMasterNames.push('Other')
                                         const circleDate = new CircleDate<CircleDataSet>(currentMasterNames)
-                                        let sumOne:number=0
+                                        let sumOther:number=0
                                         arrayOfMasters.map((master,key) => {
-                                            if(key<2) dataSet.setData(master.rating)
-                                            else sumOne+=master.rating
+                                            if(key<3) dataSet.setData(master.rating)
+                                            else sumOther=master.rating+sumOther
                                         })
-                                        if (sumOne!==0) dataSet.setData(sumOne)
+                                        if (sumOther!==0) dataSet.setData(Math.ceil((sumOther/(arrayOfMasters.length-3)*10)/10))
                                         circleDate.setDatasets(dataSet)
                                         res.status(200).send(circleDate)
                                     }
                                     else {
+                                        arrayOfMasters.sort((a, b) => b.rating - a.rating);
                                         const dataSet = new CircleDataSet('# of Votes', arrayOfMasters.length)
                                         const masterNames = arrayOfMasters.map((master) => master.email)
                                         const circleDate = new CircleDate<CircleDataSet>(masterNames)
+                                        arrayOfMasters.map((master,key) => {
+                                            dataSet.setData(master.rating)
+                                        })
+                                        circleDate.setDatasets(dataSet)
+                                        res.status(200).send(circleDate)
                                     }
-
-                                   /* arrayOfMasters.map((master,key)=>{
-                                        if(key<3)
-                                    })*/
-
-
-
-
-                                    //res.status(200).send(circleDate)
                                 }
                             })
                         }
