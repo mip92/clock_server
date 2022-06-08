@@ -614,7 +614,9 @@ class OrderController {
                 dayEnd.setHours(24)
                 const options: Omit<FindAndCountOptions<Attributes<OrderModel>>, "group"> = {};
                 options.include = []
-                if (cityIds && cityIds[0]) {options.where = {cityId: cityIds}}
+                if (cityIds && cityIds[0]) {
+                    options.where = {cityId: cityIds}
+                }
                 options.include = {
                     model: MasterBusyDate,
                     where: {dateTime: {[Op.between]: [day.toISOString(), dayEnd.toISOString()]}, masterId}
@@ -798,6 +800,66 @@ class OrderController {
             })
         } catch (e) {
             console.log(e)
+            next(ApiError.Internal(`server error`))
+        }
+    }
+
+
+    async getStatisticsByMaster(req: CustomRequest<null, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
+        interface OrderWithMaster extends OrderModel {
+            master: MasterModel
+        }
+
+        interface MasterStatisticInterface {
+            name: string,
+            small: number,
+            middle: number,
+            big: number,
+            rating: number| null,
+            totalCompleted: number,
+            totalNotCompleted : number,
+            totalSum : number,
+            id: number
+        }
+
+        try {
+            const getStatisticByOneMaster = (masterId: number): Promise<MasterStatisticInterface> => {
+                return new Promise((resolve, reject) => {
+                    // @ts-ignore
+                    Order.findAll({where: {masterId}, include: [{model: Master}]}).then((orders: OrderWithMaster[]) => {
+                        const smallClock = orders.filter((order) => order.clockSize === 1)
+                        const middleClock = orders.filter((order) => order.clockSize === 2)
+                        const bigClock = orders.length - smallClock.length - middleClock.length
+                        const totalCompleted = orders.filter((order) => order.status === STATUSES["Completed"])
+                        const totalNotCompleted = orders.length - totalCompleted.length
+                        let totalSum = 0
+                        totalCompleted.map((order) => {
+                            if (order.totalPrice !== null) {
+                                totalSum = totalSum + order.totalPrice
+                            }
+                        })
+                        const object: MasterStatisticInterface={
+                            name: orders[0].master.name,
+                            small: smallClock.length,
+                            middle: middleClock.length,
+                            big: bigClock,
+                            rating: isNaN(orders[0].master.rating)? null : orders[0].master.rating,
+                            totalCompleted: totalCompleted.length,
+                            totalNotCompleted,
+                            totalSum,
+                            id: Math.random()
+                        }
+                        console.log(object)
+                        resolve(object)
+                    })
+                })
+            }
+            Master.findAll().then((masters) => {
+                Promise.all(masters.map(master => getStatisticByOneMaster(master.id)))
+                    .then(results =>res.status(200).json(results))
+            })
+
+        } catch (e) {
             next(ApiError.Internal(`server error`))
         }
     }
