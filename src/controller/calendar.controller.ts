@@ -1,19 +1,20 @@
 import {Response, NextFunction} from 'express';
-import {UserModel} from "../models/user.model";
-import {MasterModel} from "../models/master.model";
-import {AdminModel} from "../models/admin.model";
-import {AuthRegistrationBody, CustomRequest, Link, LoginBody} from "../interfaces/RequestInterfaces";
-import {Master, User, Admin, Order, MasterBusyDate} from '../models';
-import userController from "./user.controller";
-import masterController from "./master.controller";
-import bcrypt from 'bcrypt';
+import {CustomRequest} from "../interfaces/RequestInterfaces";
+import {User, Order, MasterBusyDate} from '../models';
 import ApiError from '../exeptions/api-error';
-import tokenService from '../services/tokenServiсe';
 import {OrderModel} from "../models/order.model";
+import {Op} from "sequelize";
+
+type masterIdParam = {
+    masterId?: string
+}
 
 class CalendarController {
-    async getMonth(req: CustomRequest<LoginBody, null, null, null>, res: Response, next: NextFunction) {
+    async getMonth(req: CustomRequest<null, masterIdParam, null, null>, res: Response, next: NextFunction) {
         try {
+            const {masterId} = req.params
+            console.log(masterId)
+            if(!masterId) return next(ApiError.BadRequest("master not found"))
             const date: Date = new Date(Date.now())
             date.setHours(0)
             date.setMinutes(0)
@@ -30,27 +31,38 @@ class CalendarController {
                     return 0
                 } else return k++ - dayOfWeek + 1
             });
-            const getOrdersByDay = (day: number): Promise<OrderModel[]> => {
-                let dayOfMonth: Date | null = date
-                if (day === 0) dayOfMonth = null
-                dayOfMonth?.setDate(day)
-                let endDayOfMonth: Date | null  = date
-                if (day === 0) endDayOfMonth = null
-                const nextday=day+1
-                console.log(nextday)
-                endDayOfMonth?.setDate(nextday)
-                   // =dayOfMonth && new Date(+dayOfMonth?.setDate(day+1))
-                console.log(dayOfMonth, endDayOfMonth)
+            const getOrdersByDay = (day: number): Promise<OrderModel[] | null> => {
+                let startDayOfMonth: Date | null = date
+                if (day === 0) startDayOfMonth = null
+                startDayOfMonth?.setDate(day)
+                let endDayOfMonth: Date | null
+                endDayOfMonth = startDayOfMonth && new Date(date)
+                endDayOfMonth && startDayOfMonth && endDayOfMonth.setDate(startDayOfMonth.getDate() + 1)
+                console.log(startDayOfMonth, endDayOfMonth, day)
                 return new Promise((resolve, reject) => {
-                        Order.findAll({
-                            where: {masterId: 4},
-                            include: [{model: MasterBusyDate, where: {dateTime:dayOfMonth}}]
-                        }).then((result)=>resolve(result))
+                        if (endDayOfMonth === null) resolve(null)
+                        else
+                            Order.findAll({
+                                attributes: {exclude: ['cityId','createdAt','dealPrice','masterId','originalCityName','totalPrice', 'updatedAt','masterBusyDateId', 'userId']},
+                                include: [{
+                                    model: MasterBusyDate,
+                                    attributes: {exclude: ['createdAt','id','masterId','updatedAt']},
+                                    where: {
+                                        masterId,
+                                        dateTime: {[Op.between]: [startDayOfMonth?.toISOString(), endDayOfMonth.toISOString()]}
+                                    }
+                                },{
+                                    model: User,
+                                    attributes: {exclude: ['createdAt','id','updatedAt','password', 'role', 'isActivated','email','activationLink']},
+                                }]
+                            }).then((orders) => {
+                                resolve(orders)
+                            })
                     }
                 )
             }
-            Promise.all(correctMonth.map(day => getOrdersByDay(day))).then((result)=>{
-                console.log(result)
+            Promise.all(correctMonth.map(day => getOrdersByDay(day))).then((results) => {
+                res.json(results)
             })
         } catch (e) {
             next(ApiError.Internal(`server error`))
