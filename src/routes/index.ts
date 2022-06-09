@@ -10,6 +10,7 @@ import statusRouter from './status.router'
 import pictureRouter from './picture.router'
 import ratingRouter from './rating.router'
 import payPalRouter from './payPal.router'
+import calendarRouter from './calendar.router'
 
 router.use('/cities', cityRouter)
 router.use('/masters', masterRouter)
@@ -20,5 +21,6 @@ router.use('/status', statusRouter)
 router.use('/picture', pictureRouter)
 router.use('/rating', ratingRouter)
 router.use('/payPal', payPalRouter)
+router.use('/calendar', calendarRouter)
 
 export default router
