@@ -5,17 +5,18 @@ import ApiError from '../exeptions/api-error';
 import {OrderModel} from "../models/order.model";
 import {Op} from "sequelize";
 
+
 type masterIdParam = {
     masterId?: string
+    correctData?: string
 }
 
 class CalendarController {
-    async getMonth(req: CustomRequest<null, masterIdParam, null, null>, res: Response, next: NextFunction) {
+    async getMonth(req: CustomRequest<null, null, masterIdParam, null>, res: Response, next: NextFunction) {
         try {
-            const {masterId} = req.params
-            console.log(masterId)
-            if(!masterId) return next(ApiError.BadRequest("master not found"))
-            const date: Date = new Date(Date.now())
+            const {masterId, correctData} = req.query
+            if (!masterId || !correctData) return next(ApiError.BadRequest("master not found"))
+            const date: Date = new Date(correctData)
             date.setHours(0)
             date.setMinutes(0)
             date.setSeconds(0)
@@ -38,22 +39,21 @@ class CalendarController {
                 let endDayOfMonth: Date | null
                 endDayOfMonth = startDayOfMonth && new Date(date)
                 endDayOfMonth && startDayOfMonth && endDayOfMonth.setDate(startDayOfMonth.getDate() + 1)
-                console.log(startDayOfMonth, endDayOfMonth, day)
                 return new Promise((resolve, reject) => {
                         if (endDayOfMonth === null) resolve(null)
                         else
                             Order.findAll({
-                                attributes: {exclude: ['cityId','createdAt','dealPrice','masterId','originalCityName','totalPrice', 'updatedAt','masterBusyDateId', 'userId']},
+                                attributes: {exclude: ['cityId', 'createdAt', 'dealPrice', 'masterId', 'originalCityName', 'totalPrice', 'updatedAt', 'masterBusyDateId', 'userId']},
                                 include: [{
                                     model: MasterBusyDate,
-                                    attributes: {exclude: ['createdAt','id','masterId','updatedAt']},
+                                    attributes: {exclude: ['createdAt', 'id', 'masterId', 'updatedAt']},
                                     where: {
                                         masterId,
                                         dateTime: {[Op.between]: [startDayOfMonth?.toISOString(), endDayOfMonth.toISOString()]}
                                     }
-                                },{
+                                }, {
                                     model: User,
-                                    attributes: {exclude: ['createdAt','id','updatedAt','password', 'role', 'isActivated','email','activationLink']},
+                                    attributes: {exclude: ['createdAt', 'id', 'updatedAt', 'password', 'role', 'isActivated', 'email', 'activationLink']},
                                 }]
                             }).then((orders) => {
                                 resolve(orders)
@@ -62,7 +62,12 @@ class CalendarController {
                 )
             }
             Promise.all(correctMonth.map(day => getOrdersByDay(day))).then((results) => {
-                res.json(results)
+                let month: { orders: OrderModel[] | null, date: Date | null, id: number }[] = []
+                results.map((oneDay, key) => {
+                    const myDate = oneDay === null ? null :date.setDate(correctMonth[key])
+                    month.push({orders: oneDay, date: myDate ? new Date(myDate): null, id: key+1})
+                })
+                res.json(month)
             })
         } catch (e) {
             next(ApiError.Internal(`server error`))
