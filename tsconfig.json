@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "outDir": "build", // Types should go into this directory.
+    "declaration": true,
+
+
     "allowJs": true,
     "checkJs": false,
     //"target": "ES2015"
