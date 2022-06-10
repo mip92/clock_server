@@ -754,6 +754,7 @@ class OrderController {
                 newestDate.setMinutes(0)
                 newestDate.setSeconds(0)
             }
+            console.log(oldestDate, newestDate)
             const getRating = (master: MasterModel): Promise<RatingModel[]> => {
                 return new Promise((resolve, reject) => {
                     Rating.findAll({
