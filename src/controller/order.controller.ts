@@ -684,6 +684,7 @@ class OrderController {
             } else {
                 oldestDate = new Date(dateStart)
                 newestDate = new Date(dateFinish)
+                oldestDate.setDate(oldestDate.getDate()-1)
                 oldestDate.setHours(0)
                 oldestDate.setMinutes(0)
                 oldestDate.setSeconds(0)
@@ -747,6 +748,7 @@ class OrderController {
             } else {
                 oldestDate = new Date(dateStart)
                 newestDate = new Date(dateFinish)
+                oldestDate.setDate(oldestDate.getDate()-1)
                 oldestDate.setHours(0)
                 oldestDate.setMinutes(0)
                 oldestDate.setSeconds(0)
