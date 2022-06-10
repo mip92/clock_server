@@ -684,7 +684,6 @@ class OrderController {
             } else {
                 oldestDate = new Date(dateStart)
                 newestDate = new Date(dateFinish)
-                oldestDate.setDate(oldestDate.getDate()-1)
                 oldestDate.setHours(0)
                 oldestDate.setMinutes(0)
                 oldestDate.setSeconds(0)
@@ -742,13 +741,13 @@ class OrderController {
                 oldestDate = new Date(oldestNewest[0].dataValues.minDateTime)
                 // @ts-ignore
                 newestDate = new Date(oldestNewest[0].dataValues.maxDateTime)
+                oldestDate.setDate(oldestDate.getDate()-1)
                 oldestDate.setHours(0)
                 const newestDay = newestDate.getDate()
                 newestDate.setHours(newestDay + 1)
             } else {
                 oldestDate = new Date(dateStart)
                 newestDate = new Date(dateFinish)
-                oldestDate.setDate(oldestDate.getDate()-1)
                 oldestDate.setHours(0)
                 oldestDate.setMinutes(0)
                 oldestDate.setSeconds(0)
