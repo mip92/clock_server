@@ -101,12 +101,27 @@ export type GetAllOrders = {
     clockSize?: string,
     status?: string
 }
-export type GetOneOrderParams = { orderId: string }
-export type CreatePicturesParams = { orderId: string }
+
 
 export interface DeletePicturesBody {
     picturesId: number[]
 }
+
+export type GetOrderByDate ={
+    masterId: string
+    cities: string,
+    dateStart? :string,
+    dateFinish? :string,
+}
+
+export type GetOrderByCity ={
+    dateStart? :string,
+    dateFinish? :string,
+}
+export type GetOneOrderParams={orderId:string}
+export type CreatePicturesParams={orderId:string}
+export interface DeletePicturesBody{picturesId: number[]}
+
 
 export interface CreateUserBody {
     email: string,

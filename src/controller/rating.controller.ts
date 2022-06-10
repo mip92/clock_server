@@ -39,8 +39,17 @@ class RatingController {
     async getRatingByMaster(req: CustomRequest<null, GetRatingByMasterParams, null, null>, res: Response, next: NextFunction) {
         try {
             const masterId = req.params.masterId
-            const average: number = await ratingService.changeRating(+masterId, next)
-            res.status(200).json({averageRating: average, masterId: +masterId})
+            const ratings: RatingModel[] = await Rating.findAll({
+                    where: {masterId: +masterId},
+                }
+            )
+            if (!ratings) return next(ApiError.BadRequest("Ratings not found"))
+            let arrayOfRatings:number[] = []
+            //ratings.forEach((r)=>arrayOfRatings.push(r.rating)) //return after merging this branch in development
+            const sum = arrayOfRatings.reduce((a, b) => a + b, 0);
+            const average = (Math.ceil((sum / arrayOfRatings.length)*10)/10)
+            //const average = Math.floor(sum / arr.length);
+            res.status(200).json({averageRating: average, masterId: +masterId, ratings})
         } catch (e: any) {
             next(ApiError.Internal(`server error`))
         }
@@ -129,4 +138,3 @@ class RatingController {
 }
 
 export default new RatingController()
-
