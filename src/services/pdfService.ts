@@ -37,7 +37,7 @@ class PdfService {
                                     totalPrice: order.totalPrice,
                                     next: next}).then((qrCodeBase64) => {
                                     if (!qrCodeBase64) reject(ApiError.BadRequest(`Problem with generating qr code`))
-                                    const fontDirectory: string = path.resolve(__dirname, '..', 'fonts', 'Oswald-SemiBold.ttf')
+                                    /*const fontDirectory: string = path.resolve(__dirname, '..', 'fonts', 'Oswald-SemiBold.ttf')*/
 
                                     const doc = new PDFDocument({size: 'A4'});
                                     let finalString = ''
@@ -47,7 +47,7 @@ class PdfService {
                                     doc.image(logo, 100, 40, {width: 100, height: 100})
 
                                     doc.fontSize(27)
-                                        .font(fontDirectory)
+                                        /*.font(fontDirectory)*/
                                         .text(`Clock repair company`, 220, 70);
 
                                     doc.fontSize(14)
