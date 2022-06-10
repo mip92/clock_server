@@ -11,21 +11,26 @@ import {CityFactory} from "./city.model";
 import {MasterCityFactory} from "./masterCity.model";
 import {AdminFactory} from "./admin.model";
 
-export const dbConfig = new Sequelize({
-        database: process.env.DB_NAME as string,
-        username: process.env.DB_USER as string,
-        password: process.env.DB_PASSWORD,
-        dialect: 'postgres',
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        "dialectOptions": {
-            ssl: {
-                require: true,
+const options = {
+    database: process.env.DB_NAME as string,
+    username: process.env.DB_USER as string,
+    password: process.env.DB_PASSWORD,
+    dialect: 'postgres',
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialectOptions: {}
+}
+
+if (process.env.NODE_ENV !== 'development') {
+    options.dialectOptions= {
+        ssl: {
+            require: true,
                 rejectUnauthorized: false
-            }
         }
-    },
-);
+    }
+}
+
+export const dbConfig = new Sequelize(options);
 
 export const User = UserFactory(dbConfig);
 export const City = CityFactory(dbConfig);
