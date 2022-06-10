@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node --loader ts-node/esm src/index.ts",
-    "start:dev": "cross-env NODE_ENV=development ts-node-dev src/index.ts",
+    "start": "node --loader ts-node/esm src/index",
+    "start:dev": "cross-env NODE_ENV=development ts-node-dev src/index",
     "migration:up:all": "cd src && npx sequelize-cli db:migrate",
     "migration:down:one": "cd src && npx sequelize-cli db:migrate:undo"
   },
