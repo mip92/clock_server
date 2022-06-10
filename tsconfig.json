@@ -3,6 +3,12 @@
     "outDir": "build", // Types should go into this directory.
     "declaration": true,
 
+    "typeRoots": [
+      "./typings",
+      "./node_modules/@types/"
+    ],
+
+    "noImplicitAny": false,
 
     "allowJs": true,
     "checkJs": false,
