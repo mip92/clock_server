@@ -693,6 +693,8 @@ class OrderController {
             }
             const getOrdersByCity = (city: CityModel): Promise<number> => {
                 return new Promise((resolve, reject) => {
+                    oldestDate.setDate(oldestDate.getDate()-1)
+                    newestDate.setHours(24)
                     Order.findAll({
                         where: {cityId: city.id},
                         include: [{model: MasterBusyDate, where: {dateTime: {[Op.between]: [oldestDate, newestDate]}}}]
