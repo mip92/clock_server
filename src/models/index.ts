@@ -9,7 +9,7 @@ import {MasterBusyDateFactory} from "./masterBusyDate.model";
 import {RatingFactory} from "./rating.model";
 import {CityFactory} from "./city.model";
 import {MasterCityFactory} from "./masterCity.model";
-import {AdminFactory, AdminModel} from "./admin.model";
+import {AdminFactory} from "./admin.model";
 
 export const dbConfig = new Sequelize({
         database: process.env.DB_NAME as string,
@@ -18,6 +18,7 @@ export const dbConfig = new Sequelize({
         dialect: 'postgres',
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
+        ssl: true
     },
 );
 
