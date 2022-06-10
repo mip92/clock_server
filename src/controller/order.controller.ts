@@ -831,7 +831,6 @@ class OrderController {
         }
     }
 
-
     async getStatisticsByMaster(req: CustomRequest<null, GetOneOrderParams, null, null>, res: Response, next: NextFunction) {
         interface OrderWithMaster extends OrderModel {
             master: MasterModel
@@ -842,10 +841,10 @@ class OrderController {
             small: number,
             middle: number,
             big: number,
-            rating: number| null,
+            rating: number | null,
             totalCompleted: number,
-            totalNotCompleted : number,
-            totalSum : number,
+            totalNotCompleted: number,
+            totalSum: number,
             id: number
         }
 
@@ -865,12 +864,12 @@ class OrderController {
                                 totalSum = totalSum + order.totalPrice
                             }
                         })
-                        const object: MasterStatisticInterface={
+                        const object: MasterStatisticInterface = {
                             name: orders[0].master.name,
                             small: smallClock.length,
                             middle: middleClock.length,
                             big: bigClock,
-                            rating: isNaN(orders[0].master.rating)? null : orders[0].master.rating,
+                            rating: isNaN(orders[0].master.rating) ? null : orders[0].master.rating,
                             totalCompleted: totalCompleted.length,
                             totalNotCompleted,
                             totalSum,
@@ -882,7 +881,7 @@ class OrderController {
             }
             Master.findAll().then((masters) => {
                 Promise.all(masters.map(master => getStatisticByOneMaster(master.id)))
-                    .then(results =>res.status(200).json(results))
+                    .then(results => res.status(200).json(results))
             })
 
         } catch (e) {
