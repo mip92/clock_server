@@ -15,7 +15,7 @@ import mail from "../services/mailServiсe";
 import {User, ROLE, Order} from '../models/index';
 import ApiError from '../exeptions/api-error';
 import tokenService from '../services/tokenServiсe';
-import {Op} from 'Sequelize';
+import {Op} from 'sequelize';
 
 class UserController {
     async createUser(req: CustomRequest<CreateUserBody, null, null, null>, res: Response, next: NextFunction) {

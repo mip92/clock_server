@@ -20,7 +20,7 @@ import mail from "../services/mailServiсe";
 import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import ApiError from '../exeptions/api-error';
-import {Op} from 'Sequelize';
+import {Op} from 'sequelize';
 import {OrderPictureModel} from "../models/orderPicture.model";
 import {PictureModel} from "../models/picture.model";
 import {MyDataSet} from "../classes/MyDataSet";
