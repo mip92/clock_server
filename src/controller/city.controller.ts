@@ -9,7 +9,7 @@ import {NextFunction, Response} from "express";
 import {CityModel} from "../models/city.model";
 import {Attributes, FindAndCountOptions} from "sequelize";
 import {City} from '../models';
-import Sequelize from 'Sequelize';
+import Sequelize from 'sequelize';
 import ApiError from '../exeptions/api-error';
 
 class CityController {

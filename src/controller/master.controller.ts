@@ -19,7 +19,7 @@ import mail from "../services/mailServiсe";
 import ApiError from '../exeptions/api-error';
 import tokenService from '../services/tokenServiсe';
 import {MasterCityModel} from "../models/masterCity.model";
-import {Op} from 'Sequelize';
+import {Op} from 'sequelize';
 
 class MasterController {
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
