@@ -5,8 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "tsc": "tsc",
-    "start:prod": "node build/server.js",
-    "start": "node --experimental-specifier-resolution=node --loader ts-node/esm src/index",
+    "start": "node build/server.js",
+
     "start:dev": "cross-env NODE_ENV=development ts-node-dev src/index",
     "migration:up:all": "cd src && npx sequelize-cli db:migrate",
     "migration:down:one": "cd src && npx sequelize-cli db:migrate:undo"
