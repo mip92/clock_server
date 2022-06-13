@@ -566,21 +566,15 @@ class OrderController {
             let oldestDate: Date
             let newestDate: Date
             if (dateStart === 'null' || dateFinish === 'null' || dateStart === 'undefined' || dateFinish === 'undefined' || !dateStart || !dateFinish) {
-                const options: Omit<FindAndCountOptions<Attributes<MasterBusyDateModel>>, "group"> = {};
-                options.where = {}
-                options.attributes = [
-                    [dbConfig.fn('min', dbConfig.col('dateTime')), 'minDateTime'],
-                    [dbConfig.fn('max', dbConfig.col('dateTime')), 'maxDateTime'],
-                ]
-                const oldestNewest = await MasterBusyDate.findAll(options);
-                if (!oldestNewest) return next(ApiError.BadRequest(`there are no orders in the database`))
-                // @ts-ignore
-                oldestDate = new Date(oldestNewest[0].dataValues.minDateTime)
-                // @ts-ignore
-                newestDate = new Date(oldestNewest[0].dataValues.maxDateTime)
-                oldestDate.setHours(0)
-                const newestDay = newestDate.getDate()
-                newestDate.setHours(newestDay + 1)
+                newestDate = new Date(Date.now())
+                newestDate.setHours(0)
+                newestDate.setMinutes(0)
+                newestDate.setSeconds(0)
+                newestDate.setMilliseconds(0)
+
+                oldestDate = new Date(newestDate)
+                oldestDate.setDate(oldestDate.getDate() - 30)
+
             } else {
                 oldestDate = new Date(dateStart)
                 newestDate = new Date(dateFinish)
@@ -591,6 +585,7 @@ class OrderController {
                 newestDate.setMinutes(0)
                 newestDate.setSeconds(0)
             }
+
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {};
             options.where = {}
             const masterIds = masterId.split(',')
@@ -633,7 +628,6 @@ class OrderController {
                             })
                         }
                     )
-
             }
         )
     }
@@ -877,7 +871,7 @@ class OrderController {
                             totalCompleted: totalCompleted.length,
                             totalNotCompleted,
                             totalSum,
-                            id: Math.random()
+                            id: orders[0].master.id,
                         }
                         resolve(object)
                     })
