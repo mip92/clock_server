@@ -16,6 +16,8 @@ type getWeekParam = {
     correctMonday?: string
 }
 
+type monthType = { orders: OrderModel[] | null, date: Date | null, id: number }
+
 class CalendarController {
     async getMonth(req: CustomRequest<null, null, getMonthParam, null>, res: Response, next: NextFunction) {
         try {
@@ -67,11 +69,11 @@ class CalendarController {
                 )
             }
             Promise.all(correctMonth.map(day => getOrdersByDay(day))).then((results) => {
-                let month: { orders: OrderModel[] | null, date: Date | null, id: number }[] = []
-                results.map((oneDay, key) => {
+                let month: monthType[] = results.map((oneDay, key) => {
                     const myDate = oneDay === null ? null : date.setDate(correctMonth[key])
-                    month.push({orders: oneDay, date: myDate ? new Date(myDate) : null, id: key + 1})
+                    return {orders: oneDay, date: myDate ? new Date(myDate) : null, id: key + 1}
                 })
+
                 res.status(200).json(month)
             })
         } catch (e) {
@@ -119,11 +121,10 @@ class CalendarController {
                 )
             }
             Promise.all(week.map(day => getOrdersByDay(day))).then((results) => {
-                let month: { orders: OrderModel[] | null, date: Date | null, id: number }[] = []
-                results.map((oneDay, key) => {
+                let month: monthType[] = results.map((oneDay, key) => {
                     const date = new Date(monday)
-                    const correctDay=date.getDate()+key
-                    month.push({orders: oneDay, date: new Date(date.setDate(correctDay)), id: key + 1})
+                    const correctDay = date.getDate() + key
+                    return {orders: oneDay, date: new Date(date.setDate(correctDay)), id: key + 1}
                 })
                 res.status(200).json(month)
             })
