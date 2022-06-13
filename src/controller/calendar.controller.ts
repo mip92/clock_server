@@ -13,7 +13,7 @@ type getMonthParam = {
 
 type getWeekParam = {
     masterId?: string
-    correctWeek?: string
+    correctMonday?: string
 }
 
 class CalendarController {
@@ -69,8 +69,8 @@ class CalendarController {
             Promise.all(correctMonth.map(day => getOrdersByDay(day))).then((results) => {
                 let month: { orders: OrderModel[] | null, date: Date | null, id: number }[] = []
                 results.map((oneDay, key) => {
-                    const myDate = oneDay === null ? null :date.setDate(correctMonth[key])
-                    month.push({orders: oneDay, date: myDate ? new Date(myDate): null, id: key+1})
+                    const myDate = oneDay === null ? null : date.setDate(correctMonth[key])
+                    month.push({orders: oneDay, date: myDate ? new Date(myDate) : null, id: key + 1})
                 })
                 res.json(month)
             })
@@ -78,72 +78,53 @@ class CalendarController {
             next(ApiError.Internal(`server error`))
         }
     }
+
     async getWeek(req: CustomRequest<null, null, getWeekParam, null>, res: Response, next: NextFunction) {
         try {
-            const {masterId, correctWeek} = req.query
-            console.log(masterId, correctWeek)
-            if (!masterId || !correctWeek) return next(ApiError.BadRequest("master not found"))
-
-            let firstDayOfCurYear = new Date();
-            firstDayOfCurYear.setFullYear(firstDayOfCurYear.getFullYear(), 0, 1);
-            console.log(firstDayOfCurYear)
-            console.log(firstDayOfCurYear.getDate()+((+correctWeek)*7))
-            const monday = new Date(firstDayOfCurYear.setDate(firstDayOfCurYear.getDate()+((+correctWeek)*6+4)))
+            const {masterId, correctMonday} = req.query
+            if (!masterId || !correctMonday) return next(ApiError.BadRequest("master not found"))
+            const monday = new Date(correctMonday)
             monday.setHours(0)
             monday.setMinutes(0)
             monday.setSeconds(0)
             monday.setMilliseconds(0)
-            console.log(monday.toLocaleDateString())
-            const date: Date = new Date(correctWeek)
-            date.setHours(0)
-            date.setMinutes(0)
-            date.setSeconds(0)
-            date.setMilliseconds(0)
-            const month = date.getMonth()
-            const firstDay = date.setDate(1)
-            const dayOfWeek = date.getDay()
-            const nextMontFistDay = new Date(firstDay).setMonth(month + 1)
-            const DaysOfMonth: number = Math.round((+new Date(nextMontFistDay) - +new Date(firstDay)) / 1000 / 3600 / 24);
-
-            const correctMonth = Array.from({length: DaysOfMonth + dayOfWeek}, (v, k) => {
-                if (k < dayOfWeek) {
-                    return 0
-                } else return k++ - dayOfWeek + 1
+            const week = Array.from({length: 7}, (v, k) => {
+                return k++
             });
+
             const getOrdersByDay = (day: number): Promise<OrderModel[] | null> => {
-                let startDayOfMonth: Date | null = date
-                if (day === 0) startDayOfMonth = null
-                startDayOfMonth?.setDate(day)
-                let endDayOfMonth: Date | null
-                endDayOfMonth = startDayOfMonth && new Date(date)
-                endDayOfMonth && startDayOfMonth && endDayOfMonth.setDate(startDayOfMonth.getDate() + 1)
+
+                let start: Date = new Date(monday)
+                start.setDate(start.getDate() + day)
+                let finish = new Date(start)
+                finish.setDate(finish.getDate() + 1)
+                console.log(day, start.toISOString(), finish.toISOString())
                 return new Promise((resolve, reject) => {
-                        if (endDayOfMonth === null) resolve(null)
-                        else
-                            Order.findAll({
-                                attributes: {exclude: ['cityId', 'createdAt', 'dealPrice', 'masterId', 'originalCityName', 'totalPrice', 'updatedAt', 'masterBusyDateId', 'userId']},
-                                include: [{
-                                    model: MasterBusyDate,
-                                    attributes: {exclude: ['createdAt', 'id', 'masterId', 'updatedAt']},
-                                    where: {
-                                        masterId,
-                                        dateTime: {[Op.between]: [startDayOfMonth?.toISOString(), endDayOfMonth.toISOString()]}
-                                    }
-                                }, {
-                                    model: User,
-                                    attributes: {exclude: ['createdAt', 'id', 'updatedAt', 'password', 'role', 'isActivated', 'email', 'activationLink']},
-                                }]
-                            }).then((orders) => {
-                                resolve(orders)
-                            })
+                        Order.findAll({
+                            attributes: {exclude: ['cityId', 'createdAt', 'dealPrice', 'masterId', 'originalCityName', 'totalPrice', 'updatedAt', 'masterBusyDateId', 'userId']},
+                            include: [{
+                                model: MasterBusyDate,
+                                attributes: {exclude: ['createdAt', 'id', 'masterId', 'updatedAt']},
+                                where: {
+                                    masterId,
+                                    dateTime: {[Op.between]: [start.toISOString(), finish.toISOString()]}
+                                }
+                            }, {
+                                model: User,
+                                attributes: {exclude: ['createdAt', 'id', 'updatedAt', 'password', 'role', 'isActivated', 'email', 'activationLink']},
+                            }]
+                        }).then((orders) => {
+                            resolve(orders)
+                        })
                     }
                 )
             }
-            Promise.all(correctMonth.map(day => getOrdersByDay(day))).then((results) => {
+            Promise.all(week.map(day => getOrdersByDay(day))).then((results) => {
                 let month: { orders: OrderModel[] | null, date: Date | null, id: number }[] = []
                 results.map((oneDay, key) => {
-                    const myDate = oneDay === null ? null :date.setDate(correctMonth[key])
-                    month.push({orders: oneDay, date: myDate ? new Date(myDate): null, id: key+1})
+                    const date = new Date(monday)
+                    const correctDay=date.getDate()+key
+                    month.push({orders: oneDay, date: new Date(date.setDate(correctDay)), id: key + 1})
                 })
                 res.json(month)
             })
