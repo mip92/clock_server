@@ -366,7 +366,6 @@ class OrderController {
                 }
             }
             options.include = [...options.include, {model: OrderPicture, separate: true, include: [{model: Picture}]}]
-            console.log(options)
             const orders: { rows: OrderModel[]; count: number; } = await Order.findAndCountAll(options)
             res.status(200).json(orders)
         } catch (e) {
