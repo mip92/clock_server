@@ -1,12 +1,13 @@
 import express from "express";
 const router = express.Router();
 import calendarController from '../controller/calendar.controller';
+import {ROLE} from "../models";
+import checkRoles from "../middlwares/checkRolesMiddleware";
 
-
-router.get('/month', (res: any, req: any, next: any) => {
+router.get('/month', checkRoles([ROLE.Master]), (res: any, req: any, next: any) => {
     calendarController.getMonth(res, req, next)
 });
-router.get('/week', (res: any, req: any, next: any) => {
+router.get('/week', checkRoles([ROLE.Master]), (res: any, req: any, next: any) => {
     calendarController.getWeek(res, req, next)
 });
 

@@ -72,7 +72,7 @@ class CalendarController {
                     const myDate = oneDay === null ? null : date.setDate(correctMonth[key])
                     month.push({orders: oneDay, date: myDate ? new Date(myDate) : null, id: key + 1})
                 })
-                res.json(month)
+                res.status(200).json(month)
             })
         } catch (e) {
             next(ApiError.Internal(`server error`))
@@ -98,7 +98,6 @@ class CalendarController {
                 start.setDate(start.getDate() + day)
                 let finish = new Date(start)
                 finish.setDate(finish.getDate() + 1)
-                console.log(day, start.toISOString(), finish.toISOString())
                 return new Promise((resolve, reject) => {
                         Order.findAll({
                             attributes: {exclude: ['cityId', 'createdAt', 'dealPrice', 'masterId', 'originalCityName', 'totalPrice', 'updatedAt', 'masterBusyDateId', 'userId']},
@@ -126,7 +125,7 @@ class CalendarController {
                     const correctDay=date.getDate()+key
                     month.push({orders: oneDay, date: new Date(date.setDate(correctDay)), id: key + 1})
                 })
-                res.json(month)
+                res.status(200).json(month)
             })
         } catch (e) {
             next(ApiError.Internal(`server error`))
