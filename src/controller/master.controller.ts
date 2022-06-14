@@ -91,6 +91,7 @@ class MasterController {
         try {
             console.log(22222)
             const {limit, offset, cities, sortBy, select, filter} = req.query
+            console.log(limit, offset, cities, sortBy, select, filter)
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
             options.where = {}
@@ -103,7 +104,9 @@ class MasterController {
             //options.where.isApproved = true
             options.attributes = {exclude: ['password', 'activationLink']}
             if (limit && +limit > 50) options.limit = 50
+            else if (limit) options.limit = +limit
             if (!offset) options.offset = 0
+            else if (offset) options.offset = +offset
             if (sortBy && select) options.order = [[sortBy, select]]
             if (!cities) {
                 options.include = {model: City, required: false}
@@ -115,6 +118,7 @@ class MasterController {
                     required: true
                 }]
             }
+            console.log(options)
             const masters: { rows: MasterModel[]; count: number } = await Master.findAndCountAll(options)
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
