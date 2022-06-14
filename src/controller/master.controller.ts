@@ -22,6 +22,7 @@ import {MasterCityModel} from "../models/masterCity.model";
 import {Op} from 'sequelize';
 
 class MasterController {
+
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {name, email, citiesId} = req.body
@@ -89,9 +90,7 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
-            console.log(22222)
             const {limit, offset, cities, sortBy, select, filter} = req.query
-            console.log(limit, offset, cities, sortBy, select, filter)
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
             options.where = {}
@@ -118,7 +117,6 @@ class MasterController {
                     required: true
                 }]
             }
-            console.log(options)
             const masters: { rows: MasterModel[]; count: number } = await Master.findAndCountAll(options)
             if (!masters) return next(ApiError.BadRequest("Masters not found"))
             res.status(200).json(masters)
@@ -198,11 +196,15 @@ class MasterController {
     async deleteMaster(req: CustomRequest<null, MasterId, null, null>, res: Response, next: NextFunction) {
         try {
             const {masterId} = req.params
+            console.log(4564, masterId)
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: MasterModel | null = await Master.findOne({where: {id: masterId}, include: [{all: true}]})
+            const candidate = await Master.findOne({where:{id:masterId}})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-            if (candidate) await candidate.destroy({force: true})
-            res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
+            MasterCity.destroy({where: {masterId}}).then(()=>{
+                Master.destroy({where:{id: masterId}}).then(()=>{
+                    res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
+                })
+            })
         } catch (e: any) {
             next(ApiError.BadRequest(e))
         }

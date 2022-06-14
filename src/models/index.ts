@@ -21,14 +21,14 @@ const options = {
     dialectOptions: {}
 }
 
-if (process.env.NODE_ENV !== 'development') {
+/*if (process.env.NODE_ENV !== 'development') {*/
     options.dialectOptions= {
         ssl: {
             require: true,
                 rejectUnauthorized: false
         }
     }
-}
+//}
 
 export const dbConfig = new Sequelize(options);
 
