@@ -16,7 +16,7 @@ import {everyFiveMinutes, everyHour} from './crons'
 const app = express()
 app.use(express.json())
 app.use(cors({
-    credentials: true,
+    credentials: false,
     origin: process.env.CLIENT_URL
 }))
 

@@ -89,6 +89,7 @@ class MasterController {
 
     async getAllMasters(req: CustomRequest<null, null, GetAllMastersQuery, null>, res: Response, next: NextFunction) {
         try {
+            console.log(22222)
             const {limit, offset, cities, sortBy, select, filter} = req.query
             const citiesID: "" | string[] | undefined = cities && cities.split(',');
             const options: Omit<FindAndCountOptions<Attributes<MasterModel>>, "group"> = {}
