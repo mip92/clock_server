@@ -144,6 +144,14 @@ class MasterController {
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, name, email, citiesId} = req.body
+            console.log(id, name, email, citiesId)
+            const findMasterId: MasterModel | null = await Master.findOne({where: {id}})
+            if (!findMasterId) return next(ApiError.ExpectationFailed({
+                value: email,
+                msg: `Master with this id is not found`,
+                param: "email",
+                location: "body"
+            }))
             const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
@@ -189,6 +197,7 @@ class MasterController {
                     error => next(error)
                 )
         } catch (e: any) {
+            console.log(e)
             next(ApiError.BadRequest(e))
         }
     }
@@ -196,7 +205,6 @@ class MasterController {
     async deleteMaster(req: CustomRequest<null, MasterId, null, null>, res: Response, next: NextFunction) {
         try {
             const {masterId} = req.params
-            console.log(4564, masterId)
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
             const candidate = await Master.findOne({where:{id:masterId}})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
