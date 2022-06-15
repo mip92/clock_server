@@ -1,9 +1,11 @@
 import {getMasters} from "./getMasters.test";
 import axios from "axios";
-import {dbConfig, Master, MasterCity, ROLE} from "../models";
+import {dbConfig, Master, MasterBusyDate, MasterCity, Order, ROLE} from "../models";
+import {where} from "sequelize";
+import {MasterModel} from "../models/master.model";
 
-describe('registration master', () => {
-    test('registration master with short name', async () => {
+describe('create master', () => {
+    test('create master with short name', async () => {
         const response = await axios.post(`${process.env.API_URL}/api/auth/login`, {
             email: process.env.ADMIN_EMAIL,
             password: process.env.ADMIN_PASSWORD,
@@ -18,7 +20,7 @@ describe('registration master', () => {
             expect(e.response.data.errors[0].msg).toEqual('name must be longer than 6 symbols')
         }
     })
-    test('registration master with not valid email', async () => {
+    test('create master with not valid email', async () => {
         const response = await axios.post(`http://localhost:5000/api/auth/login`, {
             email: process.env.ADMIN_EMAIL,
             password: process.env.ADMIN_PASSWORD,
@@ -33,7 +35,7 @@ describe('registration master', () => {
             expect(e.response.data.errors[0].msg).toEqual('email must be a valid email format')
         }
     })
-    test('registration and remove master', async () => {
+    test('create and remove master', async () => {
         const response = await axios.post(`${process.env.API_URL}/api/auth/login`, {
             email: process.env.ADMIN_EMAIL,
             password: process.env.ADMIN_PASSWORD,
@@ -48,7 +50,7 @@ describe('registration master', () => {
             {headers: {Authorization: `Bearer ${response.data.token}`}}) //remove master
         expect(response3.data.message).toBe(`master with id:${response2.data.id} was deleted`)
     })
-    test('registration master with duplicate email', async () => {
+    test('create master with duplicate email', async () => {
         const response = await axios.post(`${process.env.API_URL}/api/auth/login`, {
             email: process.env.ADMIN_EMAIL,
             password: process.env.ADMIN_PASSWORD,
@@ -133,6 +135,7 @@ describe('get masters', () => {
 
 describe('get one master', () => {
     let id
+
     beforeAll(async () => {
         await dbConfig.authenticate()
         await dbConfig.sync()
@@ -150,6 +153,7 @@ describe('get one master', () => {
     afterAll(async () => {
         await Master.destroy({where: {email: "some@valid.email"}})
     })
+
     test('masters values mast be valid', async () => {
         const response = await axios.get(`${process.env.API_URL}/api/masters/getOneMaster/${id}`)
         expect(response.data.cities).toStrictEqual([])
@@ -176,6 +180,7 @@ describe('get one master', () => {
 describe('update one master', () => {
     let id
     let token
+
     beforeAll(async () => {
         await dbConfig.authenticate()
         await dbConfig.sync()
@@ -199,6 +204,7 @@ describe('update one master', () => {
         await MasterCity.destroy({where: {masterId: id}})
         await Master.destroy({where: {id}})
     })
+
     test('update master with not valid dates', async () => {
         try {
             await axios.put(`${process.env.API_URL}/api/masters/`,
@@ -284,7 +290,7 @@ describe('delete one master', () => {
 
 })
 
-describe('Approve Master', () => {
+describe('approve Master', () => {
     let id
     let token
 
@@ -307,11 +313,12 @@ describe('Approve Master', () => {
         token = response.data.token
         id = master.id
     });
-    afterAll(async () => {
+    afterEach(async () => {
         await MasterCity.destroy({where: {masterId: id}})
         await Master.destroy({where: {id}})
     })
-    test('Approve master mast be true', async () => {
+    test('Approve master mast be' +
+        'true', async () => {
         const response = await axios.get(`${process.env.API_URL}/api/masters/getOneMaster/${id}`)
         expect(response.data.isApproved).toStrictEqual(true)
     })
@@ -320,6 +327,157 @@ describe('Approve Master', () => {
             {headers: {Authorization: `Bearer ${token}`}})
         expect(response.data.message).toStrictEqual(`master with id:${id} changed status approve`)
     })
+    test('Approve master with randomId', async () => {
+            function randomInteger(min, max) {
+                let rand = min + Math.random() * (max + 1 - min);
+                return Math.floor(rand);
+            }
 
+            const randomId = randomInteger(5000000, 7000000)
+            try {
+                await axios.get(`${process.env.API_URL}/api/masters/approve/${randomId}`,
+                    {headers: {Authorization: `Bearer ${token}`}})
+
+            } catch (e: any) {
+                expect(e.response.data.message).toStrictEqual(`master with id:${randomId} is not defined`)
+            }
+        }
+    )
+})
+
+describe('get free masters', () => {
+    let id: number
+
+    beforeEach(async () => {
+        await dbConfig.authenticate()
+        await dbConfig.sync()
+        const master = await Master.create({
+            name: 'longName',
+            email: "some@valid.email",
+            password: "hashPassword",
+            role: ROLE.Master,
+            isActivated: true,
+            isApproved: true,
+            activationLink: "link"
+        });
+        id = master.id
+        await MasterCity.create({
+            masterId: id,
+            cityId: 1
+        })
+    });
+    afterEach(async () => {
+        await MasterCity.destroy({where: {masterId: id}})
+        await Master.destroy({where: {id}})
+    })
+
+    test('master is free', async () => {
+        const response = await axios.get(`${process.env.API_URL}/api/masters/getOneMaster/${id}`)
+        expect(response.data.cities[0].id).toStrictEqual(1)
+        expect(response.data.email).toStrictEqual("some@valid.email")
+        const response2 = await axios.get(`${process.env.API_URL}/api/masters/getFreeMasters?cityId=1&dateTime=2022-06-23T05:00:00.000Z&clockSize=1&limit=50&offset=0`)
+        const ourMaster = response2.data.filter((master) => master.id === id)
+        expect(ourMaster.length).toStrictEqual(1)
+    })
+    test('master is busy', async () => {
+        const response0 = await axios.get(`${process.env.API_URL}/api/masters/getOneMaster/${id}`)
+        expect(response0.data.id).toStrictEqual(id)
+        const response = await axios.post(`${process.env.API_URL}/api/order`, {
+            cityId: "1",
+            clockSize: '1',
+            dateTime: "2022-06-23T05:00:00.000Z",
+            email: "user@gmail.com",
+            masterId: id,
+            name: "longUserName"
+        })
+        expect(response.data.masterId).toStrictEqual(id)
+        try {
+            const response2 = await axios.get(`${process.env.API_URL}/api/masters/getFreeMasters?cityId=1&dateTime=2022-06-23T05:00:00.000Z&clockSize=1&limit=50&offset=0`)
+            const ourMaster = response2.data.filter((master) => master.id === id)
+            expect(ourMaster.length).toStrictEqual(0)
+        } catch (e: any) {
+            expect(e.response.data.message).toStrictEqual("masters is not found")
+            Order.destroy({where: {masterId: id}})
+            MasterBusyDate.destroy({where: {masterId: id}})
+        }
+    })
+    test('not valid date', async () => {
+        try {
+            await axios.get(`${process.env.API_URL}/api/masters/getFreeMasters?cityId=1&dateTime=aaaww&clockSize=1&limit=50&offset=0`)
+        } catch (e: any) {
+            expect(e.response.data.message).toStrictEqual(`Not valid date format`)
+        }
+    })
+})
+
+
+describe('registration master', () => {
+    test('token must be not null', async () => {
+        const response = await axios.post(`${process.env.API_URL}/api/auth/registration`, {
+            firstPassword: 123456, secondPassword: 123456, isRulesChecked: true, isMaster: true,
+            email: "some@valid.email", name: "someValidName", citiesId: [1],
+        })
+        expect(response.data.token).not.toBe(null)
+        const master: MasterModel | null = await Master.findOne({where: {email: "some@valid.email"}})
+        master && await MasterCity.destroy({where: {masterId: master.id}})
+        master && await Master.destroy({where: {id: master.id}})
+    })
+    test('not valid password', async () => {
+        try {
+            await axios.post(`${process.env.API_URL}/api/auth/registration`, {
+                firstPassword: 12, secondPassword: 1, isRulesChecked: true, isMaster: true,
+                email: "some@valid.email", name: "someValidName", citiesId: [1],
+            })
+        } catch (e: any) {
+            expect(e.response.data.errors[0].msg).toStrictEqual(`password must be longer than 3 symbols`)
+        }
+
+    })
+    test('two different passwords', async () => {
+        try {
+            await axios.post(`${process.env.API_URL}/api/auth/registration`, {
+                firstPassword: 123456, secondPassword: 123457, isRulesChecked: true, isMaster: true,
+                email: "some@valid.email", name: "someValidName", citiesId: [1],
+            })
+        } catch (e: any) {
+            expect(e.response.data.message).toStrictEqual(`Passwords do not match`)
+        }
+
+    })
+})
+
+
+describe('change master email', () => {
+    test('change to valid email', async () => {
+        const response = await axios.post(`${process.env.API_URL}/api/auth/registration`, {
+            firstPassword: 123456, secondPassword: 123456, isRulesChecked: true, isMaster: true,
+            email: "some@valid.email", name: "someValidName", citiesId: [1]
+        })
+        expect(response.data.token).not.toBe(null)
+
+        const response2 = await axios.put(`${process.env.API_URL}/api/masters/changeEmail`, {
+            password: 123456, currentEmail: "some@valid.email", newEmail: "some@valid.com"
+        }, {headers: {Authorization: `Bearer ${response.data.token}`}})
+        expect(response2.data.token).not.toBe(null)
+        const master: MasterModel | null = await Master.findOne({where: {email: "some@valid.email"}})
+        master && await MasterCity.destroy({where: {masterId: master.id}})
+        master && await Master.destroy({where: {id: master.id}})
+    })
+    test('change to not valid email', async () => {
+        const response = await axios.post(`${process.env.API_URL}/api/auth/registration`, {
+            firstPassword: 123456, secondPassword: 123456, isRulesChecked: true, isMaster: true,
+            email: "some@valid.email", name: "someValidName", citiesId: [1]
+        })
+        expect(response.data.token).toBe(null)
+        const respo = await axios.put(`${process.env.API_URL}/api/masters/changeEmail`, {
+            password: 123456, currentEmail: "some@valid.email", newEmail: "some"
+        }, {headers: {Authorization: `Bearer ${response.data.token}`}})
+        expect(respo).toBe(5)
+
+        const master: MasterModel | null = await Master.findOne({where: {email: "some@valid.email"}})
+        master && await MasterCity.destroy({where: {masterId: master.id}})
+        master && await Master.destroy({where: {id: master.id}})
+
+    })
 
 })

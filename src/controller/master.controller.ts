@@ -206,10 +206,10 @@ class MasterController {
         try {
             const {masterId} = req.params
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const candidate = await Master.findOne({where:{id:masterId}})
+            const candidate = await Master.findOne({where: {id: masterId}})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-            MasterCity.destroy({where: {masterId}}).then(()=>{
-                Master.destroy({where:{id: masterId}}).then(()=>{
+            MasterCity.destroy({where: {masterId}}).then(() => {
+                Master.destroy({where: {id: masterId}}).then(() => {
                     res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
                 })
             })
@@ -238,6 +238,7 @@ class MasterController {
     async getFreeMasters(req: CustomRequest<null, null, GetFreeMastersQuerry, null>, res: Response, next: NextFunction) {
         try {
             const {cityId, dateTime, clockSize, limit, offset} = req.query;
+            if (!+new Date(dateTime)) return next(ApiError.BadRequest("Not valid date format"))
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("The date may be later than the date now"))
             if (+clockSize > 3 || +clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
             const masters: MasterModel[] = await Master.findAll({

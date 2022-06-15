@@ -9,6 +9,7 @@ export default function (roles: ROLE[]) {
         }
         try {
             const token: string | undefined = req?.headers?.authorization?.split(' ')[1] // Bearer asfasnfkajsfnjk
+            console.log(token, 444)
             if (!token) {
                 return res.status(401).json({message: "Unauthorized"})
             }
