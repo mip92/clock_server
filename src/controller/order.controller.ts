@@ -232,7 +232,6 @@ class OrderController {
             if (!range[0].dataValues.minDealPrice)  return next(ApiError.BadRequest("This master has no orders"))
             res.status(200).json(range[0])
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }
