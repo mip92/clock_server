@@ -15,7 +15,6 @@ class AuthController {
         try {
             const admin: AdminModel[] = await Admin.findAll()
             if (admin.length === 0) {
-                console.log(22222222)
                 const email: string = process.env.ADMIN_EMAIL as string
                 const password: string = process.env.ADMIN_PASSWORD as string
                 const hashPassword: string = await bcrypt.hash(password, 5)
