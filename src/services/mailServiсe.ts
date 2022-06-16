@@ -94,7 +94,6 @@ class MailService {
         })
     }
     async sendRatingMail(to: string, link: string, pdfBase64: string) {
-        console.log(to, link)
         await this.transporter.sendMail({
             from: process.env.SMTP_USER,
             to,
