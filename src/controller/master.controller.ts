@@ -12,7 +12,7 @@ import {MasterModel} from "../models/master.model";
 import {CityModel} from "../models/city.model";
 import {MasterBusyDateModel} from "../models/masterBusyDate.model";
 import Sequelize, {Attributes, FindAndCountOptions} from "sequelize";
-import {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig} from '../models';
+import {Master, MasterCity, City, MasterBusyDate, ROLE, dbConfig, User} from '../models';
 import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import mail from "../services/mailServiсe";
@@ -20,6 +20,7 @@ import ApiError from '../exeptions/api-error';
 import tokenService from '../services/tokenServiсe';
 import {MasterCityModel} from "../models/masterCity.model";
 import {Op} from 'sequelize';
+import {UserModel} from "../models/user.model";
 
 class MasterController {
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
@@ -291,7 +292,14 @@ class MasterController {
         const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
         if (isEmailUniq) return next(ApiError.ExpectationFailed({
             value: email,
-            msg: "Master with this email is already registered",
+            msg: "User with this email is already registered",
+            param: "email",
+            location: "body"
+        }))
+        const isEmailUser: UserModel | null = await User.findOne({where: {email}})
+        if (isEmailUser) return next(ApiError.ExpectationFailed({
+            value: email,
+            msg: "User with this email is already registered",
             param: "email",
             location: "body"
         }))
