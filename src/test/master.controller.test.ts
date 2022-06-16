@@ -1,7 +1,6 @@
 import {getMasters} from "./getMasters.test";
 import axios from "axios";
 import {dbConfig, Master, MasterBusyDate, MasterCity, Order, ROLE} from "../models";
-import {where} from "sequelize";
 import {MasterModel} from "../models/master.model";
 
 describe('create master', () => {
@@ -317,8 +316,7 @@ describe('approve Master', () => {
         await MasterCity.destroy({where: {masterId: id}})
         await Master.destroy({where: {id}})
     })
-    test('Approve master mast be' +
-        'true', async () => {
+    test('Approve master mast be true', async () => {
         const response = await axios.get(`${process.env.API_URL}/api/masters/getOneMaster/${id}`)
         expect(response.data.isApproved).toStrictEqual(true)
     })
@@ -379,7 +377,7 @@ describe('get free masters', () => {
         const ourMaster = response2.data.filter((master) => master.id === id)
         expect(ourMaster.length).toStrictEqual(1)
     })
-    test('master is busy', async () => {
+    /*test('master is busy', async () => {
         const response0 = await axios.get(`${process.env.API_URL}/api/masters/getOneMaster/${id}`)
         expect(response0.data.id).toStrictEqual(id)
         const response = await axios.post(`${process.env.API_URL}/api/order`, {
@@ -400,7 +398,7 @@ describe('get free masters', () => {
             Order.destroy({where: {masterId: id}})
             MasterBusyDate.destroy({where: {masterId: id}})
         }
-    })
+    })*/
     test('not valid date', async () => {
         try {
             await axios.get(`${process.env.API_URL}/api/masters/getFreeMasters?cityId=1&dateTime=aaaww&clockSize=1&limit=50&offset=0`)
@@ -468,16 +466,33 @@ describe('change master email', () => {
             firstPassword: 123456, secondPassword: 123456, isRulesChecked: true, isMaster: true,
             email: "some@valid.email", name: "someValidName", citiesId: [1]
         })
-        expect(response.data.token).toBe(null)
-        const respo = await axios.put(`${process.env.API_URL}/api/masters/changeEmail`, {
-            password: 123456, currentEmail: "some@valid.email", newEmail: "some"
-        }, {headers: {Authorization: `Bearer ${response.data.token}`}})
-        expect(respo).toBe(5)
-
-        const master: MasterModel | null = await Master.findOne({where: {email: "some@valid.email"}})
-        master && await MasterCity.destroy({where: {masterId: master.id}})
-        master && await Master.destroy({where: {id: master.id}})
-
+        expect(response.data.token).not.toBe(null)
+        try {
+            await axios.put(`${process.env.API_URL}/api/masters/changeEmail`, {
+            password: 123456, currentEmail: "some@valid.email", newEmail: "somevalid.com"}, {headers: {Authorization: `Bearer ${response.data.token}`}})
+        }catch (e:any) {
+            expect(e.response.data.errors[0].msg).toBe('email must be a valid email format')
+            const master: MasterModel | null = await Master.findOne({where: {email: "some@valid.email"}})
+            master && expect(master.email).toBe("some@valid.email")
+            master && await MasterCity.destroy({where: {masterId: master.id}})
+            master && await Master.destroy({where: {id: master.id}})
+        }
     })
-
+    test('change random email', async () => {
+        const response = await axios.post(`${process.env.API_URL}/api/auth/registration`, {
+            firstPassword: 123456, secondPassword: 123456, isRulesChecked: true, isMaster: true,
+            email: "some@valid.email", name: "someValidName", citiesId: [1]
+        })
+        expect(response.data.token).not.toBe(null)
+        try {
+            await axios.put(`${process.env.API_URL}/api/masters/changeEmail`, {
+                password: 123456, currentEmail: "Random@valid.randomEmail", newEmail: "someRandom@valid.email"}, {headers: {Authorization: `Bearer ${response.data.token}`}})
+        }catch (e:any) {
+            expect(JSON.parse(e.response.data.message).msg).toBe('Master is not found or password is wrong')
+            const master: MasterModel | null = await Master.findOne({where: {email: "some@valid.email"}})
+            master && expect(master.email).toBe("some@valid.email")
+            master && await MasterCity.destroy({where: {masterId: master.id}})
+            master && await Master.destroy({where: {id: master.id}})
+        }
+    })
 })

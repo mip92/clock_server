@@ -49,9 +49,6 @@ type maxMinParam = {
     masterId: string
 }
 
-type orderIdParam = {
-    orderId: string
-}
 
 class OrderController {
     async createOrder(req: CustomRequest<CreateOrderBody, null, null, null>, res: Response, next: NextFunction) {
@@ -70,6 +67,7 @@ class OrderController {
                     activationLink,
                 })
                 const master: MasterModel | null = await Master.findOne({where: {id: masterId}})
+                if (!master) return next(ApiError.BadRequest("master is not found"))
                 const city: CityModel | null = await City.findOne({where: {id: cityId}})
                 const arrayOfClockSize = Array.from({length: clockSize}, (_, i) => i + 1)
                 const timeReservation = (cs: number): Promise<Date> => {
@@ -112,7 +110,8 @@ class OrderController {
                                                                                 originalCityName: city.cityName,
                                                                                 status: String(STATUSES.Approval),
                                                                                 masterId: master.id,
-                                                                                dealPrice: city.price
+                                                                                dealPrice: city.price,
+                                                                                totalPrice: city.price*clockSize
                                                                             }).then((result: OrderModel) => {
                                                                                     return new Promise(() => {
                                                                                         newOrder = result
@@ -139,6 +138,7 @@ class OrderController {
                     })
             } else {
                 const master: MasterModel | null = await Master.findOne({where: {id: masterId}})
+                if (!master) return next(ApiError.BadRequest("master is not found"))
                 const city: CityModel | null = await City.findOne({where: {id: cityId}})
                 const arrayOfClockSize = Array.from({length: clockSize}, (_, i) => i + 1)
                 const timeReservation = (cs: number): Promise<Date> => {
@@ -180,7 +180,8 @@ class OrderController {
                                                                                     originalCityName: city.cityName,
                                                                                     status: STATUSES.Approval,
                                                                                     masterId: master.id,
-                                                                                    dealPrice: city.price
+                                                                                    dealPrice: city.price,
+                                                                                    totalPrice: city.price*clockSize
                                                                                 }).then((result: OrderModel) => {
                                                                                         return new Promise(() => {
                                                                                             newOrder = result
