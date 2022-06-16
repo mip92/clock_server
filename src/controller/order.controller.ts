@@ -687,7 +687,7 @@ class OrderController {
             }
             const getOrdersByCity = (city: CityModel): Promise<number> => {
                 return new Promise((resolve, reject) => {
-                    oldestDate.setDate(oldestDate.getDate()-1)
+                    oldestDate.setDate(oldestDate.getDate() - 1)
                     newestDate.setHours(24)
                     Order.findAll({
                         where: {cityId: city.id},
@@ -737,7 +737,7 @@ class OrderController {
                 oldestDate = new Date(oldestNewest[0].dataValues.minDateTime)
                 // @ts-ignore
                 newestDate = new Date(oldestNewest[0].dataValues.maxDateTime)
-                oldestDate.setDate(oldestDate.getDate()-1)
+                oldestDate.setDate(oldestDate.getDate() - 1)
                 oldestDate.setHours(0)
                 const newestDay = newestDate.getDate()
                 newestDate.setHours(newestDay + 1)
