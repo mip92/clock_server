@@ -21,11 +21,11 @@ const options = {
     dialectOptions: {}
 }
 
-if (process.env.NODE_ENV !== 'development') {
-    options.dialectOptions= {
+if (process.env.NODE_ENV == 'production') {
+    options.dialectOptions = {
         ssl: {
             require: true,
-                rejectUnauthorized: false
+            rejectUnauthorized: false
         }
     }
 }

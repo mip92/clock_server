@@ -11,10 +11,11 @@ class MailService {
     private transporter: Transporter<SMTPTransport.SentMessageInfo>;
 
     constructor() {
+    /*process.env.NODE_ENV !== 'development'*/
         // @ts-ignore
         this.transporter = nodemailer.createTransport({host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT,
-            secure: process.env.NODE_ENV !== 'development',
+            secure: true,
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASSWORD
