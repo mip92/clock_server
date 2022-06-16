@@ -144,7 +144,6 @@ class MasterController {
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, name, email, citiesId} = req.body
-            console.log(id, name, email, citiesId)
             const findMasterId: MasterModel | null = await Master.findOne({where: {id}})
             if (!findMasterId) return next(ApiError.ExpectationFailed({
                 value: email,
