@@ -128,7 +128,6 @@ class MasterController {
     async getOneMaster(req: CustomRequest<null, MasterId, null, null>, res: Response, next: NextFunction) {
         try {
             const masterId = req.params.masterId
-            console.log(masterId)
             const master: MasterModel | null = await Master.findOne({
                     include: {all: true},
                     where: {id: masterId},
