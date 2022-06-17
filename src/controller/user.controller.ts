@@ -12,10 +12,11 @@ import {Attributes, FindAndCountOptions} from "sequelize";
 import {v4 as uuidv4} from 'uuid';
 import bcrypt from 'bcrypt';
 import mail from "../services/mailServiсe";
-import {User, ROLE, Order} from '../models/index';
+import {User, ROLE, Order, Master} from '../models/index';
 import ApiError from '../exeptions/api-error';
 import tokenService from '../services/tokenServiсe';
 import {Op} from 'sequelize';
+import {MasterModel} from "../models/master.model";
 
 class UserController {
     async createUser(req: CustomRequest<CreateUserBody, null, null, null>, res: Response, next: NextFunction) {
@@ -52,7 +53,10 @@ class UserController {
         try {
             const {email} = req.query
             const isUserCreated: UserModel | null = await User.findOne({where: {email}})
-            if (isUserCreated) return next(ApiError.BadRequest("User with this email is already registered"))
+            const isMasterCreated: MasterModel | null = await Master.findOne({where: {email}})
+            if (isUserCreated || isMasterCreated || email===process.env.ADMIN_EMAIL){
+                return next(ApiError.BadRequest("User with this email is already registered"))
+            }
             else res.status(200).json(email)
         } catch (e) {
             next(ApiError.Internal(`server error`))
@@ -142,7 +146,14 @@ class UserController {
                 param: "email",
                 location: "body"
             }))
-            if (!user) {
+            const master: MasterModel | null = await Master.findOne({where: {email}})
+            if (user) return next(ApiError.ExpectationFailed({
+                value: email,
+                msg: "User with this email is already registered",
+                param: "email",
+                location: "body"
+            }))
+            if (!master) {
                 const hashPassword: string = await bcrypt.hash(firstPassword, 5)
                 const activationLink: string = uuidv4();
                 const user: UserModel = await User.create({

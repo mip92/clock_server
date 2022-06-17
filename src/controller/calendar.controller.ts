@@ -19,6 +19,7 @@ type getWeekParam = {
 type monthType = { orders: OrderModel[] | null, date: Date | null, id: number }
 
 class CalendarController {
+
     async getMonth(req: CustomRequest<null, null, getMonthParam, null>, res: Response, next: NextFunction) {
         try {
             const {masterId, correctData} = req.query

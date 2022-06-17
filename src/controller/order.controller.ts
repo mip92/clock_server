@@ -110,7 +110,7 @@ class OrderController {
                                                                                 masterBusyDateId: mbd.id,
                                                                                 cityId,
                                                                                 originalCityName: city.cityName,
-                                                                                status: String(STATUSES.Approval),
+                                                                                status: String(STATUSES.Approved),
                                                                                 masterId: master.id,
                                                                                 dealPrice: city.price
                                                                             }).then((result: OrderModel) => {
@@ -178,7 +178,7 @@ class OrderController {
                                                                                     masterBusyDateId: mbd.id,
                                                                                     cityId,
                                                                                     originalCityName: city.cityName,
-                                                                                    status: STATUSES.Approval,
+                                                                                    status: STATUSES.Approved,
                                                                                     masterId: master.id,
                                                                                     dealPrice: city.price
                                                                                 }).then((result: OrderModel) => {
@@ -228,9 +228,10 @@ class OrderController {
                 options.where = {masterId}
             }
             const range = await Order.findAll(options);
+            // @ts-ignore
+            if (!range[0].dataValues.minDealPrice)  return next(ApiError.BadRequest("This master has no orders"))
             res.status(200).json(range[0])
         } catch (e) {
-            console.log(e)
             next(ApiError.Internal(`server error`))
         }
     }

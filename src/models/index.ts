@@ -44,11 +44,11 @@ export const MasterCity = MasterCityFactory(dbConfig);
 export const Admin = AdminFactory(dbConfig);
 
 export enum STATUSES {
-    Approval = "Approval",
+    Approved = "Approved",
     Canceled = "Canceled",
     Confirmed = "Confirmed",
     Completed = "Completed",
-    NotCompleted = "NotCompleted",
+    Declined = "Declined",
     AwaitingPayment = "AwaitingPayment"
 }
 

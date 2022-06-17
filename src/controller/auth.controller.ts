@@ -47,13 +47,19 @@ class AuthController {
 
     async registration(req: CustomRequest<AuthRegistrationBody, null, null, null>, res: Response, next: NextFunction) {
         try {
-            const {firstPassword, secondPassword, isRulesChecked, isMaster} = req.body
+            const {firstPassword, secondPassword, isRulesChecked, isMaster, email} = req.body
             if (firstPassword !== secondPassword) {
                 return next(ApiError.BadRequest('Passwords do not match'))
             }
             if (!isRulesChecked) {
                 return next(ApiError.BadRequest('Use of service rules is not confirmed'))
             }
+            if(email===process.env.ADMIN_EMAIL) return next(ApiError.ExpectationFailed({
+                value: email,
+                msg: "User with this email is already registered",
+                param: "email",
+                location: "body"
+            }))
             if (!isMaster) await userController.registration(req, res, next)
             else await masterController.registration(req, res, next)
         } catch (e) {
