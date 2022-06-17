@@ -863,18 +863,20 @@ class OrderController {
                                 totalSum = totalSum + order.totalPrice
                             }
                         })
-                        const object: MasterStatisticInterface = {
-                            name: orders[0].master.name,
-                            small: smallClock.length,
-                            middle: middleClock.length,
-                            big: bigClock,
-                            rating: isNaN(orders[0].master.rating) ? null : orders[0].master.rating,
-                            totalCompleted: totalCompleted.length,
-                            totalNotCompleted,
-                            totalSum,
-                            id: orders[0].master.id,
-                        }
-                        resolve(object)
+                        Master. findOne({where:{id:masterId}}).then((master)=>{
+                            const object: MasterStatisticInterface = {
+                                name: master?.name || 'masterName',
+                                small: smallClock.length,
+                                middle: middleClock.length,
+                                big: bigClock,
+                                rating: master?.rating ?  master.rating : null,
+                                totalCompleted: totalCompleted.length,
+                                totalNotCompleted,
+                                totalSum,
+                                id: master?.id || 0
+                            }
+                            resolve(object)
+                        })
                     })
                 })
             }
