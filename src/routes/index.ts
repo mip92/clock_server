@@ -24,4 +24,3 @@ router.use('/payPal', payPalRouter)
 router.use('/calendar', calendarRouter)
 
 export default router
-//https://cerverclock2022.herokuapp.com/api/auth/activate/bb79f164-b3a5-4a1c-9f5f-e759a6a92f09
