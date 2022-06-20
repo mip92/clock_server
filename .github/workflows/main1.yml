@@ -2,9 +2,9 @@ name: GitHub Actions Demo
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "feature_test-v2" ]
+    branches: [ "feature_test-v3" ]
   pull_request:
-    branches: [ "feature_test-v2" ]
+    branches: [ "feature_test-v3" ]
 jobs:
   init:
     runs-on: ubuntu-latest
