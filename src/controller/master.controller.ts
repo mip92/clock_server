@@ -23,6 +23,7 @@ import {Op} from 'sequelize';
 import {UserModel} from "../models/user.model";
 
 class MasterController {
+
     async createMaster(req: CustomRequest<CreateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {name, email, citiesId} = req.body
@@ -103,7 +104,9 @@ class MasterController {
             //options.where.isApproved = true
             options.attributes = {exclude: ['password', 'activationLink']}
             if (limit && +limit > 50) options.limit = 50
+            else if (limit) options.limit = +limit
             if (!offset) options.offset = 0
+            else if (offset) options.offset = +offset
             if (sortBy && select) options.order = [[sortBy, select]]
             if (!cities) {
                 options.include = {model: City, required: false}
@@ -142,6 +145,13 @@ class MasterController {
     async updateMaster(req: CustomRequest<UpdateMasterBody, null, null, null>, res: Response, next: NextFunction) {
         try {
             const {id, name, email, citiesId} = req.body
+            const findMasterId: MasterModel | null = await Master.findOne({where: {id}})
+            if (!findMasterId) return next(ApiError.ExpectationFailed({
+                value: email,
+                msg: `Master with this id is not found`,
+                param: "email",
+                location: "body"
+            }))
             const isEmailUniq: MasterModel | null = await Master.findOne({where: {email}})
             if (isEmailUniq && isEmailUniq.id !== id) return next(ApiError.ExpectationFailed({
                 value: email,
@@ -195,10 +205,13 @@ class MasterController {
         try {
             const {masterId} = req.params
             if (!masterId) next(ApiError.BadRequest("id is not defined"))
-            const candidate: MasterModel | null = await Master.findOne({where: {id: masterId}, include: [{all: true}]})
+            const candidate = await Master.findOne({where: {id: masterId}})
             if (!candidate) next(ApiError.BadRequest(`master with id:${masterId} is not defined`))
-            if (candidate) await candidate.destroy({force: true})
-            res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
+            MasterCity.destroy({where: {masterId}}).then(() => {
+                Master.destroy({where: {id: masterId}}).then(() => {
+                    res.status(200).json({message: `master with id:${masterId} was deleted`, master: candidate})
+                })
+            })
         } catch (e: any) {
             next(ApiError.BadRequest(e))
         }
@@ -224,6 +237,7 @@ class MasterController {
     async getFreeMasters(req: CustomRequest<null, null, GetFreeMastersQuerry, null>, res: Response, next: NextFunction) {
         try {
             const {cityId, dateTime, clockSize, limit, offset} = req.query;
+            if (!+new Date(dateTime)) return next(ApiError.BadRequest("Not valid date format"))
             if (+new Date(dateTime) < +Date.now()) return next(ApiError.BadRequest("The date may be later than the date now"))
             if (+clockSize > 3 || +clockSize < 1) next(ApiError.BadRequest("Max clockSize is 3"))
             const masters: MasterModel[] = await Master.findAll({

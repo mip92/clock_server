@@ -8,12 +8,12 @@ import {body, query} from 'express-validator';
 import {ROLE} from "../models";
 
 const validationCreateMasterBodyRules = [
-    body('name', "name must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
+    body('name', "name must be longer than 6 symbols").isLength({min: 6}).not().isEmpty().escape(),
     body('email', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
     body('citiesId', 'cityId is required').not().isEmpty().escape()
 ];
 const validationChangeEmailBodyRules = [
-    body('password', "password must be longer than 3 symbols").isLength({min: 3}).not().isEmpty().escape(),
+    body('password', "password must be longer than 6 symbols").isLength({min: 6}).not().isEmpty().escape(),
     body('currentEmail', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
     body('newEmail', 'email must be a valid email format').not().isEmpty().isEmail().normalizeEmail(),
     body('role', 'role must be not null').not()
