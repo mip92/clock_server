@@ -23,7 +23,6 @@ class CityController {
                 param: "city",
                 location: "body"
             }))
-
             const newCity = await City.create({cityName: city, price})
             res.status(201).json(newCity)
         } catch (e) {
