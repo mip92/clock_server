@@ -87,9 +87,8 @@ class MailService {
             html:
                 `
                     <div>
-                        <div>Your status has been changed to</div>
-                        <div>${status ? "confirmed" : "not confirmed"}</div>
-                        <div>${status ? "now you can work in our company": "now you can't work in our company" }</div>
+                        <div>${status ? "Your status has been changed to confirmed." : "Your status has been changed to not confirmed."}</div>
+                        <div>${status ? "Now you can work in our company": "Now you can't work in our company" }</div>
                     </div>
                 `
         })
