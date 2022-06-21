@@ -27,14 +27,16 @@ class MailService {
             {
                 from: process.env.SMTP_USER,
                 to,
-                subject: "Order on site " + process.env.CLIENT_URL + " was created",
+                subject: "Order was created",
                 text: "",
                 html:
                     `
             <div>
                 <h1>Order is processed</h1>
-                <div>Master ${masterName} will come to you ${dateTime.toLocaleString()} to repair the clock, estimated repair time is ${clockSize} hours</div>
+                <div>Master ${masterName} will come to you ${dateTime.getDate()}.${dateTime.getMonth()}.${dateTime.getFullYear()} at ${dateTime.getHours()}:00 to repair the clock, estimated repair time is ${clockSize} hours</div>
+                <br>
                 <div>This is a temporary password, change it to a more secure one in your account ${password}</div>
+                <br>
                 <div>To activate mail, follow the link and login</div>
                 <a href=${url}>Authorization<a/>
             <div/>
@@ -54,7 +56,7 @@ class MailService {
                     `
             <div>
                 <h1>Order is processed</h1>
-                <div>Master ${masterName} will come to you ${dateTime.toLocaleString()} to repair the clock, estimated repair time is ${clockSize} hours</div>
+                <div>Master ${masterName} will come to you ${dateTime.getDate()}.${dateTime.getMonth()}.${dateTime.getFullYear()} at ${dateTime.getHours()}:00 to repair the clock, estimated repair time is ${clockSize} hours</div>
             <div/>
             `
             })
@@ -127,7 +129,7 @@ class MailService {
             html:
                 `
                     <div>
-                        <div>Watch repair scheduled in an hour at ${date.toLocaleString()}</div>
+                        <div>Watch repair scheduled in an hour at ${date.getDate()}.${date.getMonth()}.${date.getFullYear()} at ${date.getHours()}:00</div>
                         <div>city: ${order.originalCityName}</div>
                         <div>deal price: ${order.dealPrice}</div>
                         <div>clock size: ${order.clockSize === 1 ? 'small' : order.clockSize === 2 ? 'middle' : 'big'}</div>
