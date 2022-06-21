@@ -5,7 +5,7 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {RatingModel} from "../models/rating.model";
-import {Rating, Order, User, ROLE, Master} from '../models';
+import {Rating, Order, User, ROLE, Master, STATUSES} from '../models';
 import ApiError from '../exeptions/api-error';
 import {OrderModel} from "../models/order.model";
 import {v4 as uuidv4} from "uuid";
