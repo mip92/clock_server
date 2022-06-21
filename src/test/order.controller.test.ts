@@ -41,7 +41,7 @@ describe('create order', () => {
             masterId: id,
             name: "dddddd",
         })
-        expect(response3.data.status).toEqual(STATUSES.Approval)
+        expect(response3.data.status).toEqual(STATUSES.Approved)
         expect(response3.data.masterId).toEqual(id)
         await Order.destroy({where:{id:response3.data.id}})
         await User.destroy({where:{id:response3.data.userId}})
