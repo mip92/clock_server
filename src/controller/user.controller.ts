@@ -1,8 +1,8 @@
 import {
     AuthRegistrationBody,
-    ChangeEmailBody, CreateUserBody,
+    ChangeEmailBody, ChangeName, CreateUserBody,
     CustomRequest,
-    DeleteUserParams, FindUserQuery, GetOneUserParams,
+    DeleteUserParams, FindUserNameQuery, FindUserQuery, GetOneUserParams,
     LimitOffsetType,
     UpdateUserBody
 } from "../interfaces/RequestInterfaces";
@@ -54,10 +54,27 @@ class UserController {
             const {email} = req.query
             const isUserCreated: UserModel | null = await User.findOne({where: {email}})
             const isMasterCreated: MasterModel | null = await Master.findOne({where: {email}})
-            if (isUserCreated || isMasterCreated || email===process.env.ADMIN_EMAIL){
+            if (isUserCreated || isMasterCreated || email === process.env.ADMIN_EMAIL) {
                 return next(ApiError.BadRequest("User with this email is already registered"))
+            } else res.status(200).json(email)
+        } catch (e) {
+            next(ApiError.Internal(`server error`))
+        }
+    }
+
+    async findName(req: CustomRequest<null, null, FindUserNameQuery, null>, res: Response, next: NextFunction) {
+        try {
+            const {email, name} = req.query
+            const isUserCreated: UserModel | null = await User.findOne({where: {email}})
+            if (isUserCreated) {
+                if (name !== isUserCreated.name) return next(ApiError.BadRequest(isUserCreated?.name))
             }
-            else res.status(200).json(email)
+            const isMasterCreated: MasterModel | null = await Master.findOne({where: {email}})
+            if (isMasterCreated) {
+                if (name !== isMasterCreated.name) return next(ApiError.BadRequest(isMasterCreated?.name))
+            } else {
+                res.status(200).json(email)
+            }
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }

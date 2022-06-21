@@ -138,6 +138,7 @@ class OrderController {
                         )
                     })
             } else {
+                if (name !== user.name) user.update({name})
                 const master: MasterModel | null = await Master.findOne({where: {id: masterId}})
                 const city: CityModel | null = await City.findOne({where: {id: cityId}})
                 const arrayOfClockSize = Array.from({length: clockSize}, (_, i) => i + 1)
