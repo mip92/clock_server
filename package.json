@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "tsc": "tsc",
-    "start": "tsc && node build/src/index.js",
+    "start": "tsc && node build/index.js",
     "start:dev": "cross-env NODE_ENV=development ts-node-dev src/index",
     "migration:up:all": "cd src && npx sequelize-cli db:migrate",
     "migration:down:one": "cd src && npx sequelize-cli db:migrate:undo"
