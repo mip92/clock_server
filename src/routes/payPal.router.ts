@@ -15,6 +15,9 @@ router.post('/created/:orderId', createPayPalOrderBodyRules, checkRules, (res: a
 router.post('/paid', (res: any, req: any, next: any) => {
     payPalController.orderHasBeenPaid(res, req, next)
 })
+router.get('/getPdf/:orderId', (res: any, req: any, next: any) => {
+    payPalController.getPdf(res, req, next)
+})
 
 
 export default router

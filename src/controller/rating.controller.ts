@@ -115,7 +115,7 @@ class RatingController {
                 link: uniqueKey
             });
             const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
-            const pdfBase64 = await pdfService.createPdf(+orderId, next)
+            const pdfBase64 = await pdfService.createPdf(+orderId, next, null)
             if (!pdfBase64) return next(ApiError.BadRequest(`Problem with creating pdf`))
             await mail.sendRatingMail(order.user.email, link, pdfBase64)
         } catch (e) {
