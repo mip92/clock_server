@@ -83,7 +83,6 @@ class OrderController {
                     })
                 }
                 let orderDateTime: string
-                let newOrder: OrderModel
                 let count = 0
                 Promise.all(arrayOfClockSize.map(cs => timeReservation(cs)))
                     .then(results => {
@@ -145,7 +144,6 @@ class OrderController {
                     })
                 }
                 let orderDateTime: string
-                let newOrder: OrderModel
                 let count = 0
                 Promise.all(arrayOfClockSize.map(cs => timeReservation(cs)))
                     .then(results => {
@@ -173,13 +171,8 @@ class OrderController {
                                                                                     masterId: master.id,
                                                                                     dealPrice: city.price
                                                                                 }).then((result: OrderModel) => {
-                                                                                        return new Promise(() => {
-                                                                                            newOrder = result
-                                                                                            mail.sendMail(email, master.name, orderDateTime, clockSize)
-                                                                                                .then(() => res.status(201).json(newOrder))
-                                                                                        })
-                                                                                    }
-                                                                                )
+                                                                                    res.status(201).json(result)
+                                                                                })
                                                                             }
                                                                         )
                                                                     }

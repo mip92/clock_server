@@ -29,22 +29,35 @@ class PayPalController {
 
     async orderHasBeenPaid(req: CustomRequest<any, null, null, null>, res: Response, next: NextFunction) {
         try {
-            interface OrderModelWithUser extends OrderModel{
+            interface OrderModelWithUser extends OrderModel {
                 user: UserModel
-                master:MasterModel
-                master_busyDate:MasterBusyDateModel
+                master: MasterModel
+                master_busyDate: MasterBusyDateModel
             }
+
             const payPalOrderId = req.body.resource.supplementary_data.related_ids.order_id
             //@ts-ignore
-            const order: OrderModelWithUser | null = await Order.findOne({where: {payPalOrderId}, include:[{model: User}, {model: Master}, {model:MasterBusyDate}]})
-            const password: string = uuidv4();
-            const hashPassword: string = await bcrypt.hash(password.slice(0, 6), 5)
-            const user = order && await User.findOne({where:{id:order.user.id}})
-            user?.update({password:hashPassword})
-            order && order.update({status: STATUSES.Confirmed}).then((order: OrderModelWithUser)=>{
-               mail.sendMailToNewUser(order.user.email, order.master.name, order.master_busyDate.dateTime, order.clockSize, password.slice(0, 6), order.user.activationLink)
+            const order: OrderModelWithUser | null = await Order.findOne({
+                where: {payPalOrderId},
+                include: [{model: User}, {model: Master}, {model: MasterBusyDate}]
             })
 
+            const user = order && await User.findOne({where: {id: order.user.id}})
+            if (!user) return
+            if (user.password == 'tempPassword') {
+                order.update({status: STATUSES.Confirmed}).then((order: OrderModelWithUser) => {
+                    const password: string = uuidv4();
+                    bcrypt.hash(password.slice(0, 6), 5).then((hashPassword: string) => {
+                        user?.update({password: hashPassword}).then(() => {
+                            mail.sendMailToNewUser(order.user.email, order.master.name, order.master_busyDate.dateTime, order.clockSize, password.slice(0, 6), order.user.activationLink)
+                        })
+                    })
+                })
+            }else{
+                order.update({status: STATUSES.Confirmed}).then((order: OrderModelWithUser) => {
+                    mail.sendMail(order.user.email, order.master.name, order.master_busyDate.dateTime, order.clockSize)
+                })
+            }
         } catch (e) {
             next(ApiError.Internal(`server error`))
         }
