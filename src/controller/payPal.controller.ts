@@ -41,8 +41,8 @@ class PayPalController {
                 where: {payPalOrderId},
                 include: [{model: User}, {model: Master}, {model: MasterBusyDate}]
             })
-
-            const user = order && await User.findOne({where: {id: order.user.id}})
+            if (!order) return
+            const user = await User.findOne({where: {id: order.user.id}})
             if (!user) return
             if (user.password == 'tempPassword') {
                 order.update({status: STATUSES.Confirmed}).then((order: OrderModelWithUser) => {

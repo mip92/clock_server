@@ -33,6 +33,9 @@ class MailService {
                     `
             <div>
                 <h1>Order is processed</h1>
+                <br>
+                <div>You have successfully paid for the order</div>
+                <br>
                 <div>Master ${masterName} will come to you ${dateTime.getDate()}.${dateTime.getMonth()}.${dateTime.getFullYear()} at ${dateTime.getHours()}:00 to repair the clock, estimated repair time is ${clockSize} hours</div>
                 <br>
                 <div>This is a temporary password, change it to a more secure one in your account ${password}</div>
@@ -56,6 +59,9 @@ class MailService {
                     `
             <div>
                 <h1>Order is processed</h1>
+                <br>
+                <div>You have successfully paid for the order</div>
+                <br>
                 <div>Master ${masterName} will come to you ${dateTime.getDate()}.${dateTime.getMonth()}.${dateTime.getFullYear()} at ${dateTime.getHours()}:00 to repair the clock, estimated repair time is ${clockSize} hours</div>
             <div/>
             `

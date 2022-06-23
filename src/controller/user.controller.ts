@@ -144,7 +144,7 @@ class UserController {
             if (!userId) next(ApiError.BadRequest("id is not defined"))
             const candidate: UserModel | null = await User.findOne({where: {id: userId}, include: {all: true}})
             if (!candidate) next(ApiError.BadRequest(`user with id:${userId} is not defined`))
-            const order = await Order.destroy({where: {userId}})
+            await Order.destroy({where: {userId}})
             candidate && await candidate.destroy({force: true})
             res.status(200).json({message: `user with id:${userId} was deleted`, user: candidate})
         } catch (e) {
