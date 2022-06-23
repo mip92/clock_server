@@ -29,6 +29,9 @@ router.post('/', validationCreateUserBodyRules, checkRules2, (res: any, req: any
 router.get('/findUser', (res: any, req: any, next: any) => {
     userController.findUser(res, req, next)
 });
+router.get('/findName', (res: any, req: any, next: any) => {
+    userController.findName(res, req, next)
+});
 router.get('/', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
     userController.getAllUsers(res, req, next)
 });
@@ -38,6 +41,7 @@ router.get('/:userId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any)
 router.put('/', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
     userController.updateUser(res, req, next)
 });
+
 router.delete('/:userId', checkRoles([ROLE.Admin]), (res: any, req: any, next: any) => {
     userController.deleteUser(res, req, next)
 });

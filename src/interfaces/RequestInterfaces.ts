@@ -129,11 +129,19 @@ export interface CreateUserBody {
 }
 
 export type FindUserQuery = { email: string }
+
+export type FindUserNameQuery = { email: string, name: string }
+
 export type GetOneUserParams = { userId: string }
 
 export interface UpdateUserBody {
     id: number,
     newEmail: string,
+    newName: string
+}
+export interface ChangeName {
+    id: number,
+    email: string,
     newName: string
 }
 

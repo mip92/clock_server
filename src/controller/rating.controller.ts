@@ -5,7 +5,7 @@ import {
 } from "../interfaces/RequestInterfaces";
 import {NextFunction, Response} from "express";
 import {RatingModel} from "../models/rating.model";
-import {Rating, Order, User, ROLE, Master} from '../models';
+import {Rating, Order, User, ROLE, Master, STATUSES} from '../models';
 import ApiError from '../exeptions/api-error';
 import {OrderModel} from "../models/order.model";
 import {v4 as uuidv4} from "uuid";
@@ -115,7 +115,7 @@ class RatingController {
                 link: uniqueKey
             });
             const link = `${process.env.CLIENT_URL}/rating/${newRating.link}`
-            const pdfBase64 = await pdfService.createPdf(+orderId, next)
+            const pdfBase64 = await pdfService.createPdf(+orderId, next, null)
             if (!pdfBase64) return next(ApiError.BadRequest(`Problem with creating pdf`))
             await mail.sendRatingMail(order.user.email, link, pdfBase64)
         } catch (e) {
