@@ -59,11 +59,9 @@ class OrderController {
             const {cityId, clockSize, dateTime, email, masterId, name} = req.body
             let user: UserModel | null = await User.findOne({where: {email}})
             if (!user) {
-                const password: string = uuidv4();
-                const hashPassword: string = await bcrypt.hash(password.slice(0, 6), 5)
                 const activationLink: string = uuidv4();
                 user = await User.create({
-                    password: hashPassword,
+                    password: "tempPassword",
                     email,
                     role: "USER",
                     name,
@@ -102,7 +100,6 @@ class OrderController {
                                                                 if (mbd) orderDateTime = mbd.dateTime
                                                                 if (user && user.id && email && master && city && mbd) {
                                                                     return new Promise(() => {
-
                                                                             Order.create({
                                                                                 // @ts-ignore
                                                                                 userId: user.id, email: email,
@@ -114,14 +111,7 @@ class OrderController {
                                                                                 masterId: master.id,
                                                                                 dealPrice: city.price
                                                                             }).then((result: OrderModel) => {
-                                                                                    return new Promise(() => {
-                                                                                        newOrder = result
-                                                                                        mail.sendMailToNewUser(email, master.name, orderDateTime, clockSize, password.slice(0, 6), activationLink)
-                                                                                            .then(() => {
-                                                                                                res.status(201).json(newOrder)
-                                                                                            })
-
-                                                                                    })
+                                                                                    res.status(201).json(result)
                                                                                 }
                                                                             )
                                                                         }
@@ -230,7 +220,7 @@ class OrderController {
             }
             const range = await Order.findAll(options);
             // @ts-ignore
-            if (!range[0].dataValues.minDealPrice)  return next(ApiError.BadRequest("This master has no orders"))
+            if (!range[0].dataValues.minDealPrice) return next(ApiError.BadRequest("This master has no orders"))
             res.status(200).json(range[0])
         } catch (e) {
             next(ApiError.Internal(`server error`))
@@ -864,13 +854,13 @@ class OrderController {
                                 totalSum = totalSum + order.totalPrice
                             }
                         })
-                        Master. findOne({where:{id:masterId}}).then((master)=>{
+                        Master.findOne({where: {id: masterId}}).then((master) => {
                             const object: MasterStatisticInterface = {
                                 name: master?.name || 'masterName',
                                 small: smallClock.length,
                                 middle: middleClock.length,
                                 big: bigClock,
-                                rating: master?.rating ?  master.rating : null,
+                                rating: master?.rating ? master.rating : null,
                                 totalCompleted: totalCompleted.length,
                                 totalNotCompleted,
                                 totalSum,
